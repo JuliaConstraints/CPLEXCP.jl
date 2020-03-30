@@ -15,7 +15,7 @@ end
 
 function write_depsfile(path)
     open(depsfile, "w") do f
-        println(f, "const libcplexjava = \"$(escape_string(path))\"")
+        println(f, "const libcplexcpojava = \"$(escape_string(path))\"")
     end
 end
 
