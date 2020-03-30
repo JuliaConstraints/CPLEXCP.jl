@@ -1,5 +1,3 @@
-using Libdl
-
 # Cannot use the static library cp.lib: very hard to build the corresponding
 # dynamic library.
 # Cannot use CxxWrap, because it is highly tied to MinGW... and CPLEX CPO is
@@ -43,19 +41,16 @@ function get_jar_file()
         end
     end
 
-    if found_path === nothing
-        base_env = "CPLEX_STUDIO_DIR"
+    base_env = "CPLEX_STUDIO_DIR"
+    for v in reverse(cpxvers)
+        for env in [base_env, base_env * v]
+            if !haskey(ENV, env)
+                continue
+            end
 
-        for v in reverse(cpxvers)
-            for env in [base_env, base_env * v]
-                if !haskey(ENV, env)
-                    continue
-                end
-
-                lib_path = abspath(ENV[env] * "/cpoptimizer/lib/ILOG.CP.jar")
-                if isfile(lib_path)
-                    return lib_path
-                end
+            lib_path = abspath(ENV[env] * "/cpoptimizer/lib/ILOG.CP.jar")
+            if isfile(lib_path)
+                return lib_path
             end
         end
     end

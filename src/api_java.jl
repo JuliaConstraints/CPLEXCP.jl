@@ -8,64 +8,80 @@ function cpo_java_init()
     JavaCall.init()
 end
 
-mutable struct JavaCPOModel
+mutable struct JavaCPOModel # TODO: mutable required?
     cp
+    intvar
+    intvararray
+    intervalvar
+    numvar
+    numvararray
 end
 
 function cpo_java_model()
+    # Import the required symbols and store them in the model for future use.
     jcp = @jimport ilog.cp.IloCP
-    return JavaCPOModel(jcp(()))
+    intvar = @jimport ilog.concert.IloIntVar
+    intervalvar = @jimport ilog.concert.IloIntervalVar
+    numvar = @jimport ilog.concert.IloNumVar
+
+    # Actually build the model.
+    model = jcp(())
+
+    # Return the right data structure
+    return JavaCPOModel(model, intvar, Vector{intvar}, intervalvar, numvar, Vector{numvar})
 end
 
 ## Variable creation
 
 # Integer variables
 function cpo_java_intvar_bounded(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Integer}
-    jcall(cp.cp, "intVar", (jint, jint, JString), lb, ub, name)
+    return jcall(cp.cp, "intVar", cp.intvar, (jint, jint, JString), lb, ub, name)
 end
 
 function cpo_java_intvar_discrete(cp::JavaCPOModel, values::Vector{T}, name::String="") where {T <: Integer}
-    jvalues = JavaCall.convert_arg(Vector{jint}, values)
     if length(name) == 0
-        jcall(cp.cp, "intVar", (Vector{jint},), jvalues)
+        return jcall(cp.cp, "intVar", cp.intvar, (Vector{jint},), values)
     else
-        jcall(cp.cp, "intVar", (Vector{jint}, JString), jvalues, name)
+        return jcall(cp.cp, "intVar", cp.intvar, (Vector{jint}, JString), values, name)
     end
 end
 
 function cpo_java_intvararray_bounded(cp::JavaCPOModel, n::T, lb::T, ub::T, name::String="") where {T <: Integer}
-    jcall(cp.cp, "intVarArray", (jint, jint, jint, JString), n, lb, ub, name)
+    return jcall(cp.cp, "intVarArray", cp.intvararray, (jint, jint, jint, JString), n, lb, ub, name)
 end
 
 function cpo_java_intvararray_discrete(cp::JavaCPOModel, n::T, values::Vector{T}, name::String="") where {T <: Integer}
-    jvalues = JavaCall.convert_arg(Vector{jint}, values)
-    jcall(cp.cp, "intVarArray", (jint, Vector{jint}, JString), n, jvalues, name)
+    return jcall(cp.cp, "intVarArray", cp.intvararray, (jint, Vector{jint}, JString), n, values, name)
 end
 
 # Numerical variables
+function cpo_java_numvar(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Real}
+    return jcall(cp.cp, "numVarArray", cp.numvararray, (jint, jdouble, jdouble, JString), 1, lb, ub, name)[1]
+end
+
 function cpo_java_numvararray(cp::JavaCPOModel, n::Int, lb::T, ub::T, name::String="") where {T <: Real}
-    jcall(cp.cp, "numVarArray", (jint, jdouble, jdouble, JString), n, lb, ub, name)
+    return jcall(cp.cp, "numVarArray", cp.numvararray, (jint, jdouble, jdouble, JString), n, lb, ub, name)
 end
 
 # Interval variables
 function cpo_java_intervalvar(cp::JavaCPOModel, name::String="")
     if length(name) == 0
-        jcall(cp.cp, "intervalVar", ())
+        return jcall(cp.cp, "intervalVar", cp.intervalvar, ())
     else
-        jcall(cp.cp, "intervalVar", (JString), name)
+        return jcall(cp.cp, "intervalVar", cp.intervalvar, (JString,), name)
     end
 end
 
 function cpo_java_intervalvar_fixedsize(cp::JavaCPOModel, size::Integer, name::String="")
     if length(name) == 0
-        jcall(cp.cp, "intervalVar", (jint,), size)
+        return jcall(cp.cp, "intervalVar", cp.intervalvar, (jint,), size)
     else
-        jcall(cp.cp, "intervalVar", (jint, JString), size, name)
+        return jcall(cp.cp, "intervalVar", cp.intervalvar, (jint, JString), size, name)
     end
 end
 
 function cpo_java_intervalvar_boundedsize(cp::JavaCPOModel, size_lb::Integer, size_ub::Integer)
-    jcall(cp.cp, "intervalVar", (jint, jint), size_lb, size_ub)
+    return jcall(cp.cp, "intervalVar", cp.intervalvar, (jint, jint), size_lb, size_ub)
 end
 
 # TODO: public IloIntervalVar intervalVar(int szmin, int szmax, boolean opt, IloNumToNumStepFunction intensity, int granularity)
