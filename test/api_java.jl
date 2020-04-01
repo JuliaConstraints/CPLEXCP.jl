@@ -9,8 +9,17 @@
     @test model.intervalvar == JavaCall.JavaObject{Symbol("ilog.concert.IloIntervalVar")}
     @test model.numvar == JavaCall.JavaObject{Symbol("ilog.concert.IloNumVar")}
 
+    @test model.intexpr == JavaCall.JavaObject{Symbol("ilog.concert.IloIntExpr")}
+    @test model.numexpr == JavaCall.JavaObject{Symbol("ilog.concert.IloNumExpr")}
+    @test model.inttupleset == JavaCall.JavaObject{Symbol("ilog.concert.IloIntTupleSet")}
+
+    @test model.constraint == JavaCall.JavaObject{Symbol("ilog.concert.IloConstraint")}
+    @test model.alternative_constraint == JavaCall.JavaObject{Symbol("ilog.concert.IloAlternative")}
+
     @test model.intvararray == Vector{model.intvar}
     @test model.numvararray == Vector{model.numvar}
+    @test model.intexprarray == Vector{model.intexpr}
+    @test model.numexprarray == Vector{model.numexpr}
 
     ## Variable creation
     # Integer variables
