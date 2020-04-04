@@ -8,6 +8,8 @@ function cpo_java_init()
     JavaCall.init()
 end
 
+## TODO: missing methods from IloModeler?
+
 struct JavaCPOModel
     cp
 
@@ -197,6 +199,10 @@ function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, types:
 end
 
 ## Expression creation
+
+function cpo_java_abs(cp::JavaCPOModel, var)
+    return jcall(cp.cp, "abs", cp.intexpr, (cp.intexpr,), var)
+end
 
 function cpo_java_constant(cp::JavaCPOModel, value::Integer)
     return jcall(cp.cp, "constant", cp.intexpr, (jint,), value)
@@ -840,8 +846,32 @@ function cpo_java_cumulfunctionexpr(cp::JavaCPOModel, name::String="")
     end
 end
 
-function cpo_java_diff(cp::JavaCPOModel, f1, f2)
-    return jcall(cp.cp, "diff", cp.cumulfunctionexpr, (cp.cumulfunctionexpr, cumulfunctionexpr), f1, f2)
+function cpo_java_diff_int(cp::JavaCPOModel, e1::Integer, e2) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables (int/num).
+    return jcall(cp.cp, "diff", cp.intexpr, (jint, cp.intexpr), f1, f2)
+end
+
+function cpo_java_diff_int(cp::JavaCPOModel, e1, e2::Integer)
+    return jcall(cp.cp, "diff", cp.intexpr, (cp.intexpr, jint), e1, e2)
+end
+
+function cpo_java_diff_int(cp::JavaCPOModel, e1, e2)
+    return jcall(cp.cp, "diff", cp.intexpr, (cp.intexpr, cp.intexpr), e1, e2)
+end
+
+function cpo_java_diff_num(cp::JavaCPOModel, e1::Real, e2)
+    return jcall(cp.cp, "diff", cp.cp.numexpr, (jdouble, cp.numexpr), e1, e2)
+end
+
+function cpo_java_diff_num(cp::JavaCPOModel, e1, e2::Real)
+    return jcall(cp.cp, "diff", cp.cp.numexpr, (jdouble, jdouble), e1, e2)
+end
+
+function cpo_java_diff_num(cp::JavaCPOModel, e1, e2)
+    return jcall(cp.cp, "diff", cp.cp.numexpr, (cp.numexpr, cp.numexpr), e1, e2)
+end
+
+function cpo_java_diff_cumulfunctionexpr(cp::JavaCPOModel, f1, f2)
+    return jcall(cp.cp, "diff", cp.cumulfunctionexpr, (cp.cumulfunctionexpr, cp.cumulfunctionexpr), f1, f2)
 end
 
 function cpo_java_getnumberofsegments(cp::JavaCPOModel, f)
