@@ -328,7 +328,7 @@ function cpo_java_overlaplength(cp::JavaCPOModel, var_a, var_b)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, cp.intervalvar), var_a, var_b)
 end
 
-function cpo_java_overlaplength_absval(cp::JavaCPOModel, var_a, var_b, absval::Integer)
+function cpo_java_overlaplength(cp::JavaCPOModel, var_a, var_b, absval::Integer)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, cp.intervalvar, jint), var_a, var_b, absval)
 end
 
@@ -448,7 +448,7 @@ function cpo_java_starteval(cp::JavaCPOModel, a, f)
     return jcall(cp.cp, "startEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction), a, f)
 end
 
-function cpo_java_starteval_absval(cp::JavaCPOModel, a, f, absval::Real)
+function cpo_java_starteval(cp::JavaCPOModel, a, f, absval::Real)
     return jcall(cp.cp, "startEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction, jdouble), a, f, absval)
 end
 
@@ -456,7 +456,7 @@ function cpo_java_startof(cp::JavaCPOModel, a)
     return jcall(cp.cp, "startOf", cp.numexpr, (cp.intervalvar,), a)
 end
 
-function cpo_java_startof_absval(cp::JavaCPOModel, a, absval::Real)
+function cpo_java_startof(cp::JavaCPOModel, a, absval::Real)
     return jcall(cp.cp, "startOf", cp.numexpr, (cp.intervalvar, jdouble), a, absval)
 end
 
@@ -464,7 +464,7 @@ function cpo_java_startofnext(cp::JavaCPOModel, seq, a, lastval)
     return jcall(cp.cp, "startOfNext", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, lastval)
 end
 
-function cpo_java_startofnext_absval(cp::JavaCPOModel, seq, a, lastval, absval::Real)
+function cpo_java_startofnext(cp::JavaCPOModel, seq, a, lastval, absval::Real)
     return jcall(cp.cp, "startOfNext", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, lastval, absval)
 end
 
@@ -472,7 +472,7 @@ function cpo_java_startofprevious(cp::JavaCPOModel, seq, a, firstval)
     return jcall(cp.cp, "startOfPrevious", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, firstval)
 end
 
-function cpo_java_startofprevious_absval(cp::JavaCPOModel, seq, a, firstval, absval::Real)
+function cpo_java_startofprevious(cp::JavaCPOModel, seq, a, firstval, absval::Real)
     return jcall(cp.cp, "startOfPrevious", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, firstval, absval)
 end
 
