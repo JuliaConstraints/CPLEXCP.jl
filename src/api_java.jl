@@ -8,8 +8,6 @@ function cpo_java_init()
     JavaCall.init()
 end
 
-## TODO: everything Ilo*ValueEval and Ilo*VarEval.
-
 struct JavaCPOModel
     cp
 
@@ -541,7 +539,7 @@ end
 # Other functions in the interface, but they require the conversion between Java's int[] and C++ Concert's IloIntArray.
 # This conversion does not seem to be exposed.
 
-## TODO: IloNumToNumSegmentFunction: functions
+## IloNumToNumSegmentFunction: functions
 
 function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel)
     return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, ())
@@ -813,7 +811,7 @@ end
 
 # TODO: what about IloNumToNumStepFunctionCursor?
 
-## TODO: IloStateFunction: functions
+## IloStateFunction: functions (they are all directly implemented in IloCP)
 
 function cpo_java_statefunction(cp::JavaCPOModel, name::String="")
     if length(name) == 0
@@ -831,7 +829,7 @@ function cpo_java_statefunction(cp::JavaCPOModel, t, name::String="")
     end
 end
 
-## TODO: IloCumulFunctionExpr: functions
+## IloCumulFunctionExpr: functions (they are all directly implemented in IloCP)
 
 function cpo_java_cumulfunctionexpr(cp::JavaCPOModel, name::String="")
     if length(name) == 0
@@ -889,7 +887,7 @@ function cpo_java_sum_cumulfunctionexpr(cp::JavaCPOModel, f1, f2) # TODO: cannot
     return jcall(cp.cp, "sum", cp.cumulfunctionexpr, (cp.cumulfunctionexpr, cumulfunctionexpr), f1, f2)
 end
 
-## TODO: IloTransitionDistance: functions
+## IloTransitionDistance: functions
 
 function cpo_java_transitiondistance(cp::JavaCPOModel, i::Integer, name::String="")
     if length(name) == 0
@@ -905,6 +903,21 @@ function cpo_java_transitiondistance(cp::JavaCPOModel, dtable::Matrix{T}, name::
     else
         return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (Vector{Vector{jint}}, JString), dtable, name)
     end
+end
+
+function cpo_java_transitiondistance_getsize(cp::JavaCPOModel, td)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(td, "getSize", jint, ())
+end
+
+function cpo_java_transitiondistance_getvalue(cp::JavaCPOModel, td, fromstate::Integer, tostate::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(td, "getValue", jint, (jint, jint), fromstate, tostate)
+end
+
+function cpo_java_transitiondistance_setvalue(cp::JavaCPOModel, td, fromstate::Integer, tostate::Integer, value::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(td, "setValue", nothing, (jint, jint, jint), fromstate, tostate, value)
 end
 
 ## Constraint creation
@@ -1654,7 +1667,234 @@ function cpo_java_solution(cp::JavaCPOModel, constrs)
     return jcall(cp.cp, "solution", cp.solution, ())
 end
 
-# TODO: functions of IloSolution
+function cpo_java_solution_add_intervalvar(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "add", nothing, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_add_intervalvararray(cp::JavaCPOModel, solution, vars::Vector)
+    return jcall(solution, "add", nothing, (cp.intervalvararray,), var)
+end
+
+function cpo_java_solution_add_intvar(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "add", nothing, (cp.intvar,), var)
+end
+
+function cpo_java_solution_add_intvararray(cp::JavaCPOModel, solution, vars::Vector{})
+    return jcall(solution, "add", nothing, (cp.intvararray,), vars)
+end
+
+function cpo_java_solution_add_numvar(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "add", nothing, (cp.numvar,), var)
+end
+
+function cpo_java_solution_contains_intervalvar(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "contains", jboolean, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_contains_intvar(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "contains", jboolean, (cp.intvar,), var)
+end
+
+function cpo_java_solution_end(cp::JavaCPOModel, solution)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(solution, "end", jboolean, ())
+end
+
+function cpo_java_solution_getend(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getEnd", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getendmax(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getEndMax", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getendmin(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getEndMin", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getlength(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getLength", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getlengthmax(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getLengthMax", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getlengthmin(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getLengthMin", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getmax_int(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "getMax", jint, (cp.intvar,), var)
+end
+
+function cpo_java_solution_getmax_num(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getMax", jdouble, (cp.numvar,), var)
+end
+
+function cpo_java_solution_getmin_int(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "getMin", jint, (cp.intvar,), var)
+end
+
+function cpo_java_solution_getmin_num(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getMin", jdouble, (cp.numvar,), var)
+end
+
+function cpo_java_solution_getsize(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getSize", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getsizemax(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getSizeMax", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getsizemin(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getSizeMin", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getstart(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getStart", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getstartmax(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getStartMax", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getstartmin(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getStartMin", jint, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_getvalue_int(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "getValue", jint, (cp.intvar,), var)
+end
+
+function cpo_java_solution_getvalue_num(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "getValue", jdouble, (cp.numvar,), var)
+end
+
+function cpo_java_solution_isabsent(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "isAbsent", jboolean, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_isfixed(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "isFixed", jboolean, (cp.intvar,), var)
+end
+
+function cpo_java_solution_isindomain(cp::JavaCPOModel, solution, var, value)
+    return jcall(solution, "isInDomain", jboolean, (cp.intervalvar, jint), var, value)
+end
+
+function cpo_java_solution_ispresent(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "isPresent", jboolean, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_remove_intervalvar(cp::JavaCPOModel, solution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "remove", nothing, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_remove_intervalvararray(cp::JavaCPOModel, solution, vars::Vector)
+    return jcall(solution, "remove", nothing, (cp.intervalvararray,), var)
+end
+
+function cpo_java_solution_remove_intvar(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "remove", nothing, (cp.intvar,), var)
+end
+
+function cpo_java_solution_remove_intvararray(cp::JavaCPOModel, solution, vars::Vector{})
+    return jcall(solution, "remove", nothing, (cp.intvararray,), vars)
+end
+
+function cpo_java_solution_setabsent(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "setAbsent", void, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_setdomain(cp::JavaCPOModel, solution, var, vmin::Integer, vmax::Integer)
+    return jcall(solution, "setDomain", jboolean, (cp.intvar, jint, jint), var, vmin, vmax)
+end
+
+function cpo_java_solution_setend(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setEnd", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setendmax(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setEndMax", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setendmin(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setEndMin", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setlength(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setLength", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setlengthmax(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setLengthMax", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setlengthmin(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setLengthMin", void, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setmax_int(cp::JavaCPOModel, solution, var, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "setMax", jboolean, (cp.intvar, jint), var, v)
+end
+
+function cpo_java_solution_setmax_num(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setMax", jboolean, (cp.numvar, jint), var, v)
+end
+
+function cpo_java_solution_setmin_int(cp::JavaCPOModel, solution, var, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "setMin", jboolean, (cp.intvar, jint), var, v)
+end
+
+function cpo_java_solution_setmin_num(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setMin", jboolean, (cp.numvar, jint), var, v)
+end
+
+function cpo_java_solution_setoptional(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "setOptional", void, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_setpresent(cp::JavaCPOModel, solution, var)
+    return jcall(solution, "setPresent", void, (cp.intervalvar,), var)
+end
+
+function cpo_java_solution_setsize(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setSize", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setsizemax(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setSizeMax", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setsizemin(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setSizeMin", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setstart(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setStart", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setstartmax(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setStartMax", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setstartmin(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setStartMin", jboolean, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_solution_setvalue_int(cp::JavaCPOModel, solution, var, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+    return jcall(solution, "setValue", jboolean, (cp.intvar, jint), var, v)
+end
+
+function cpo_java_solution_setvalue_num(cp::JavaCPOModel, solution, var, v::Integer)
+    return jcall(solution, "setValue", jboolean, (cp.numvar, jint), var, v)
+end
+
+function cpo_java_solution_store(cp::JavaCPOModel, solution)
+    return jcall(solution, "store", jboolean, ())
+end
 
 ## Miscellaneous
 
