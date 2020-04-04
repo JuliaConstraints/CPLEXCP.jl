@@ -64,4 +64,29 @@
             @test typeof(cpo_java_intervalsequencevar(model, [i1, i2])) == model.intervalsequencevar
         end
     end
+
+    @testset "Integration tests" begin
+        @testset "Color" begin
+            model = cpo_java_model()
+            belgium = cpo_java_intvar(model, 0, 3)
+            denmark = cpo_java_intvar(model, 0, 3)
+            france = cpo_java_intvar(model, 0, 3)
+            germany = cpo_java_intvar(model, 0, 3)
+            luxembourg = cpo_java_intvar(model, 0, 3)
+            netherlands = cpo_java_intvar(model, 0, 3)
+
+            cpo_java_add(model, cpo_java_neq_intexpr(model, belgium, france))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, belgium, germany))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, belgium, netherlands))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, belgium, luxembourg))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, denmark, germany))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, france, germany))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, france, luxembourg))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, germany, luxembourg))
+            cpo_java_add(model, cpo_java_neq_intexpr(model, germany, netherlands))
+
+            status = cpo_java_solve(model)
+            @test status
+        end
+    end
 end
