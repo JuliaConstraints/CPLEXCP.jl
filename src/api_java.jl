@@ -8,6 +8,8 @@ function cpo_java_init()
     JavaCall.init()
 end
 
+## TODO: everything Ilo*ValueEval and Ilo*VarEval.
+
 mutable struct JavaCPOModel # TODO: mutable required?
     cp
 
@@ -26,6 +28,10 @@ mutable struct JavaCPOModel # TODO: mutable required?
     inttupleset
     numtonumsegmentfunction
     numtonumstepfunction
+    cumulfunctionexpr
+    cumulfunctionexprarray
+    transitiondistance
+    statefunction
 
     constraint
     constraintarray
@@ -35,9 +41,18 @@ mutable struct JavaCPOModel # TODO: mutable required?
     isomorphismarray
     nooverlap
     nooverlaparray
+    range
+    rangearray
+    span
+    spanarray
+    synchronize
+    synchronizearray
 
     objective
     multicriterionexpr
+    solution
+
+    addable
 end
 
 function cpo_java_model()
@@ -54,14 +69,23 @@ function cpo_java_model()
     inttupleset = @jimport ilog.concert.IloIntTupleSet
     numtonumsegmentfunction = @jimport ilog.concert.IloNumToNumSegmentFunction
     numtonumstepfunction = @jimport ilog.concert.IloNumToNumStepFunction
+    cumulfunctionexpr = @jimport ilog.concert.IloCumulFunctionExpr
+    transitiondistance = @jimport ilog.concert.IloTransitionDistance
+    statefunction = @jimport ilog.concert.IloStateFunction
 
     constraint = @jimport ilog.concert.IloConstraint
     alternative = @jimport ilog.concert.IloAlternative
     isomorphism = @jimport ilog.concert.IloIsomorphism
     nooverlap = @jimport ilog.concert.IloNoOverlap
+    range = @jimport ilog.concert.IloRange
+    span = @jimport ilog.concert.IloSpan
+    synchronize = @jimport ilog.concert.IloSynchronize
 
     objective = @jimport ilog.concert.IloObjective
     multicriterionexpr = @jimport ilog.concert.IloMultiCriterionExpr
+    solution = @jimport ilog.concert.IloSolution
+
+    addable = @jimport ilog.concert.IloAddable
 
     # Actually build the model.
     model = jcp(())
@@ -72,9 +96,12 @@ function cpo_java_model()
                         Vector{intervalsequencevar}, numvar, Vector{numvar},
                         intexpr, Vector{intexpr}, numexpr, Vector{numexpr}, inttupleset,
                         numtonumsegmentfunction, numtonumstepfunction,
+                        cumulfunctionexpr, Vector{cumulfunctionexpr},
+                        transitiondistance, statefunction,
                         constraint, Vector{constraint}, alternative, Vector{alternative},
                         isomorphism, Vector{isomorphism}, nooverlap, Vector{nooverlap},
-                        objective, multicriterionexpr)
+                        range, Vector{range}, span, Vector{span}, synchronize, Vector{synchronize},
+                        objective, multicriterionexpr, solution, addable)
 end
 
 function cpo_java_release(cp::JavaCPOModel)
@@ -297,18 +324,6 @@ function cpo_java_numvararray(cp::JavaCPOModel, n)
     return jcall(cp.cp, "numVarArray", cp.intexpr, (jint,), n)
 end
 
-function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel)
-    return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, ())
-end
-
-function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel, x::Vector{Real}, v::Vector{Real})
-    return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}), x, v)
-end
-
-function cpo_java_numtonumstepfunction(cp::JavaCPOModel)
-    return jcall(cp.cp, "numToNumStepFunction", cp.numtonumstepfunction, ())
-end
-
 function cpo_java_overlaplength(cp::JavaCPOModel, var_a, var_b)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, cp.intervalvar), var_a, var_b)
 end
@@ -323,6 +338,242 @@ end
 
 function cpo_java_overlaplength_int(cp::JavaCPOModel, var, start::Integer, end_::Integer, absval::Integer)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, jint, jint, jint), var, start, end_, absval)
+end
+
+function cpo_java_piecewiselinear_slope(cp::JavaCPOModel, var, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real)
+    return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), var, point, slope, a, fa)
+end
+
+function cpo_java_piecewiselinear_value(cp::JavaCPOModel, var, firstslope::Real, point::Vector{<: Real}, value::Vector{<: Real}, lastslope::Real)
+    return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
+end
+
+function cpo_java_piecewiselinearfunction_slope(cp::JavaCPOModel, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), point, slope, a, fa)
+    else
+        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble, JString), point, slope, a, fa, name)
+    end
+end
+
+function cpo_java_power_double_numexpr(cp::JavaCPOModel, expr_a::Real, expr_b)
+    return jcall(cp.cp, "power", cp.numexpr, (jdouble, cp.numexpr), expr_a, expr_b)
+end
+
+function cpo_java_power_numexpr_double(cp::JavaCPOModel, expr_a, expr_b::Real)
+    return jcall(cp.cp, "power", cp.numexpr, (cp.numexpr, jdouble), expr_a, expr_b)
+end
+
+function cpo_java_power_numexpr_numexpr(cp::JavaCPOModel, expr_a, expr_b)
+    return jcall(cp.cp, "power", cp.numexpr, (cp.numexpr, cp.numexpr), expr_a, expr_b)
+end
+
+function cpo_java_prod_int_intexpr(cp::JavaCPOModel, values::Vector{<: Integer}, exprs)
+    return jcall(cp.cp, "prod", cp.intexpr, (Vector{jint}, cp.intexprarray), values, exprs)
+end
+
+function cpo_java_prod_intexpr_int(cp::JavaCPOModel, exprs, values::Vector{<: Integer})
+    return jcall(cp.cp, "prod", cp.intexpr, (cp.intexprarray, Vector{jint}), exprs, values)
+end
+
+function cpo_java_prod_intexpr_intexpr(cp::JavaCPOModel, exprs_a, exprs_b)
+    return jcall(cp.cp, "prod", cp.intexpr, (cp.intexprarray, cp.intexprarray), exprs_a, exprs_b)
+end
+
+function cpo_java_pulse(cp::JavaCPOModel, var, v::Integer)
+    return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (cp.intervalvar, jint), var, v)
+end
+
+function cpo_java_pulse_minmax(cp::JavaCPOModel, var, vmin::Integer, vmax::Integer)
+    return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), var, vmin, vmax)
+end
+
+function cpo_java_pulse_startend(cp::JavaCPOModel, start::Integer, end_::Integer, v::Integer)
+    return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (jint, jint, jint), start, end_, v)
+end
+
+function cpo_java_quot_double_numexpr(cp::JavaCPOModel, expr_a::Real, expr_b)
+    return jcall(cp.cp, "quot", cp.numexpr, (jdouble, cp.numexpr), expr_a, expr_b)
+end
+
+function cpo_java_quot_numexpr_double(cp::JavaCPOModel, expr_a, expr_b::Real)
+    return jcall(cp.cp, "quot", cp.numexpr, (cp.numexpr, jdouble), expr_a, expr_b)
+end
+
+function cpo_java_quot_numexpr_numexpr(cp::JavaCPOModel, expr_a, expr_b)
+    return jcall(cp.cp, "quot", cp.numexpr, (cp.numexpr, cp.numexpr), expr_a, expr_b)
+end
+
+function cpo_java_sizeeval(cp::JavaCPOModel, a, f)
+    return jcall(cp.cp, "sizeEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction), a, f)
+end
+
+function cpo_java_sizeeval_abs(cp::JavaCPOModel, a, f, absval::Real)
+    return jcall(cp.cp, "sizeEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction, jdouble), a, f, absval)
+end
+
+function cpo_java_sizeof(cp::JavaCPOModel, a)
+    return jcall(cp.cp, "sizeOf", cp.numexpr, (cp.intervalvar,), a)
+end
+
+function cpo_java_sizeof_abs(cp::JavaCPOModel, a, absval::Real)
+    return jcall(cp.cp, "sizeOf", cp.numexpr, (cp.intervalvar, jdouble), a, absval)
+end
+
+function cpo_java_sizeofnext(cp::JavaCPOModel, seq, a, lastval::Integer)
+    return jcall(cp.cp, "sizeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, lastval)
+end
+
+function cpo_java_sizeofnext_abs(cp::JavaCPOModel, seq, a, lastval::Integer, absval::Real)
+    return jcall(cp.cp, "sizeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, lastval, absval)
+end
+
+function cpo_java_sizeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer)
+    return jcall(cp.cp, "sizeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, firstval)
+end
+
+function cpo_java_sizeofprevious_abs(cp::JavaCPOModel, seq, a, firstval::Integer, absval::Real)
+    return jcall(cp.cp, "sizeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, firstval, absval)
+end
+
+function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::Vector)
+    return jcall(cp.cp, "standardDeviation", cp.numexpr, (cp.intexprarray,), exprs)
+end
+
+function cpo_java_standarddeviation_bounded(cp::JavaCPOModel, exprs::Vector, mean_lb::Real, mean_ub::Real)
+    return jcall(cp.cp, "standardDeviation", cp.numexpr, (cp.intexprarray, jdouble, jdouble), exprs, mean_lb, mean_ub)
+end
+
+function cpo_java_starteval(cp::JavaCPOModel, a, f)
+    return jcall(cp.cp, "startEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction), a, f)
+end
+
+function cpo_java_starteval_absval(cp::JavaCPOModel, a, f, absval::Real)
+    return jcall(cp.cp, "startEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction, jdouble), a, f, absval)
+end
+
+function cpo_java_startof(cp::JavaCPOModel, a)
+    return jcall(cp.cp, "startOf", cp.numexpr, (cp.intervalvar,), a)
+end
+
+function cpo_java_startof_absval(cp::JavaCPOModel, a, absval::Real)
+    return jcall(cp.cp, "startOf", cp.numexpr, (cp.intervalvar, jdouble), a, absval)
+end
+
+function cpo_java_startofnext(cp::JavaCPOModel, seq, a, lastval)
+    return jcall(cp.cp, "startOfNext", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, lastval)
+end
+
+function cpo_java_startofnext_absval(cp::JavaCPOModel, seq, a, lastval, absval::Real)
+    return jcall(cp.cp, "startOfNext", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, lastval, absval)
+end
+
+function cpo_java_startofprevious(cp::JavaCPOModel, seq, a, firstval)
+    return jcall(cp.cp, "startOfPrevious", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, firstval)
+end
+
+function cpo_java_startofprevious_absval(cp::JavaCPOModel, seq, a, firstval, absval::Real)
+    return jcall(cp.cp, "startOfPrevious", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, firstval, absval)
+end
+
+function cpo_java_sum_int(cp::JavaCPOModel, exprs)
+    return jcall(cp.cp, "sum", cp.intexpr, (cp.intexprarray,), exprs)
+end
+
+function cpo_java_sum_num(cp::JavaCPOModel, exprs)
+    return jcall(cp.cp, "sum", cp.numexpr, (cp.numexprarray,), exprs)
+end
+
+function cpo_java_typeofnext(cp::JavaCPOModel, seq, a, lastval::Integer)
+    return jcall(cp.cp, "typeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, lastval)
+end
+
+function cpo_java_typeofnext(cp::JavaCPOModel, seq, a, lastval::Integer, absval::Integer)
+    return jcall(cp.cp, "typeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), seq, a, lastval, absval)
+end
+
+function cpo_java_typeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer)
+    return jcall(cp.cp, "typeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, firstval)
+end
+
+function cpo_java_typeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer, absval::Integer)
+    return jcall(cp.cp, "typeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), seq, a, firstval, absval)
+end
+
+## TODO: IloNumToNumStepFunction and IloNumToNumSegmentFunction: functions
+
+function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel)
+    return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, ())
+end
+
+function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel, x::Vector{Real}, v::Vector{Real})
+    return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}), x, v)
+end
+
+function cpo_java_numtonumstepfunction(cp::JavaCPOModel)
+    return jcall(cp.cp, "numToNumStepFunction", cp.numtonumstepfunction, ())
+end
+
+## TODO: IloStateFunction: functions
+
+function cpo_java_statefunction(cp::JavaCPOModel, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "stateFunction", cp.statefunction, ())
+    else
+        return jcall(cp.cp, "stateFunction", cp.statefunction, (JString,), name)
+    end
+end
+
+function cpo_java_statefunction(cp::JavaCPOModel, t, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "stateFunction", cp.statefunction, (transitiondistance,), t)
+    else
+        return jcall(cp.cp, "stateFunction", cp.statefunction, (transitiondistance, JString), t, name)
+    end
+end
+
+## TODO: IloCumulFunctionExpr: functions
+
+function cpo_java_step(cp::JavaCPOModel, t::Integer, v::Integer)
+    return jcall(cp.cp, "step", cp.cumulfunctionexpr, (jint, jint), t, v)
+end
+
+function cpo_java_stepatend(cp::JavaCPOModel, a, v::Integer)
+    return jcall(cp.cp, "stepAtEnd", cp.cumulfunctionexpr, (cp.intervalvar, jint), a, v)
+end
+
+function cpo_java_stepatend_minmax(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
+    return jcall(cp.cp, "stepAtEnd", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), a, vmin, vmax)
+end
+
+function cpo_java_stepatstart(cp::JavaCPOModel, a, v::Integer)
+    return jcall(cp.cp, "stepAtStart", cp.cumulfunctionexpr, (cp.intervalvar, jint), a, v)
+end
+
+function cpo_java_stepatstart_minmax(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
+    return jcall(cp.cp, "stepAtStart", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), a, vmin, vmax)
+end
+
+function cpo_java_sum_cumulfunctionexpr(cp::JavaCPOModel, f1, f2)
+    return jcall(cp.cp, "sum", cp.cumulfunctionexpr, (cp.cumulfunctionexpr, cumulfunctionexpr), f1, f2)
+end
+
+## TODO: IloTransitionDistance: functions
+
+function cpo_java_transitiondistance(cp::JavaCPOModel, i::Integer, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (jint,), i)
+    else
+        return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (jint, JString), i, name)
+    end
+end
+
+function cpo_java_transitiondistance(cp::JavaCPOModel, dtable::Matrix{<: Integer}, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (Vector{Vector{jint}},), dtable)
+    else
+        return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (Vector{Vector{jint}}, JString), dtable, name)
+    end
 end
 
 ## Constraint creation
@@ -595,7 +846,131 @@ function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{<
     return jcall(cp.cp, "pack", cp.constraint, (cp.intexprarray, cp.intexprarray, Vector{jint}, cp.intexpr), expr_load, expr_where, weight, used)
 end
 
+function cpo_java_ispresent(cp::JavaCPOModel, var)
+    return jcall(cp.cp, "presenceOf", cp.constraint, (cp.intervalvar,), var)
+end
+
 # TODO: IloTransitionDistance and missing noOverlap
+
+function cpo_java_previous(cp::JavaCPOModel, seq, prev, next)
+    return jcall(cp.cp, "presenceOf", cp.constraint, (cp.intervalsequencevar, cp.intervalvar, cp.intervalvar), seq, prev, next)
+end
+
+function cpo_java_range(cp::JavaCPOModel, expr, b::Real)
+    return jcall(cp.cp, "range", cp.constraint, (cp.numexpr, jdouble), expr, b)
+end
+
+function cpo_java_samecommonsubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar), seq_1, seq_2)
+    else
+        return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, JString), seq_1, seq_2, name)
+    end
+end
+
+function cpo_java_samecommonsubsequence_seq_interval(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray), seq_1, seq_2, a_1, a_2)
+    else
+        return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray, JString), seq_1, seq_2, a_1, a_2, name)
+    end
+end
+
+function cpo_java_samesubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar), seq_1, seq_2)
+    else
+        return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, JString), seq_1, seq_2, name)
+    end
+end
+
+function cpo_java_samesubsequence_seq_interval(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray), seq_1, seq_2, a_1, a_2)
+    else
+        return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray, JString), seq_1, seq_2, a_1, a_2, name)
+    end
+end
+
+function cpo_java_sequence(cp::JavaCPOModel, nbmin::Integer, nbmax::Integer, seqwidth::Integer, vars::Vector, values::Vector{<: Integer}, card::Vector)
+    return jcall(cp.cp, "sequence", cp.constraint, (jint, jint, jint, cp.intvararray, Vector{jint}, cp.intvararray), nbmin, nbmax, seqwidth, vars, values, card)
+end
+
+function cpo_java_span(cp::JavaCPOModel, a, bs::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "span", cp.span, (cp.intervalvar, cp.intervalvararray), a, bs)
+    else
+        return jcall(cp.cp, "span", cp.span, (cp.intervalvar, cp.intervalvararray, JString), a, bs, name)
+    end
+end
+
+function cpo_java_startatend(cp::JavaCPOModel, a, b)
+    return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
+end
+
+function cpo_java_startatend_int(cp::JavaCPOModel, a, b, z::Integer)
+    return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
+end
+
+function cpo_java_startatend_intexpr(cp::JavaCPOModel, a, b, z)
+    return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
+end
+
+function cpo_java_startatstart(cp::JavaCPOModel, a, b)
+    return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
+end
+
+function cpo_java_startatstart_int(cp::JavaCPOModel, a, b, z::Integer)
+    return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
+end
+
+function cpo_java_startatstart_intexpr(cp::JavaCPOModel, a, b, z)
+    return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
+end
+
+function cpo_java_startbeforeend(cp::JavaCPOModel, a, b)
+    return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
+end
+
+function cpo_java_startbeforeend_int(cp::JavaCPOModel, a, b, z::Integer)
+    return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
+end
+
+function cpo_java_startbeforeend_intexpr(cp::JavaCPOModel, a, b, z)
+    return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
+end
+
+function cpo_java_startbeforestart(cp::JavaCPOModel, a, b)
+    return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
+end
+
+function cpo_java_startbeforestart_int(cp::JavaCPOModel, a, b, z::Integer)
+    return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
+end
+
+function cpo_java_startbeforestart_intexpr(cp::JavaCPOModel, a, b, z)
+    return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
+end
+
+function cpo_java_strong(cp::JavaCPOModel, vars)
+    return jcall(cp.cp, "strong", cp.constraint, (cp.intvararray,), vars)
+end
+
+function cpo_java_subcircuit(cp::JavaCPOModel, vars)
+    return jcall(cp.cp, "subCircuit", cp.constraint, (cp.intvararray,), vars)
+end
+
+function cpo_java_synchronize(cp::JavaCPOModel, a, bs::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "synchronize", cp.synchronize, (cp.intervalvar, cp.intervalvararray), a, bs)
+    else
+        return jcall(cp.cp, "synchronize", cp.synchronize, (cp.intervalvar, cp.intervalvararray, JString), a, bs, name)
+    end
+end
+
+function cpo_java_trueconstraint(cp::JavaCPOModel)
+    return jcall(cp.cp, "trueConstraint", cp.constraint, ())
+end
 
 ## Objective
 
@@ -614,6 +989,17 @@ end
 function cpo_java_minimize_multicriterion(cp::JavaCPOModel, expr)
     return jcall(cp.cp, "minimize", cp.objective, (cp.multicriterionexpr,), expr)
 end
+
+function cpo_java_staticlex(cp::JavaCPOModel, criteria::Vector, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "staticLex", cp.multicriterionexpr, (cp.numexprarray,), criteria)
+    else
+        return jcall(cp.cp, "staticLex", cp.multicriterionexpr, (cp.numexprarray, JString), criteria, name)
+    end
+    # Other staticLex don't need to be mapped, just facility functions in Java for short arrays.
+end
+
+staticLex
 
 ## Query solution and state
 # TODO: getAll*
@@ -784,6 +1170,50 @@ function cpo_java_next(cp::JavaCPOModel)
     return jcall(cp.cp, "next", jboolean, ())
 end
 
+function cpo_java_propagate(cp::JavaCPOModel)
+    return jcall(cp.cp, "propagate", jboolean, ())
+end
+
+function cpo_java_propagate(cp::JavaCPOModel, constr)
+    return jcall(cp.cp, "propagate", jboolean, (cp.constraint,), constr)
+end
+
+function cpo_java_refineconflict(cp::JavaCPOModel)
+    return jcall(cp.cp, "refineConflict", jboolean, ())
+end
+
+function cpo_java_refineconflict_constraints(cp::JavaCPOModel, constrs)
+    return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray,), constrs)
+end
+
+function cpo_java_refineconflict_constraints_double(cp::JavaCPOModel, constrs, prefs::Vector{<:Real})
+    return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray, Vector{jdouble}), constrs, prefs)
+end
+
+function cpo_java_restore(cp::JavaCPOModel, solution)
+    return jcall(cp.cp, "restore", jboolean, (cp.solution,), solution)
+end
+
+function cpo_java_solve(cp::JavaCPOModel)
+    return jcall(cp.cp, "solve", jboolean, ())
+end
+
+function cpo_java_startnewsearch(cp::JavaCPOModel)
+    return jcall(cp.cp, "startNewSearch", nothing, ())
+end
+
+function cpo_java_store(cp::JavaCPOModel, solution)
+    return jcall(cp.cp, "store", nothing, (cp.solution,), solution)
+end
+
+## Solution IloSolution.
+
+function cpo_java_solution(cp::JavaCPOModel, constrs)
+    return jcall(cp.cp, "solution", cp.solution, ())
+end
+
+# TODO: functions of IloSolution
+
 ## Miscellaneous
 # TODO: dumpModel
 # TODO: exportModel
@@ -795,3 +1225,25 @@ end
 # TODO: getConflict
 # TODO: getIloCumulFunctionExpr
 # TODO: importModel
+# TODO: printInformation
+
+function cpo_java_remove(cp::JavaCPOModel, addable)
+    return jcall(cp.cp, "remove", cp.addable, (cp.addable,), addable)
+end
+
+function cpo_java_removeallcallbacks(cp::JavaCPOModel)
+    return jcall(cp.cp, "removeAllCallbacks", nothing)
+end
+
+function cpo_java_removeallkpis(cp::JavaCPOModel)
+    return jcall(cp.cp, "removeAllKPIs", nothing)
+end
+
+# TODO: removeCallback
+# TODO: removeKPI
+
+function cpo_java_runseeds(cp::JavaCPOModel, n::Integer)
+    return jcall(cp.cp, "runSeeds", nothing, (jint,), n)
+end
+
+# TODO: searchPhase
