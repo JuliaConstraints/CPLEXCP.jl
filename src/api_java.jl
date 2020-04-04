@@ -14,6 +14,7 @@ struct JavaCPOModel
     intvar
     intvararray
     intervalvar
+    intervalvararray
     intervalsequencevar
     intervalsequencevararray
     numvar
@@ -103,8 +104,8 @@ function cpo_java_model()
 
     # Return the right data structure
     return JavaCPOModel(model,
-                        intvar, Vector{intvar}, intervalvar, intervalsequencevar,
-                        Vector{intervalsequencevar}, numvar, Vector{numvar},
+                        intvar, Vector{intvar}, intervalvar, Vector{intervalvar},
+                        intervalsequencevar, Vector{intervalsequencevar}, numvar, Vector{numvar},
                         intexpr, Vector{intexpr}, numexpr, Vector{numexpr}, inttupleset,
                         numtonumsegmentfunction, numtonumstepfunction,
                         cumulfunctionexpr, Vector{cumulfunctionexpr},
@@ -112,7 +113,7 @@ function cpo_java_model()
                         constraint, Vector{constraint}, alternative, Vector{alternative},
                         isomorphism, Vector{isomorphism}, nooverlap, Vector{nooverlap},
                         range, Vector{range}, span, Vector{span}, synchronize, Vector{synchronize},
-                        objective, multicriterionexpr, solution, addable,
+                        objective, multicriterionexpr, solution, addable, callback,
                         conflictstatus, conflictstatus_possible, conflictstatus_member,
                         conflictstatus_excluded)
 end
@@ -669,7 +670,7 @@ function cpo_java_numtonumsegmentfunction_shift(cp::JavaCPOModel, n2nsf, dx::Rea
     return jcall(n2nsf, "shift", nothing, (jdouble, jdouble), dx, dval)
 end
 
-function cpo_java_numtonumsegmentfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+function cpo_java_numtonumsegmentfunction_sub(cp::JavaCPOModel, n2nsf, f)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(n2nsf, "sub", nothing, (cp.numtonumsegmentfunction,), f)
 end
@@ -804,7 +805,7 @@ function cpo_java_numtonumstepfunction_shift(cp::JavaCPOModel, n2nsf, dx::Real, 
     return jcall(n2nsf, "shift", nothing, (jdouble, jdouble), dx, dval)
 end
 
-function cpo_java_numtonumstepfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+function cpo_java_numtonumstepfunction_sub(cp::JavaCPOModel, n2nsf, f)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(n2nsf, "sub", nothing, (cp.numtonumstepfunction,), f)
 end
@@ -1436,8 +1437,6 @@ function cpo_java_staticlex(cp::JavaCPOModel, criteria::Vector, name::String="")
     end
     # Other staticLex don't need to be mapped, just facility functions in Java for short arrays.
 end
-
-staticLex
 
 ## Query solution and state
 
