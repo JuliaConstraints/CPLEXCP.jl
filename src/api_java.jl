@@ -414,15 +414,15 @@ function cpo_java_pulse(cp::JavaCPOModel, start::Integer, end_::Integer, v::Inte
     return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (jint, jint, jint), start, end_, v)
 end
 
-function cpo_java_quot_double_numexpr(cp::JavaCPOModel, expr_a::Real, expr_b)
+function cpo_java_quot(cp::JavaCPOModel, expr_a::Real, expr_b)
     return jcall(cp.cp, "quot", cp.numexpr, (jdouble, cp.numexpr), expr_a, expr_b)
 end
 
-function cpo_java_quot_numexpr_double(cp::JavaCPOModel, expr_a, expr_b::Real)
+function cpo_java_quot(cp::JavaCPOModel, expr_a, expr_b::Real)
     return jcall(cp.cp, "quot", cp.numexpr, (cp.numexpr, jdouble), expr_a, expr_b)
 end
 
-function cpo_java_quot_numexpr_numexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_quot(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "quot", cp.numexpr, (cp.numexpr, cp.numexpr), expr_a, expr_b)
 end
 
@@ -528,7 +528,7 @@ function cpo_java_inttable(cp::JavaCPOModel, dimension::Integer)
     return jcall(cp.cp, "intTable", cp.inttupleset, (jint,), dimension)
 end
 
-function cpo_java_inttupleset_getarity(cp::JavaCPOModel, its, tuple::Vector{T}) where {T <: Integer}
+function cpo_java_inttupleset_addtuple(cp::JavaCPOModel, its, tuple::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "addTuple", nothing, (cp.inttupleset, Vector{jint}), its, tuple)
 end
 
@@ -923,6 +923,10 @@ end
 
 ## Constraint creation
 
+function cpo_java_add(cp::JavaCPOModel, addable)
+    return jcall(cp.cp, "add", cp.constraint, (cp.addable,), addable)
+end
+
 function cpo_java_alldiff(cp::JavaCPOModel, exprs)
     return jcall(cp.cp, "allDiff", cp.constraint, (cp.intexprarray,), exprs)
 end
@@ -1019,11 +1023,11 @@ function cpo_java_alwaysin_state(cp::JavaCPOModel, f, start::Integer, end_::Inte
     return jcall(cp.cp, "alwaysIn", cp.constraint, (cp.statefunction, jint, jint, jint, jint), f, start, end_, vmin, vmax)
 end
 
-function cpo_java_alwaysnostate_state(cp::JavaCPOModel, f, a)
+function cpo_java_alwaysnostate(cp::JavaCPOModel, f, a)
     return jcall(cp.cp, "alwaysNoState", cp.constraint, (cp.statefunction, cp.intervalvar, jint), f, a)
 end
 
-function cpo_java_alwaysnostate_state(cp::JavaCPOModel, f, start::Integer, end_::Integer)
+function cpo_java_alwaysnostate(cp::JavaCPOModel, f, start::Integer, end_::Integer)
     return jcall(cp.cp, "alwaysNoState", cp.constraint, (cp.statefunction, jint, jint), f, start, end_)
 end
 
@@ -1239,15 +1243,19 @@ function cpo_java_lt(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "lt", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_neq(cp::JavaCPOModel, constr_a, constr_b)
+function cpo_java_neq_constraint(cp::JavaCPOModel, constr_a, constr_b)
     return jcall(cp.cp, "neq", cp.constraint, (cp.constraint, cp.constraint), constr_a, constr_b)
 end
 
-function cpo_java_neq(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+    return jcall(cp.cp, "neq", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
+end
+
+function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "neq", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_neq(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "neq", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
@@ -1493,7 +1501,7 @@ function cpo_java_getincumbentvalue(cp::JavaCPOModel, expr)
 end
 
 function cpo_java_getintvalue(cp::JavaCPOModel, expr)
-    return jcall(cp.cp, "getIncumbentValue", jint, (cp.intexpr,), expr)
+    return jcall(cp.cp, "getInt", jint, (cp.intexpr,), expr)
 end
 
 function cpo_java_getlast(cp::JavaCPOModel, var)
