@@ -173,7 +173,7 @@ function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, name::
     end
 end
 
-function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, types::Vector{<:Integer}, name::String="")
+function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, types::Vector{T}, name::String="") where {T <: Integer}
     if length(name) == 0
         return jcall(cp.cp, "intervalSequenceVar", cp.intervalsequencevar, (cp.intervalvararray, Vector{jint}), intervalvararray, types)
     else
@@ -216,7 +216,7 @@ function cpo_java_countdifferent(cp::JavaCPOModel, exprs)
     return jcall(cp.cp, "countDifferent", cp.intexpr, (cp.intexprarray,), exprs,)
 end
 
-function cpo_java_element(cp::JavaCPOModel, values::Vector{<:Integer}, expr_index)
+function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index) where {T <: Integer}
     return jcall(cp.cp, "element", cp.intexpr, (Vector{jint}, cp.intexpr), values, expr_index)
 end
 
@@ -224,7 +224,7 @@ function cpo_java_element(cp::JavaCPOModel, exprs::Vector, expr_index)
     return jcall(cp.cp, "element", cp.intexpr, (cp.intexprarray, cp.intexpr), exprs, expr_index)
 end
 
-function cpo_java_element(cp::JavaCPOModel, values::Vector{<:Real}, expr_index)
+function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index) where {T <: Real}
     return jcall(cp.cp, "element", cp.intexpr, (Vector{jdouble}, cp.intexpr), values, expr_index)
 end
 
@@ -340,15 +340,15 @@ function cpo_java_overlaplength(cp::JavaCPOModel, var, start::Integer, end_::Int
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, jint, jint, jint), var, start, end_, absval)
 end
 
-function cpo_java_piecewiselinear(cp::JavaCPOModel, var, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real)
+function cpo_java_piecewiselinear(cp::JavaCPOModel, var, point::Vector{T}, slope::Vector{T}, a::Real, fa::Real) where {T <: Real}
     return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), var, point, slope, a, fa)
 end
 
-function cpo_java_piecewiselinear(cp::JavaCPOModel, var, firstslope::Real, point::Vector{<: Real}, value::Vector{<: Real}, lastslope::Real)
+function cpo_java_piecewiselinear(cp::JavaCPOModel, var, firstslope::Real, point::Vector{T}, value::Vector{T}, lastslope::Real) where {T <: Real}
     return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
 end
 
-function cpo_java_piecewiselinearfunction(cp::JavaCPOModel, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real, name::String="")
+function cpo_java_piecewiselinearfunction(cp::JavaCPOModel, point::Vector{T}, slope::Vector{T}, a::Real, fa::Real, name::String="") where {T <: Real}
     if length(name) == 0
         return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), point, slope, a, fa)
     else
@@ -368,11 +368,11 @@ function cpo_java_power(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "power", cp.numexpr, (cp.numexpr, cp.numexpr), expr_a, expr_b)
 end
 
-function cpo_java_prod(cp::JavaCPOModel, values::Vector{<: Integer}, exprs)
+function cpo_java_prod(cp::JavaCPOModel, values::Vector{T}, exprs) where {T <: Integer}
     return jcall(cp.cp, "prod", cp.intexpr, (Vector{jint}, cp.intexprarray), values, exprs)
 end
 
-function cpo_java_prod(cp::JavaCPOModel, exprs, values::Vector{<: Integer})
+function cpo_java_prod(cp::JavaCPOModel, exprs, values::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "prod", cp.intexpr, (cp.intexprarray, Vector{jint}), exprs, values)
 end
 
@@ -568,7 +568,7 @@ function cpo_java_transitiondistance(cp::JavaCPOModel, i::Integer, name::String=
     end
 end
 
-function cpo_java_transitiondistance(cp::JavaCPOModel, dtable::Matrix{<: Integer}, name::String="")
+function cpo_java_transitiondistance(cp::JavaCPOModel, dtable::Matrix{T}, name::String="") where {T <: Integer}
     if length(name) == 0
         return jcall(cp.cp, "transitionDistance", cp.transitiondistance, (Vector{Vector{jint}},), dtable)
     else
@@ -586,11 +586,11 @@ function cpo_java_allmindistance(cp::JavaCPOModel, vars)
     return jcall(cp.cp, "allMinDistance", cp.constraint, (cp.intvararray,), vars)
 end
 
-function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
+function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
     return jcall(cp.cp, "allowedAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
-function cpo_java_allowedassignments_vars(cp::JavaCPOModel, vars, values::Vector{<:Integer})
+function cpo_java_allowedassignments_vars(cp::JavaCPOModel, vars, values::Vector{T}) where {T <: Integer}
     # TODO: IloIntTupleSet
     return jcall(cp.cp, "allowedAssignments", cp.constraint, (cp.intvararray, cp.inttupleset), vars, values)
 end
@@ -631,15 +631,15 @@ function cpo_java_distribute(cp::JavaCPOModel, exprs_cards, exprs_vars)
     return jcall(cp.cp, "distribute", cp.constraint, (cp.intexprarray, cp.intexprarray), exprs_cards, exprs_vars)
 end
 
-function cpo_java_distribute(cp::JavaCPOModel, exprs_cards, values::Vector{<:Integer}, exprs_vars)
+function cpo_java_distribute(cp::JavaCPOModel, exprs_cards, values::Vector{T}, exprs_vars) where {T <: Integer}
     return jcall(cp.cp, "distribute", cp.constraint, (cp.intexprarray, Vector{jint}, cp.intexprarray), exprs_cards, values, exprs_vars)
 end
 
-function cpo_java_element_int(cp::JavaCPOModel, expr_var, expr_index, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
+function cpo_java_element_int(cp::JavaCPOModel, expr_var, expr_index, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
     return jcall(cp.cp, "element", cp.constraint, (cp.intexpr, cp.intexpr, Vector{jint}), expr_var, expr_index, values)
 end
 
-function cpo_java_element_num(cp::JavaCPOModel, expr_var, expr_index, values::Vector{<:Real})
+function cpo_java_element_num(cp::JavaCPOModel, expr_var, expr_index, values::Vector{T}) where {T <: Real}
     return jcall(cp.cp, "element", cp.constraint, (cp.intexpr, cp.intexpr, Vector{jdouble}), expr_var, expr_index, values)
 end
 
@@ -715,11 +715,11 @@ function cpo_java_first(cp::JavaCPOModel, seq, var)
     return jcall(cp.cp, "first", cp.constraint, (cp.intervalsequencevar, cp.interval), seq, var)
 end
 
-function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
+function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, expr, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
     return jcall(cp.cp, "forbiddenAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
-function cpo_java_forbiddenassignments_vars(cp::JavaCPOModel, vars, values::Vector{<:Integer})
+function cpo_java_forbiddenassignments_vars(cp::JavaCPOModel, vars, values::Vector{T}) where {T <: Integer}
     # TODO: IloIntTupleSet
     return jcall(cp.cp, "forbiddenAssignments", cp.constraint, (cp.intvararray, cp.inttupleset), vars, values)
 end
@@ -840,11 +840,11 @@ end
 
 # TODO: IloTransitionDistance and missing noOverlap
 
-function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{<:Integer})
+function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "pack", cp.constraint, (cp.intexprarray, cp.intexprarray, Vector{jint}), expr_load, expr_where, weight)
 end
 
-function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{<:Integer}, used)
+function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{T}, used) where {T <: Integer}
     return jcall(cp.cp, "pack", cp.constraint, (cp.intexprarray, cp.intexprarray, Vector{jint}, cp.intexpr), expr_load, expr_where, weight, used)
 end
 
@@ -892,7 +892,7 @@ function cpo_java_samesubsequence(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector
     end
 end
 
-function cpo_java_sequence(cp::JavaCPOModel, nbmin::Integer, nbmax::Integer, seqwidth::Integer, vars::Vector, values::Vector{<: Integer}, card::Vector)
+function cpo_java_sequence(cp::JavaCPOModel, nbmin::T, nbmax::T, seqwidth::T, vars::Vector, values::Vector{T}, card::Vector) where {T <: Integer}
     return jcall(cp.cp, "sequence", cp.constraint, (jint, jint, jint, cp.intvararray, Vector{jint}, cp.intvararray), nbmin, nbmax, seqwidth, vars, values, card)
 end
 
@@ -1186,7 +1186,7 @@ function cpo_java_refineconflict(cp::JavaCPOModel, constrs)
     return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray,), constrs)
 end
 
-function cpo_java_refineconflict(cp::JavaCPOModel, constrs, prefs::Vector{<:Real})
+function cpo_java_refineconflict(cp::JavaCPOModel, constrs, prefs::Vector{T}) where {T <: Real}
     return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray, Vector{jdouble}), constrs, prefs)
 end
 
