@@ -10,7 +10,7 @@ end
 
 ## TODO: everything Ilo*ValueEval and Ilo*VarEval.
 
-mutable struct JavaCPOModel # TODO: mutable required?
+struct JavaCPOModel
     cp
 
     intvar
@@ -32,6 +32,7 @@ mutable struct JavaCPOModel # TODO: mutable required?
     cumulfunctionexprarray
     transitiondistance
     statefunction
+    statefunctionarray
 
     constraint
     constraintarray
@@ -53,6 +54,12 @@ mutable struct JavaCPOModel # TODO: mutable required?
     solution
 
     addable
+
+    callback
+    conflictstatus
+    conflictstatus_possible
+    conflictstatus_member
+    conflictstatus_excluded
 end
 
 function cpo_java_model()
@@ -87,6 +94,12 @@ function cpo_java_model()
 
     addable = @jimport ilog.concert.IloAddable
 
+    callback = @jimport ilog.cp.IloCP$Callback
+    conflictstatus = @jimport ilog.cp.IloCP$ConflictStatus
+    conflictstatus_possible = jfield(conflictstatus, "ConflictPossibleMember", conflictstatus)
+    conflictstatus_member = jfield(conflictstatus, "ConflictMember", conflictstatus)
+    conflictstatus_excluded = jfield(conflictstatus, "ConflictExcluded", conflictstatus)
+
     # Actually build the model.
     model = jcp(())
 
@@ -97,11 +110,13 @@ function cpo_java_model()
                         intexpr, Vector{intexpr}, numexpr, Vector{numexpr}, inttupleset,
                         numtonumsegmentfunction, numtonumstepfunction,
                         cumulfunctionexpr, Vector{cumulfunctionexpr},
-                        transitiondistance, statefunction,
+                        transitiondistance, statefunction, Vector{statefunction},
                         constraint, Vector{constraint}, alternative, Vector{alternative},
                         isomorphism, Vector{isomorphism}, nooverlap, Vector{nooverlap},
                         range, Vector{range}, span, Vector{span}, synchronize, Vector{synchronize},
-                        objective, multicriterionexpr, solution, addable)
+                        objective, multicriterionexpr, solution, addable,
+                        conflictstatus, conflictstatus_possible, conflictstatus_member,
+                        conflictstatus_excluded)
 end
 
 function cpo_java_release(cp::JavaCPOModel)
@@ -516,6 +531,12 @@ function cpo_java_typeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer, ab
     return jcall(cp.cp, "typeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), seq, a, firstval, absval)
 end
 
+## TODO: IloIntTupleSet: functions
+
+function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel, dimension::Integer)
+    return jcall(cp.cp, "intTable", cp.inttupleset, (jint,), dimension)
+end
+
 ## TODO: IloNumToNumStepFunction and IloNumToNumSegmentFunction: functions
 
 function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel)
@@ -638,8 +659,7 @@ function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector
     return jcall(cp.cp, "allowedAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
-function cpo_java_allowedassignments_vars(cp::JavaCPOModel, vars, values::Vector{T}) where {T <: Integer}
-    # TODO: IloIntTupleSet
+function cpo_java_allowedassignments_vars(cp::JavaCPOModel, vars, values)
     return jcall(cp.cp, "allowedAssignments", cp.constraint, (cp.intvararray, cp.inttupleset), vars, values)
 end
 
@@ -827,8 +847,7 @@ function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, expr, values::Vect
     return jcall(cp.cp, "forbiddenAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
-function cpo_java_forbiddenassignments_vars(cp::JavaCPOModel, vars, values::Vector{T}) where {T <: Integer}
-    # TODO: IloIntTupleSet
+function cpo_java_forbiddenassignments_vars(cp::JavaCPOModel, vars, values)
     return jcall(cp.cp, "forbiddenAssignments", cp.constraint, (cp.intvararray, cp.inttupleset), vars, values)
 end
 
@@ -1146,10 +1165,29 @@ end
 staticLex
 
 ## Query solution and state
-# TODO: getAll*
+
+function cpo_java_getallconstrainedilocumulfunctionexprs(cp::JavaCPOModel)
+    return jcall(cp.cp, "getAllConstrainedIloCumulFunctionExprs", cp.cumulfunctionexprarray, ())
+end
+
+function cpo_java_getallilointervalsequencevars(cp::JavaCPOModel)
+    return jcall(cp.cp, "getAllIloIntervalSequenceVars", cp.intervalsequencevararray, ())
+end
+
+function cpo_java_getallintervalvars(cp::JavaCPOModel)
+    return jcall(cp.cp, "getAllIloIntervalVars", cp.intervalvararray, ())
+end
+
+function cpo_java_getallintvars(cp::JavaCPOModel)
+    return jcall(cp.cp, "getAllIloIntVars", cp.intvararray, ())
+end
+
+function cpo_java_getallstatefunctions(cp::JavaCPOModel)
+    return jcall(cp.cp, "getAllIloStateFunctions", cp.statefunctionarray, ())
+end
 
 function cpo_java_getallkpinames(cp::JavaCPOModel)
-    return jcall(cp.cp, "getAllKPINames", Vector{JString})
+    return jcall(cp.cp, "getAllKPINames", Vector{JString}, ())
 end
 
 function cpo_java_getdomain(cp::JavaCPOModel, var)
@@ -1357,32 +1395,62 @@ end
 # TODO: functions of IloSolution
 
 ## Miscellaneous
-# TODO: dumpModel
-# TODO: exportModel
+
+function cpo_java_dumpmodel(cp::JavaCPOModel, filename::String)
+    return jcall(cp.cp, "dumpModel", nothing, (JString,), filename)
+    # TODO: OutputStream?
+end
+
+function cpo_java_exportmodel(cp::JavaCPOModel, filename::String)
+    return jcall(cp.cp, "exportModel", nothing, (JString,), filename)
+    # TODO: OutputStream?
+end
 
 function cpo_java_getbuildid(cp::JavaCPOModel)
     return jcall(cp.cp, "getBuildID", JString)
 end
 
-# TODO: getConflict
-# TODO: getIloCumulFunctionExpr
-# TODO: importModel
-# TODO: printInformation
+function cpo_java_getconflict_constraint(cp::JavaCPOModel, constr) # TODO: cannot use Julia method dispatch due to missing type for expressions (interval/num) and constraints.
+    return jcall(cp.cp, "getConflict", cp.conflictstatus, (cp.constraint,), constr)
+end
+
+function cpo_java_getconflict_intervalval(cp::JavaCPOModel, var)
+    return jcall(cp.cp, "getConflict", cp.conflictstatus, (cp.intervalvar,), constr)
+end
+
+function cpo_java_getconflict_numvar(cp::JavaCPOModel, var)
+    return jcall(cp.cp, "getConflict", cp.conflictstatus, (cp.numvar,), constr)
+end
+
+function cpo_java_importmodel(cp::JavaCPOModel, filename::String)
+    return jcall(cp.cp, "importModel", nothing, (JString,), filename)
+    # TODO: InputStream?
+end
+
+function cpo_java_printinformation(cp::JavaCPOModel)
+    return jcall(cp.cp, "printInformation", nothing, ())
+    # TODO: OutputStream?
+end
 
 function cpo_java_remove(cp::JavaCPOModel, addable)
     return jcall(cp.cp, "remove", cp.addable, (cp.addable,), addable)
 end
 
 function cpo_java_removeallcallbacks(cp::JavaCPOModel)
-    return jcall(cp.cp, "removeAllCallbacks", nothing)
+    return jcall(cp.cp, "removeAllCallbacks", nothing, ())
 end
 
 function cpo_java_removeallkpis(cp::JavaCPOModel)
-    return jcall(cp.cp, "removeAllKPIs", nothing)
+    return jcall(cp.cp, "removeAllKPIs", nothing, ())
 end
 
-# TODO: removeCallback
-# TODO: removeKPI
+function cpo_java_removecallback(cp::JavaCPOModel, cb)
+    return jcall(cp.cp, "removeCallback", nothing, (cp.callback,), cb)
+end
+
+function cpo_java_removekpi(cp::JavaCPOModel, kpi::String)
+    return jcall(cp.cp, "removeKPI", nothing, (JString,), kpi)
+end
 
 function cpo_java_runseeds(cp::JavaCPOModel, n::Integer)
     return jcall(cp.cp, "runSeeds", nothing, (jint,), n)
