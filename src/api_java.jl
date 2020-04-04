@@ -379,14 +379,6 @@ function cpo_java_piecewiselinear(cp::JavaCPOModel, var, firstslope::Real, point
     return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
 end
 
-function cpo_java_piecewiselinearfunction(cp::JavaCPOModel, point::Vector{T}, slope::Vector{T}, a::Real, fa::Real, name::String="") where {T <: Real}
-    if length(name) == 0
-        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), point, slope, a, fa)
-    else
-        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble, JString), point, slope, a, fa, name)
-    end
-end
-
 function cpo_java_power(cp::JavaCPOModel, expr_a::Real, expr_b)
     return jcall(cp.cp, "power", cp.numexpr, (jdouble, cp.numexpr), expr_a, expr_b)
 end
@@ -531,13 +523,25 @@ function cpo_java_typeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer, ab
     return jcall(cp.cp, "typeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), seq, a, firstval, absval)
 end
 
-## TODO: IloIntTupleSet: functions
+## IloIntTupleSet: functions
 
-function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel, dimension::Integer)
+function cpo_java_inttable(cp::JavaCPOModel, dimension::Integer)
     return jcall(cp.cp, "intTable", cp.inttupleset, (jint,), dimension)
 end
 
-## TODO: IloNumToNumStepFunction and IloNumToNumSegmentFunction: functions
+function cpo_java_inttupleset_getarity(cp::JavaCPOModel, its, tuple::Vector{T}) where {T <: Integer}
+    return jcall(cp.cp, "addTuple", nothing, (cp.inttupleset, Vector{jint}), its, tuple)
+end
+
+function cpo_java_inttupleset_getarity(cp::JavaCPOModel, its)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(its, "getArity", jint, ())
+end
+
+# Other functions in the interface, but they require the conversion between Java's int[] and C++ Concert's IloIntArray.
+# This conversion does not seem to be exposed.
+
+## TODO: IloNumToNumSegmentFunction: functions
 
 function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel)
     return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, ())
@@ -547,9 +551,267 @@ function cpo_java_numtonumsegmentfunction(cp::JavaCPOModel, x::Vector{Real}, v::
     return jcall(cp.cp, "numToNumSegmentFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}), x, v)
 end
 
+function cpo_java_piecewiselinearfunction(cp::JavaCPOModel, point::Vector{T}, slope::Vector{T}, a::Real, fa::Real, name::String="") where {T <: Real}
+    if length(name) == 0
+        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), point, slope, a, fa)
+    else
+        return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble, JString), point, slope, a, fa, name)
+    end
+end
+
+function cpo_java_numtonumsegmentfunction_add(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "add", nothing, (cp.numtonumsegmentfunction,), f)
+end
+
+function cpo_java_numtonumsegmentfunction_addvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "addValue", nothing, (jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumsegmentfunction_copy(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "copy", cp.numtonumsegmentfunction, ())
+end
+
+function cpo_java_numtonumsegmentfunction_dilate(cp::JavaCPOModel, n2nsf, k::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "dilate", nothing, (jdouble,), k)
+end
+
+function cpo_java_numtonumsegmentfunction_getarea(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getArea", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumsegmentfunction_getdefinitionintervalmax(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getDefinitionIntervalMax", jdouble, ())
+end
+
+function cpo_java_numtonumsegmentfunction_getdefinitionintervalmin(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getDefinitionIntervalMin", jdouble, ())
+end
+
+function cpo_java_numtonumsegmentfunction_getmax(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getMax", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumsegmentfunction_getmin(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getMin", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumsegmentfunction_getvalue(cp::JavaCPOModel, n2nsf, x::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getValue", jdouble, (jdouble,), x)
+end
+
+function cpo_java_numtonumsegmentfunction_prod(cp::JavaCPOModel, n2nsf, k::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "prod", nothing, (jdouble,), k)
+end
+
+function cpo_java_numtonumsegmentfunction_setmax(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (jdouble, jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumsegmentfunction_setmax(cp::JavaCPOModel, n2nsf, x1::Real, v1::Real, x2::Real, v2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (jdouble, jdouble, jdouble, jdouble), x1, v1, x2, v2)
+end
+
+function cpo_java_numtonumsegmentfunction_setmax(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (cp.numtonumsegmentfunction,), f)
+end
+
+function cpo_java_numtonumsegmentfunction_setmin(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (jdouble, jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumsegmentfunction_setmin(cp::JavaCPOModel, n2nsf, x1::Real, v1::Real, x2::Real, v2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (jdouble, jdouble, jdouble, jdouble), x1, v1, x2, v2)
+end
+
+function cpo_java_numtonumsegmentfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (cp.numtonumsegmentfunction,), f)
+end
+
+function cpo_java_numtonumsegmentfunction_setperiodic(cp::JavaCPOModel, n2nsf, f, x0::Real, n::Real, dval::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodic", nothing, (cp.numtonumsegmentfunction, jdouble, jdouble, jdouble), f, x0, n, dval)
+end
+
+function cpo_java_numtonumsegmentfunction_setperiodicvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, f, offset)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodicValue", nothing, (jdouble, jdouble, cp.numtonumsegmentfunction, jdouble), x1, x2, f, offset)
+end
+
+# setPoints not done, because there is no access to IloNumArray in Java.
+
+function cpo_java_numtonumsegmentfunction_setslope(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real, slope::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setSlope", nothing, (jdouble, jdouble, jdouble, jdouble), x1, x2, v, slope)
+end
+
+function cpo_java_numtonumsegmentfunction_setvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setValue", nothing, (jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumsegmentfunction_shift(cp::JavaCPOModel, n2nsf, dx::Real, dval::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "shift", nothing, (jdouble, jdouble), dx, dval)
+end
+
+function cpo_java_numtonumsegmentfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "sub", nothing, (cp.numtonumsegmentfunction,), f)
+end
+
+# TODO: what about IloNumToNumSegmentFunctionCursor?
+
+## IloNumToNumStepFunction: functions
+
 function cpo_java_numtonumstepfunction(cp::JavaCPOModel)
     return jcall(cp.cp, "numToNumStepFunction", cp.numtonumstepfunction, ())
 end
+
+function cpo_java_numtonumstepfunction_add(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "add", nothing, (cp.numtonumstepfunction,), f)
+end
+
+function cpo_java_numtonumstepfunction_addvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "addValue", nothing, (jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumstepfunction_copy(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "copy", cp.numtonumstepfunction, ())
+end
+
+function cpo_java_numtonumstepfunction_dilate(cp::JavaCPOModel, n2nsf, k::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "dilate", nothing, (jdouble,), k)
+end
+
+function cpo_java_numtonumstepfunction_getarea(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getArea", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumstepfunction_getdefinitionintervalmax(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getDefinitionIntervalMax", jdouble, ())
+end
+
+function cpo_java_numtonumstepfunction_getdefinitionintervalmin(cp::JavaCPOModel, n2nsf)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getDefinitionIntervalMin", jdouble, ())
+end
+
+function cpo_java_numtonumstepfunction_getmax(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getMax", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumstepfunction_getmin(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getMin", jdouble, (jdouble, jdouble), x1, x2)
+end
+
+function cpo_java_numtonumstepfunction_getvalue(cp::JavaCPOModel, n2nsf, x::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "getValue", jdouble, (jdouble,), x)
+end
+
+function cpo_java_numtonumstepfunction_prod(cp::JavaCPOModel, n2nsf, k::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "prod", nothing, (jdouble,), k)
+end
+
+function cpo_java_numtonumstepfunction_setmax(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (jdouble, jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumstepfunction_setmax(cp::JavaCPOModel, n2nsf, x1::Real, v1::Real, x2::Real, v2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (jdouble, jdouble, jdouble, jdouble), x1, v1, x2, v2)
+end
+
+function cpo_java_numtonumstepfunction_setmax(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMax", nothing, (cp.numtonumstepfunction,), f)
+end
+
+function cpo_java_numtonumstepfunction_setmin(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (jdouble, jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumstepfunction_setmin(cp::JavaCPOModel, n2nsf, x1::Real, v1::Real, x2::Real, v2::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (jdouble, jdouble, jdouble, jdouble), x1, v1, x2, v2)
+end
+
+function cpo_java_numtonumstepfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setMin", nothing, (cp.numtonumstepfunction,), f)
+end
+
+function cpo_java_numtonumstepfunction_setperiodic(cp::JavaCPOModel, n2nsf, f, x0::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodic", nothing, (cp.numtonumstepfunction, jdouble), f, x0)
+end
+
+function cpo_java_numtonumstepfunction_setperiodic(cp::JavaCPOModel, n2nsf, f, x0::Real, n::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodic", nothing, (cp.numtonumstepfunction, jdouble, jdouble), f, x0, n)
+end
+
+function cpo_java_numtonumstepfunction_setperiodicvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodicValue", nothing, (jdouble, jdouble, cp.numtonumstepfunction), x1, x2, f)
+end
+
+function cpo_java_numtonumstepfunction_setperiodicvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, f, offset)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setPeriodicValue", nothing, (jdouble, jdouble, cp.numtonumstepfunction, jdouble), x1, x2, f, offset)
+end
+
+# setSteps not done, because there is no access to IloNumArray in Java.
+
+function cpo_java_numtonumstepfunction_setvalue(cp::JavaCPOModel, n2nsf, x1::Real, x2::Real, v::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "setValue", nothing, (jdouble, jdouble, jdouble), x1, x2, v)
+end
+
+function cpo_java_numtonumstepfunction_shift(cp::JavaCPOModel, n2nsf, dx::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "shift", nothing, (jdouble, jdouble), dx)
+end
+
+function cpo_java_numtonumstepfunction_shift(cp::JavaCPOModel, n2nsf, dx::Real, dval::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "shift", nothing, (jdouble, jdouble), dx, dval)
+end
+
+function cpo_java_numtonumstepfunction_setmin(cp::JavaCPOModel, n2nsf, f)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(n2nsf, "sub", nothing, (cp.numtonumstepfunction,), f)
+end
+
+# TODO: what about IloNumToNumStepFunctionCursor?
 
 ## TODO: IloStateFunction: functions
 
