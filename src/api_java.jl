@@ -111,11 +111,11 @@ end
 ## Variable creation
 
 # Integer variables
-function cpo_java_intvar_bounded(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Integer}
+function cpo_java_intvar(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Integer}
     return jcall(cp.cp, "intVar", cp.intvar, (jint, jint, JString), lb, ub, name)
 end
 
-function cpo_java_intvar_discrete(cp::JavaCPOModel, values::Vector{T}, name::String="") where {T <: Integer}
+function cpo_java_intvar(cp::JavaCPOModel, values::Vector{T}, name::String="") where {T <: Integer}
     if length(name) == 0
         return jcall(cp.cp, "intVar", cp.intvar, (Vector{jint},), values)
     else
@@ -123,11 +123,11 @@ function cpo_java_intvar_discrete(cp::JavaCPOModel, values::Vector{T}, name::Str
     end
 end
 
-function cpo_java_intvararray_bounded(cp::JavaCPOModel, n::T, lb::T, ub::T, name::String="") where {T <: Integer}
+function cpo_java_intvararray(cp::JavaCPOModel, n::T, lb::T, ub::T, name::String="") where {T <: Integer}
     return jcall(cp.cp, "intVarArray", cp.intvararray, (jint, jint, jint, JString), n, lb, ub, name)
 end
 
-function cpo_java_intvararray_discrete(cp::JavaCPOModel, n::T, values::Vector{T}, name::String="") where {T <: Integer}
+function cpo_java_intvararray(cp::JavaCPOModel, n::T, values::Vector{T}, name::String="") where {T <: Integer}
     return jcall(cp.cp, "intVarArray", cp.intvararray, (jint, Vector{jint}, JString), n, values, name)
 end
 
@@ -149,7 +149,7 @@ function cpo_java_intervalvar(cp::JavaCPOModel, name::String="")
     end
 end
 
-function cpo_java_intervalvar_fixedsize(cp::JavaCPOModel, size::Integer, name::String="")
+function cpo_java_intervalvar(cp::JavaCPOModel, size::Integer, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "intervalVar", cp.intervalvar, (jint,), size)
     else
@@ -157,7 +157,7 @@ function cpo_java_intervalvar_fixedsize(cp::JavaCPOModel, size::Integer, name::S
     end
 end
 
-function cpo_java_intervalvar_boundedsize(cp::JavaCPOModel, size_lb::Integer, size_ub::Integer)
+function cpo_java_intervalvar(cp::JavaCPOModel, size_lb::Integer, size_ub::Integer)
     return jcall(cp.cp, "intervalVar", cp.intervalvar, (jint, jint), size_lb, size_ub)
 end
 
@@ -173,7 +173,7 @@ function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, name::
     end
 end
 
-function cpo_java_intervalsequencevar_int(cp::JavaCPOModel, intervalvararray, types::Vector{<:Integer}, name::String="")
+function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray, types::Vector{<:Integer}, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "intervalSequenceVar", cp.intervalsequencevar, (cp.intervalvararray, Vector{jint}), intervalvararray, types)
     else
@@ -183,23 +183,23 @@ end
 
 ## Expression creation
 
-function cpo_java_constant_int(cp::JavaCPOModel, value::Integer)
+function cpo_java_constant(cp::JavaCPOModel, value::Integer)
     return jcall(cp.cp, "constant", cp.intexpr, (jint,), value)
 end
 
-function cpo_java_constant_num(cp::JavaCPOModel, value::Real)
+function cpo_java_constant(cp::JavaCPOModel, value::Real)
     return jcall(cp.cp, "constant", cp.numexpr, (jdouble,), value)
 end
 
-function cpo_java_div_expr_expr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_div(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "div", cp.intexpr, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_div_int_expr(cp::JavaCPOModel, int_a::Integer, expr_b)
+function cpo_java_div(cp::JavaCPOModel, int_a::Integer, expr_b)
     return jcall(cp.cp, "div", cp.intexpr, (jint, cp.intexpr), int_a, expr_b)
 end
 
-function cpo_java_div_expr_int(cp::JavaCPOModel, expr_a, int_b::Integer)
+function cpo_java_div(cp::JavaCPOModel, expr_a, int_b::Integer)
     return jcall(cp.cp, "div", cp.intexpr, (cp.intexpr, jint), expr_a, int_b)
 end
 
@@ -216,15 +216,15 @@ function cpo_java_countdifferent(cp::JavaCPOModel, exprs)
     return jcall(cp.cp, "countDifferent", cp.intexpr, (cp.intexprarray,), exprs,)
 end
 
-function cpo_java_element_int(cp::JavaCPOModel, values::Vector{<:Integer}, expr_index)
+function cpo_java_element(cp::JavaCPOModel, values::Vector{<:Integer}, expr_index)
     return jcall(cp.cp, "element", cp.intexpr, (Vector{jint}, cp.intexpr), values, expr_index)
 end
 
-function cpo_java_element_intexpr(cp::JavaCPOModel, exprs::Vector, expr_index)
+function cpo_java_element(cp::JavaCPOModel, exprs::Vector, expr_index)
     return jcall(cp.cp, "element", cp.intexpr, (cp.intexprarray, cp.intexpr), exprs, expr_index)
 end
 
-function cpo_java_element_num(cp::JavaCPOModel, values::Vector{<:Real}, expr_index)
+function cpo_java_element(cp::JavaCPOModel, values::Vector{<:Real}, expr_index)
     return jcall(cp.cp, "element", cp.intexpr, (Vector{jdouble}, cp.intexpr), values, expr_index)
 end
 
@@ -234,7 +234,7 @@ function cpo_java_endof(cp::JavaCPOModel, var)
     return jcall(cp.cp, "endOf", cp.intexpr, (cp.intervalvar,), var)
 end
 
-function cpo_java_endof_int(cp::JavaCPOModel, var, absval)
+function cpo_java_endof(cp::JavaCPOModel, var, absval)
     return jcall(cp.cp, "endOf", cp.intexpr, (cp.intervalvar, jint), var, absval::Integer)
 end
 
@@ -272,23 +272,23 @@ function cpo_java_lengthof(cp::JavaCPOModel, var)
     return jcall(cp.cp, "lengthOf", cp.intexpr, (cp.intervalvar,), var)
 end
 
-function cpo_java_lengthof_int(cp::JavaCPOModel, var, absval)
+function cpo_java_lengthof(cp::JavaCPOModel, var, absval::Integer)
     return jcall(cp.cp, "lengthOf", cp.intexpr, (cp.intervalvar, jint), var, absval)
 end
 
-function cpo_java_lengthofnext(cp::JavaCPOModel, sequence, var, lastval)
+function cpo_java_lengthofnext(cp::JavaCPOModel, sequence, var, lastval::Integer)
     return jcall(cp.cp, "lengthOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), sequence, var, lastval)
 end
 
-function cpo_java_lengthofnext_int(cp::JavaCPOModel, sequence, var, lastval, absval)
+function cpo_java_lengthofnext(cp::JavaCPOModel, sequence, var, lastval::Integer, absval::Integer)
     return jcall(cp.cp, "lengthOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), sequence, var, lastval, absval)
 end
 
-function cpo_java_lengthofprevious(cp::JavaCPOModel, sequence, var, firstval)
+function cpo_java_lengthofprevious(cp::JavaCPOModel, sequence, var, firstval::Integer)
     return jcall(cp.cp, "lengthOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), sequence, var, lastval)
 end
 
-function cpo_java_lengthofprevious_int(cp::JavaCPOModel, sequence, var, firstval, absval)
+function cpo_java_lengthofprevious(cp::JavaCPOModel, sequence, var, firstval::Integer, absval::Integer)
     return jcall(cp.cp, "lengthOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jint), sequence, var, lastval, absval)
 end
 
@@ -296,7 +296,7 @@ function cpo_java_log(cp::JavaCPOModel, expr)
     return jcall(cp.cp, "log", cp.numexpr, (cp.numexpr,), expr)
 end
 
-function cpo_java_max_int(cp::JavaCPOModel, exprs)
+function cpo_java_max_int(cp::JavaCPOModel, exprs) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
     return jcall(cp.cp, "max", cp.intexpr, (cp.intexprarray,), exprs)
 end
 
@@ -304,7 +304,7 @@ function cpo_java_max_num(cp::JavaCPOModel, exprs)
     return jcall(cp.cp, "max", cp.numexpr, (cp.numexprarray,), exprs)
 end
 
-function cpo_java_min_int(cp::JavaCPOModel, exprs)
+function cpo_java_min_int(cp::JavaCPOModel, exprs) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
     return jcall(cp.cp, "min", cp.intexpr, (cp.intexprarray,), exprs)
 end
 
@@ -332,23 +332,23 @@ function cpo_java_overlaplength(cp::JavaCPOModel, var_a, var_b, absval::Integer)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, cp.intervalvar, jint), var_a, var_b, absval)
 end
 
-function cpo_java_overlaplength_int(cp::JavaCPOModel, var, start::Integer, end_::Integer)
+function cpo_java_overlaplength(cp::JavaCPOModel, var, start::Integer, end_::Integer)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, jint, jint), var, start, end_)
 end
 
-function cpo_java_overlaplength_int(cp::JavaCPOModel, var, start::Integer, end_::Integer, absval::Integer)
+function cpo_java_overlaplength(cp::JavaCPOModel, var, start::Integer, end_::Integer, absval::Integer)
     return jcall(cp.cp, "overlapLength", cp.intexpr, (cp.intervalvar, jint, jint, jint), var, start, end_, absval)
 end
 
-function cpo_java_piecewiselinear_slope(cp::JavaCPOModel, var, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real)
+function cpo_java_piecewiselinear(cp::JavaCPOModel, var, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real)
     return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), var, point, slope, a, fa)
 end
 
-function cpo_java_piecewiselinear_value(cp::JavaCPOModel, var, firstslope::Real, point::Vector{<: Real}, value::Vector{<: Real}, lastslope::Real)
+function cpo_java_piecewiselinear(cp::JavaCPOModel, var, firstslope::Real, point::Vector{<: Real}, value::Vector{<: Real}, lastslope::Real)
     return jcall(cp.cp, "piecewiseLinear", cp.numexpr, (cp.numexpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
 end
 
-function cpo_java_piecewiselinearfunction_slope(cp::JavaCPOModel, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real, name::String="")
+function cpo_java_piecewiselinearfunction(cp::JavaCPOModel, point::Vector{<: Real}, slope::Vector{<: Real}, a::Real, fa::Real, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "piecewiseLinearFunction", cp.numtonumsegmentfunction, (Vector{jdouble}, Vector{jdouble}, jdouble, jdouble), point, slope, a, fa)
     else
@@ -356,27 +356,27 @@ function cpo_java_piecewiselinearfunction_slope(cp::JavaCPOModel, point::Vector{
     end
 end
 
-function cpo_java_power_double_numexpr(cp::JavaCPOModel, expr_a::Real, expr_b)
+function cpo_java_power(cp::JavaCPOModel, expr_a::Real, expr_b)
     return jcall(cp.cp, "power", cp.numexpr, (jdouble, cp.numexpr), expr_a, expr_b)
 end
 
-function cpo_java_power_numexpr_double(cp::JavaCPOModel, expr_a, expr_b::Real)
+function cpo_java_power(cp::JavaCPOModel, expr_a, expr_b::Real)
     return jcall(cp.cp, "power", cp.numexpr, (cp.numexpr, jdouble), expr_a, expr_b)
 end
 
-function cpo_java_power_numexpr_numexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_power(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "power", cp.numexpr, (cp.numexpr, cp.numexpr), expr_a, expr_b)
 end
 
-function cpo_java_prod_int_intexpr(cp::JavaCPOModel, values::Vector{<: Integer}, exprs)
+function cpo_java_prod(cp::JavaCPOModel, values::Vector{<: Integer}, exprs)
     return jcall(cp.cp, "prod", cp.intexpr, (Vector{jint}, cp.intexprarray), values, exprs)
 end
 
-function cpo_java_prod_intexpr_int(cp::JavaCPOModel, exprs, values::Vector{<: Integer})
+function cpo_java_prod(cp::JavaCPOModel, exprs, values::Vector{<: Integer})
     return jcall(cp.cp, "prod", cp.intexpr, (cp.intexprarray, Vector{jint}), exprs, values)
 end
 
-function cpo_java_prod_intexpr_intexpr(cp::JavaCPOModel, exprs_a, exprs_b)
+function cpo_java_prod(cp::JavaCPOModel, exprs_a, exprs_b)
     return jcall(cp.cp, "prod", cp.intexpr, (cp.intexprarray, cp.intexprarray), exprs_a, exprs_b)
 end
 
@@ -384,11 +384,11 @@ function cpo_java_pulse(cp::JavaCPOModel, var, v::Integer)
     return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (cp.intervalvar, jint), var, v)
 end
 
-function cpo_java_pulse_minmax(cp::JavaCPOModel, var, vmin::Integer, vmax::Integer)
+function cpo_java_pulse(cp::JavaCPOModel, var, vmin::Integer, vmax::Integer)
     return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), var, vmin, vmax)
 end
 
-function cpo_java_pulse_startend(cp::JavaCPOModel, start::Integer, end_::Integer, v::Integer)
+function cpo_java_pulse(cp::JavaCPOModel, start::Integer, end_::Integer, v::Integer)
     return jcall(cp.cp, "pulse", cp.cumulfunctionexpr, (jint, jint, jint), start, end_, v)
 end
 
@@ -408,7 +408,7 @@ function cpo_java_sizeeval(cp::JavaCPOModel, a, f)
     return jcall(cp.cp, "sizeEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction), a, f)
 end
 
-function cpo_java_sizeeval_abs(cp::JavaCPOModel, a, f, absval::Real)
+function cpo_java_sizeeval(cp::JavaCPOModel, a, f, absval::Real)
     return jcall(cp.cp, "sizeEval", cp.numexpr, (cp.intervalvar, cp.numtonumsegmentfunction, jdouble), a, f, absval)
 end
 
@@ -416,7 +416,7 @@ function cpo_java_sizeof(cp::JavaCPOModel, a)
     return jcall(cp.cp, "sizeOf", cp.numexpr, (cp.intervalvar,), a)
 end
 
-function cpo_java_sizeof_abs(cp::JavaCPOModel, a, absval::Real)
+function cpo_java_sizeof(cp::JavaCPOModel, a, absval::Real)
     return jcall(cp.cp, "sizeOf", cp.numexpr, (cp.intervalvar, jdouble), a, absval)
 end
 
@@ -424,7 +424,7 @@ function cpo_java_sizeofnext(cp::JavaCPOModel, seq, a, lastval::Integer)
     return jcall(cp.cp, "sizeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, lastval)
 end
 
-function cpo_java_sizeofnext_abs(cp::JavaCPOModel, seq, a, lastval::Integer, absval::Real)
+function cpo_java_sizeofnext(cp::JavaCPOModel, seq, a, lastval::Integer, absval::Real)
     return jcall(cp.cp, "sizeOfNext", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, lastval, absval)
 end
 
@@ -432,7 +432,7 @@ function cpo_java_sizeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer)
     return jcall(cp.cp, "sizeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint), seq, a, firstval)
 end
 
-function cpo_java_sizeofprevious_abs(cp::JavaCPOModel, seq, a, firstval::Integer, absval::Real)
+function cpo_java_sizeofprevious(cp::JavaCPOModel, seq, a, firstval::Integer, absval::Real)
     return jcall(cp.cp, "sizeOfPrevious", cp.intexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, firstval, absval)
 end
 
@@ -440,7 +440,7 @@ function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::Vector)
     return jcall(cp.cp, "standardDeviation", cp.numexpr, (cp.intexprarray,), exprs)
 end
 
-function cpo_java_standarddeviation_bounded(cp::JavaCPOModel, exprs::Vector, mean_lb::Real, mean_ub::Real)
+function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::Vector, mean_lb::Real, mean_ub::Real)
     return jcall(cp.cp, "standardDeviation", cp.numexpr, (cp.intexprarray, jdouble, jdouble), exprs, mean_lb, mean_ub)
 end
 
@@ -476,7 +476,7 @@ function cpo_java_startofprevious(cp::JavaCPOModel, seq, a, firstval, absval::Re
     return jcall(cp.cp, "startOfPrevious", cp.numexpr, (cp.intervalsequencevar, cp.intervalvar, jint, jdouble), seq, a, firstval, absval)
 end
 
-function cpo_java_sum_int(cp::JavaCPOModel, exprs)
+function cpo_java_sum_int(cp::JavaCPOModel, exprs) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
     return jcall(cp.cp, "sum", cp.intexpr, (cp.intexprarray,), exprs)
 end
 
@@ -542,7 +542,7 @@ function cpo_java_stepatend(cp::JavaCPOModel, a, v::Integer)
     return jcall(cp.cp, "stepAtEnd", cp.cumulfunctionexpr, (cp.intervalvar, jint), a, v)
 end
 
-function cpo_java_stepatend_minmax(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
+function cpo_java_stepatend(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
     return jcall(cp.cp, "stepAtEnd", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), a, vmin, vmax)
 end
 
@@ -550,11 +550,11 @@ function cpo_java_stepatstart(cp::JavaCPOModel, a, v::Integer)
     return jcall(cp.cp, "stepAtStart", cp.cumulfunctionexpr, (cp.intervalvar, jint), a, v)
 end
 
-function cpo_java_stepatstart_minmax(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
+function cpo_java_stepatstart(cp::JavaCPOModel, a, vmin::Integer, vmax::Integer)
     return jcall(cp.cp, "stepAtStart", cp.cumulfunctionexpr, (cp.intervalvar, jint, jint), a, vmin, vmax)
 end
 
-function cpo_java_sum_cumulfunctionexpr(cp::JavaCPOModel, f1, f2)
+function cpo_java_sum_cumulfunctionexpr(cp::JavaCPOModel, f1, f2) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num vs. cumul).
     return jcall(cp.cp, "sum", cp.cumulfunctionexpr, (cp.cumulfunctionexpr, cumulfunctionexpr), f1, f2)
 end
 
@@ -586,7 +586,7 @@ function cpo_java_allmindistance(cp::JavaCPOModel, vars)
     return jcall(cp.cp, "allMinDistance", cp.constraint, (cp.intvararray,), vars)
 end
 
-function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer})
+function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
     return jcall(cp.cp, "allowedAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
@@ -603,7 +603,7 @@ function cpo_java_alternative(cp::JavaCPOModel, interval_a, intervals_b::Vector,
     end
 end
 
-function cpo_java_alternative_int(cp::JavaCPOModel, interval_a, intervals_b::Vector, value, name::String="")
+function cpo_java_alternative(cp::JavaCPOModel, interval_a, intervals_b::Vector, value::Int, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "alternative", cp.constraint, (cp.intervalvar, cp.intervalvararray, jint), interval_a, intervals_b, value)
     else
@@ -611,7 +611,7 @@ function cpo_java_alternative_int(cp::JavaCPOModel, interval_a, intervals_b::Vec
     end
 end
 
-function cpo_java_alternative_expr(cp::JavaCPOModel, interval_a, intervals_b::Vector, expr, name::String="")
+function cpo_java_alternative(cp::JavaCPOModel, interval_a, intervals_b::Vector, expr, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "alternative", cp.constraint, (cp.intervalvar, cp.intervalvararray, cp.intexpr), interval_a, intervals_b, expr)
     else
@@ -631,11 +631,11 @@ function cpo_java_distribute(cp::JavaCPOModel, exprs_cards, exprs_vars)
     return jcall(cp.cp, "distribute", cp.constraint, (cp.intexprarray, cp.intexprarray), exprs_cards, exprs_vars)
 end
 
-function cpo_java_distribute_int(cp::JavaCPOModel, exprs_cards, values::Vector{<:Integer}, exprs_vars)
+function cpo_java_distribute(cp::JavaCPOModel, exprs_cards, values::Vector{<:Integer}, exprs_vars)
     return jcall(cp.cp, "distribute", cp.constraint, (cp.intexprarray, Vector{jint}, cp.intexprarray), exprs_cards, values, exprs_vars)
 end
 
-function cpo_java_element_int(cp::JavaCPOModel, expr_var, expr_index, values::Vector{<:Integer})
+function cpo_java_element_int(cp::JavaCPOModel, expr_var, expr_index, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
     return jcall(cp.cp, "element", cp.constraint, (cp.intexpr, cp.intexpr, Vector{jint}), expr_var, expr_index, values)
 end
 
@@ -647,11 +647,11 @@ function cpo_java_endatend(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "endAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), expr_a, expr_b)
 end
 
-function cpo_java_endatend_int(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endatend(cp::JavaCPOModel, expr_a, expr_b, expr_z::Integer)
     return jcall(cp.cp, "endAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_endatend_intexpr(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endatend(cp::JavaCPOModel, expr_a, expr_b, expr_z)
     return jcall(cp.cp, "endAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), expr_a, expr_b, expr_z)
 end
 
@@ -659,11 +659,11 @@ function cpo_java_endatstart(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "endAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar), expr_a, expr_b)
 end
 
-function cpo_java_endatstart_int(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endatstart(cp::JavaCPOModel, expr_a, expr_b, expr_z::Integer)
     return jcall(cp.cp, "endAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_endatstart_intexpr(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endatstart(cp::JavaCPOModel, expr_a, expr_b, expr_z)
     return jcall(cp.cp, "endAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), expr_a, expr_b, expr_z)
 end
 
@@ -671,11 +671,11 @@ function cpo_java_endbeforeend(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "endBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), expr_a, expr_b)
 end
 
-function cpo_java_endbeforeend_int(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endbeforeend(cp::JavaCPOModel, expr_a, expr_b, expr_z::Integer)
     return jcall(cp.cp, "endBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_endbeforeend_intexpr(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endbeforeend(cp::JavaCPOModel, expr_a, expr_b, expr_z)
     return jcall(cp.cp, "endBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), expr_a, expr_b, expr_z)
 end
 
@@ -683,23 +683,23 @@ function cpo_java_endbeforestart(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "endBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar), expr_a, expr_b)
 end
 
-function cpo_java_endbeforestart_int(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endbeforestart(cp::JavaCPOModel, expr_a, expr_b, expr_z::Integer)
     return jcall(cp.cp, "endBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_endbeforestart_intexpr(cp::JavaCPOModel, expr_a, expr_b, expr_z)
+function cpo_java_endbeforestart(cp::JavaCPOModel, expr_a, expr_b, expr_z)
     return jcall(cp.cp, "endBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_eq_intexpr_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_eq(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "eq", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_eq_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "eq", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_eq_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_eq(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "eq", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
@@ -715,7 +715,7 @@ function cpo_java_first(cp::JavaCPOModel, seq, var)
     return jcall(cp.cp, "first", cp.constraint, (cp.intervalsequencevar, cp.interval), seq, var)
 end
 
-function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer})
+function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, expr, values::Vector{<:Integer}) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
     return jcall(cp.cp, "forbiddenAssignments", cp.constraint, (cp.intvararray, Vector{jint}), vars, values)
 end
 
@@ -730,27 +730,27 @@ end
 # TODO: forbidStart
 # TODO: ge (4 times)
 
-function cpo_java_ge_intexpr_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_ge(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "ge", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_ge_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_ge(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "ge", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_ge_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_ge(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "ge", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_gt_intexpr_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_gt(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "gt", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_gt_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_gt(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "gt", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_gt_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_gt(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "gt", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
@@ -774,7 +774,7 @@ function cpo_java_isomorphism(cp::JavaCPOModel, vars_a, vars_b, name::String="")
     end
 end
 
-function cpo_java_isomorphism_map(cp::JavaCPOModel, vars_a, vars_b, map, absval, name::String="")
+function cpo_java_isomorphism(cp::JavaCPOModel, vars_a, vars_b, map, absval::Integer, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "isomorphism", cp.isomorphism, (cp.intervalvararray, cp.intervalvararray, cp.intaxprarray, jint), vars_a, vars_b, map, absval)
     else
@@ -786,15 +786,15 @@ function cpo_java_last(cp::JavaCPOModel, intervalseq, interval)
     return jcall(cp.cp, "last", cp.constraint, (cp.intervalsequencevar, cp.intervalvar), intervalseq, interval)
 end
 
-function cpo_java_le_intexpr_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_le(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "le", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_le_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_le(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "le", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_le_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_le(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "le", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
@@ -802,15 +802,15 @@ function cpo_java_lexicographic(cp::JavaCPOModel, exprs_a, exprs_b)
     return jcall(cp.cp, "lexicographic", cp.constraint, (cp.intexprarray, cp.intexprarray), exprs_a, exprs_b)
 end
 
-function cpo_java_lt_intexpr_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_lt(cp::JavaCPOModel, expr_a, expr_b)
     return jcall(cp.cp, "lt", cp.constraint, (cp.intexpr, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_lt_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_lt(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "lt", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_lt_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_lt(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "lt", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
@@ -818,25 +818,27 @@ function cpo_java_neq(cp::JavaCPOModel, constr_a, constr_b)
     return jcall(cp.cp, "neq", cp.constraint, (cp.constraint, cp.constraint), constr_a, constr_b)
 end
 
-function cpo_java_neq_int_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_neq(cp::JavaCPOModel, expr_a::Integer, expr_b)
     return jcall(cp.cp, "neq", cp.constraint, (jint, cp.intexpr), expr_a, expr_b)
 end
 
-function cpo_java_neq_intexpr_int(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_neq(cp::JavaCPOModel, expr_a, expr_b::Integer)
     return jcall(cp.cp, "neq", cp.constraint, (cp.intexpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_nooverlap(cp::JavaCPOModel, seq)
+function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq) # TODO: cannot use Julia method dispatch due to missing type for variables.
     return jcall(cp.cp, "noOverlap", cp.nooverlap, (cp.intervalsequencevar,), seq)
 end
 
-function cpo_java_nooverlap(cp::JavaCPOModel, vars, name::String="")
+function cpo_java_nooverlap_vars(cp::JavaCPOModel, vars, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "noOverlap", cp.nooverlap, (cp.intervalvararray,), vars)
     else
         return jcall(cp.cp, "noOverlap", cp.nooverlap, (cp.intervalvararray, JString), vars, name)
     end
 end
+
+# TODO: IloTransitionDistance and missing noOverlap
 
 function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{<:Integer})
     return jcall(cp.cp, "pack", cp.constraint, (cp.intexprarray, cp.intexprarray, Vector{jint}), expr_load, expr_where, weight)
@@ -846,21 +848,19 @@ function cpo_java_pack(cp::JavaCPOModel, expr_load, expr_where, weight::Vector{<
     return jcall(cp.cp, "pack", cp.constraint, (cp.intexprarray, cp.intexprarray, Vector{jint}, cp.intexpr), expr_load, expr_where, weight, used)
 end
 
-function cpo_java_ispresent(cp::JavaCPOModel, var)
+function cpo_java_presenceof(cp::JavaCPOModel, var)
     return jcall(cp.cp, "presenceOf", cp.constraint, (cp.intervalvar,), var)
 end
 
-# TODO: IloTransitionDistance and missing noOverlap
-
 function cpo_java_previous(cp::JavaCPOModel, seq, prev, next)
-    return jcall(cp.cp, "presenceOf", cp.constraint, (cp.intervalsequencevar, cp.intervalvar, cp.intervalvar), seq, prev, next)
+    return jcall(cp.cp, "previous", cp.constraint, (cp.intervalsequencevar, cp.intervalvar, cp.intervalvar), seq, prev, next)
 end
 
 function cpo_java_range(cp::JavaCPOModel, expr, b::Real)
     return jcall(cp.cp, "range", cp.constraint, (cp.numexpr, jdouble), expr, b)
 end
 
-function cpo_java_samecommonsubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
+function cpo_java_samecommonsubsequence(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar), seq_1, seq_2)
     else
@@ -868,7 +868,7 @@ function cpo_java_samecommonsubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq
     end
 end
 
-function cpo_java_samecommonsubsequence_seq_interval(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
+function cpo_java_samecommonsubsequence(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "sameCommonSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray), seq_1, seq_2, a_1, a_2)
     else
@@ -876,7 +876,7 @@ function cpo_java_samecommonsubsequence_seq_interval(cp::JavaCPOModel, seq_1::Ve
     end
 end
 
-function cpo_java_samesubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
+function cpo_java_samesubsequence(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar), seq_1, seq_2)
     else
@@ -884,7 +884,7 @@ function cpo_java_samesubsequence_seq(cp::JavaCPOModel, seq_1::Vector, seq_2::Ve
     end
 end
 
-function cpo_java_samesubsequence_seq_interval(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
+function cpo_java_samesubsequence(cp::JavaCPOModel, seq_1::Vector, seq_2::Vector, a_1::Vector, a_2::Vector, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "sameSubsequence", cp.constraint, (cp.intervalsequencevar, cp.intervalsequencevar, cp.intervalvararray, cp.intervalvararray), seq_1, seq_2, a_1, a_2)
     else
@@ -908,11 +908,11 @@ function cpo_java_startatend(cp::JavaCPOModel, a, b)
     return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
 end
 
-function cpo_java_startatend_int(cp::JavaCPOModel, a, b, z::Integer)
+function cpo_java_startatend(cp::JavaCPOModel, a, b, z::Integer)
     return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
 end
 
-function cpo_java_startatend_intexpr(cp::JavaCPOModel, a, b, z)
+function cpo_java_startatend(cp::JavaCPOModel, a, b, z)
     return jcall(cp.cp, "startAtEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
 end
 
@@ -920,11 +920,11 @@ function cpo_java_startatstart(cp::JavaCPOModel, a, b)
     return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
 end
 
-function cpo_java_startatstart_int(cp::JavaCPOModel, a, b, z::Integer)
+function cpo_java_startatstart(cp::JavaCPOModel, a, b, z::Integer)
     return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
 end
 
-function cpo_java_startatstart_intexpr(cp::JavaCPOModel, a, b, z)
+function cpo_java_startatstart(cp::JavaCPOModel, a, b, z)
     return jcall(cp.cp, "startAtStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
 end
 
@@ -932,11 +932,11 @@ function cpo_java_startbeforeend(cp::JavaCPOModel, a, b)
     return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
 end
 
-function cpo_java_startbeforeend_int(cp::JavaCPOModel, a, b, z::Integer)
+function cpo_java_startbeforeend(cp::JavaCPOModel, a, b, z::Integer)
     return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
 end
 
-function cpo_java_startbeforeend_intexpr(cp::JavaCPOModel, a, b, z)
+function cpo_java_startbeforeend(cp::JavaCPOModel, a, b, z)
     return jcall(cp.cp, "startBeforeEnd", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
 end
 
@@ -944,11 +944,11 @@ function cpo_java_startbeforestart(cp::JavaCPOModel, a, b)
     return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar), a, b)
 end
 
-function cpo_java_startbeforestart_int(cp::JavaCPOModel, a, b, z::Integer)
+function cpo_java_startbeforestart(cp::JavaCPOModel, a, b, z::Integer)
     return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, jint), a, b, z)
 end
 
-function cpo_java_startbeforestart_intexpr(cp::JavaCPOModel, a, b, z)
+function cpo_java_startbeforestart(cp::JavaCPOModel, a, b, z)
     return jcall(cp.cp, "startBeforeStart", cp.constraint, (cp.intervalvar, cp.intervalvar, cp.intexpr), a, b, z)
 end
 
@@ -978,7 +978,7 @@ function cpo_java_maximize(cp::JavaCPOModel, expr)
     return jcall(cp.cp, "maximize", cp.objective, (cp.intexpr,), expr)
 end
 
-function cpo_java_maximize_multicriterion(cp::JavaCPOModel, expr)
+function cpo_java_maximize_multicriterion(cp::JavaCPOModel, expr) # TODO: cannot use Julia method dispatch due to missing type for expressions.
     return jcall(cp.cp, "maximize", cp.objective, (cp.multicriterionexpr,), expr)
 end
 
@@ -986,7 +986,7 @@ function cpo_java_minimize(cp::JavaCPOModel, expr)
     return jcall(cp.cp, "minimize", cp.objective, (cp.intexpr,), expr)
 end
 
-function cpo_java_minimize_multicriterion(cp::JavaCPOModel, expr)
+function cpo_java_minimize_multicriterion(cp::JavaCPOModel, expr) # TODO: cannot use Julia method dispatch due to missing type for expressions.
     return jcall(cp.cp, "minimize", cp.objective, (cp.multicriterionexpr,), expr)
 end
 
@@ -1122,7 +1122,7 @@ function cpo_java_getstartmin(cp::JavaCPOModel, var)
     return jcall(cp.cp, "getStartMin", jint, (cp.intervalvar,), var)
 end
 
-function cpo_java_getvalue_intexpr(cp::JavaCPOModel, expr)
+function cpo_java_getvalue_intexpr(cp::JavaCPOModel, expr) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables (int/num).
     return jcall(cp.cp, "getValue", jdouble, (cp.intexpr,), expr)
 end
 
@@ -1146,7 +1146,7 @@ function cpo_java_isabsent(cp::JavaCPOModel, var)
     return jcall(cp.cp, "isAbsent", jboolean, (cp.intervalvar), var)
 end
 
-function cpo_java_isfixed_intervalsequencevar(cp::JavaCPOModel, var)
+function cpo_java_isfixed_intervalsequencevar(cp::JavaCPOModel, var) # TODO: cannot use Julia method dispatch due to missing type for variables.
     return jcall(cp.cp, "isFixed", jboolean, (cp.intervalsequencevar), var)
 end
 
@@ -1182,11 +1182,11 @@ function cpo_java_refineconflict(cp::JavaCPOModel)
     return jcall(cp.cp, "refineConflict", jboolean, ())
 end
 
-function cpo_java_refineconflict_constraints(cp::JavaCPOModel, constrs)
+function cpo_java_refineconflict(cp::JavaCPOModel, constrs)
     return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray,), constrs)
 end
 
-function cpo_java_refineconflict_constraints_double(cp::JavaCPOModel, constrs, prefs::Vector{<:Real})
+function cpo_java_refineconflict(cp::JavaCPOModel, constrs, prefs::Vector{<:Real})
     return jcall(cp.cp, "refineConflict", jboolean, (cp.constraintarray, Vector{jdouble}), constrs, prefs)
 end
 
