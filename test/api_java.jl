@@ -66,6 +66,8 @@
     end
 
     @testset "Integration tests" begin
+        # Based on the provided examples, translated from Java.
+
         @testset "Color" begin
             model = cpo_java_model()
             belgium = cpo_java_intvar(model, 0, 3)
@@ -87,6 +89,23 @@
 
             status = cpo_java_solve(model)
             @test status
+
+            @test cpo_java_getvalue_intvar(model, belgium) == cpo_java_getvalue_intexpr(model, belgium)
+            @test cpo_java_getvalue_intvar(model, denmark) == cpo_java_getvalue_intexpr(model, denmark)
+            @test cpo_java_getvalue_intvar(model, france) == cpo_java_getvalue_intexpr(model, france)
+            @test cpo_java_getvalue_intvar(model, germany) == cpo_java_getvalue_intexpr(model, germany)
+            @test cpo_java_getvalue_intvar(model, luxembourg) == cpo_java_getvalue_intexpr(model, luxembourg)
+            @test cpo_java_getvalue_intvar(model, netherlands) == cpo_java_getvalue_intexpr(model, netherlands)
+
+            @test cpo_java_getvalue_intvar(model, belgium) != cpo_java_getvalue_intvar(model, france)
+            @test cpo_java_getvalue_intvar(model, belgium) != cpo_java_getvalue_intvar(model, germany)
+            @test cpo_java_getvalue_intvar(model, belgium) != cpo_java_getvalue_intvar(model, netherlands)
+            @test cpo_java_getvalue_intvar(model, belgium) != cpo_java_getvalue_intvar(model, luxembourg)
+            @test cpo_java_getvalue_intvar(model, denmark) != cpo_java_getvalue_intvar(model, germany)
+            @test cpo_java_getvalue_intvar(model, france) != cpo_java_getvalue_intvar(model, germany)
+            @test cpo_java_getvalue_intvar(model, france) != cpo_java_getvalue_intvar(model, luxembourg)
+            @test cpo_java_getvalue_intvar(model, germany) != cpo_java_getvalue_intvar(model, luxembourg)
+            @test cpo_java_getvalue_intvar(model, germany) != cpo_java_getvalue_intvar(model, netherlands)
         end
     end
 end
