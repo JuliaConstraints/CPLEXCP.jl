@@ -35,6 +35,19 @@ const IloAddable = JavaObject{Symbol("ilog.concert.IloAddable")}
 const Callback = JavaObject{Symbol("ilog.cp.IloCP\$Callback")}
 const ConflictStatus = JavaObject{Symbol("ilog.concert.IloCP\$ConflictStatus")}
 
+# Unions of types to model Java type hierarchy.
+const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize}
+const IntExpr = Union{IloIntVar, IloIntExpr, Constraint}
+const NumVar = Union{IloIntVar, IloNumVar}
+const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr}
+const Addable = Constraint
+
+const ConstraintArray = Union{Vector{Constraint}, Vector{T} where {T <: Constraint}}
+const IntExprArray = Union{Vector{IntExpr}, Vector{T} where {T <: IntExpr}}
+const NumVarArray = Union{Vector{NumVar}, Vector{T} where {T <: NumVar}}
+const NumExprArray = Union{Vector{NumExpr}, Vector{T} where {T <: NumExpr}}
+const AddableArray = Union{Vector{Addable}, Vector{T} where {T <: Addable}}
+
 ## TODO: missing methods from IloModeler?
 
 """
@@ -151,7 +164,7 @@ end
 
 ## Expression creation
 
-function cpo_java_abs(cp::JavaCPOModel, var)
+function cpo_java_abs(cp::JavaCPOModel, var::IntExpr)
     return jcall(cp.cp, "abs", IloIntExpr, (IloIntExpr,), var)
 end
 
@@ -163,35 +176,35 @@ function cpo_java_constant(cp::JavaCPOModel, value::Real)
     return jcall(cp.cp, "constant", IloNumExpr, (jdouble,), value)
 end
 
-function cpo_java_count(cp::JavaCPOModel, exprs::Vector, value::Integer)
+function cpo_java_count(cp::JavaCPOModel, exprs::IntExprArray, value::Integer)
     return jcall(cp.cp, "count", IloIntExpr, (Vector{IloIntExpr}, jint), exprs, value)
 end
 
-function cpo_java_countdifferent(cp::JavaCPOModel, exprs::Vector)
+function cpo_java_countdifferent(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "countDifferent", IloIntExpr, (Vector{IloIntExpr},), exprs,)
 end
 
-function cpo_java_div(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_div(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "div", IloIntExpr, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_div(cp::JavaCPOModel, int_a::Integer, expr_b)
+function cpo_java_div(cp::JavaCPOModel, int_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "div", IloIntExpr, (jint, IloIntExpr), int_a, expr_b)
 end
 
-function cpo_java_div(cp::JavaCPOModel, expr_a, int_b::Integer)
+function cpo_java_div(cp::JavaCPOModel, expr_a::IntExpr, int_b::Integer)
     return jcall(cp.cp, "div", IloIntExpr, (IloIntExpr, jint), expr_a, int_b)
 end
 
-function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index) where {T <: Integer}
+function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index::IntExpr) where {T <: Integer}
     return jcall(cp.cp, "element", IloIntExpr, (Vector{jint}, IloIntExpr), values, expr_index)
 end
 
-function cpo_java_element(cp::JavaCPOModel, exprs::Vector, expr_index)
+function cpo_java_element(cp::JavaCPOModel, exprs::IntExprArray, expr_index::IntExpr)
     return jcall(cp.cp, "element", IloIntExpr, (Vector{IloIntExpr}, IloIntExpr), exprs, expr_index)
 end
 
-function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index) where {T <: Real}
+function cpo_java_element(cp::JavaCPOModel, values::Vector{T}, expr_index::IntExpr) where {T <: Real}
     return jcall(cp.cp, "element", IloIntExpr, (Vector{jdouble}, IloIntExpr), values, expr_index)
 end
 
@@ -227,7 +240,7 @@ function cpo_java_enfofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVa
     return jcall(cp.cp, "endOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jint), var_seq, var_interval, firstval, absval)
 end
 
-function cpo_java_exponent(cp::JavaCPOModel, expr)
+function cpo_java_exponent(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "exponent", IloNumExpr, (IloNumExpr,), expr)
 end
 
@@ -247,7 +260,7 @@ function cpo_java_heightatstart(cp::JavaCPOModel, a::IloIntervalVar, f::IloCumul
     return jcall(cp.cp, "heightAtStart", IloIntExpr, (IloIntervalVar, IloCumulFunctionExpr, jint), a, f, absval)
 end
 
-function cpo_java_intexpr(cp::JavaCPOModel, constr)
+function cpo_java_intexpr(cp::JavaCPOModel, constr::Constraint)
     return jcall(cp.cp, "intExpr", IloIntExpr, (IloConstraint,), constr)
 end
 
@@ -279,23 +292,23 @@ function cpo_java_lengthofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenc
     return jcall(cp.cp, "lengthOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jint), var_seq, var_interval, lastval, absval)
 end
 
-function cpo_java_log(cp::JavaCPOModel, expr)
+function cpo_java_log(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "log", IloNumExpr, (IloNumExpr,), expr)
 end
 
-function cpo_java_max_int(cp::JavaCPOModel, exprs::Vector) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
+function cpo_java_max(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "max", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_max_num(cp::JavaCPOModel, exprs::Vector)
+function cpo_java_max(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "max", IloNumExpr, (Vector{IloNumExpr},), exprs)
 end
 
-function cpo_java_min_int(cp::JavaCPOModel, exprs::Vector) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
+function cpo_java_min(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "min", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_min_num(cp::JavaCPOModel, exprs::Vector)
+function cpo_java_min(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "min", IloNumExpr, (Vector{IloNumExpr},), exprs)
 end
 
@@ -335,27 +348,27 @@ function cpo_java_piecewiselinear(cp::JavaCPOModel, var::IloIntervalVar, firstsl
     return jcall(cp.cp, "piecewiseLinear", IloNumExpr, (IloNumExpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
 end
 
-function cpo_java_power(cp::JavaCPOModel, expr_a::Real, expr_b)
+function cpo_java_power(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr)
     return jcall(cp.cp, "power", IloNumExpr, (jdouble, IloNumExpr), expr_a, expr_b)
 end
 
-function cpo_java_power(cp::JavaCPOModel, expr_a, expr_b::Real)
+function cpo_java_power(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
     return jcall(cp.cp, "power", IloNumExpr, (IloNumExpr, jdouble), expr_a, expr_b)
 end
 
-function cpo_java_power(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_power(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
     return jcall(cp.cp, "power", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
 end
 
-function cpo_java_prod(cp::JavaCPOModel, values::Vector{T}, exprs) where {T <: Integer}
+function cpo_java_prod(cp::JavaCPOModel, values::Vector{T}, exprs::IntExprArray) where {T <: Integer}
     return jcall(cp.cp, "prod", IloIntExpr, (Vector{jint}, Vector{IloIntExpr}), values, exprs)
 end
 
-function cpo_java_prod(cp::JavaCPOModel, exprs::Vector, values::Vector{T}) where {T <: Integer}
+function cpo_java_prod(cp::JavaCPOModel, exprs::IntExprArray, values::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "prod", IloIntExpr, (Vector{IloIntExpr}, Vector{jint}), exprs, values)
 end
 
-function cpo_java_prod(cp::JavaCPOModel, exprs_a::Vector, exprs_b::Vector)
+function cpo_java_prod(cp::JavaCPOModel, exprs_a::IntExprArray, exprs_b::IntExprArray)
     return jcall(cp.cp, "prod", IloIntExpr, (Vector{IloIntExpr}, Vector{IloIntExpr}), exprs_a, exprs_b)
 end
 
@@ -371,15 +384,15 @@ function cpo_java_pulse(cp::JavaCPOModel, start::Integer, end_::Integer, v::Inte
     return jcall(cp.cp, "pulse", IloCumulFunctionExpr, (jint, jint, jint), start, end_, v)
 end
 
-function cpo_java_quot(cp::JavaCPOModel, expr_a::Real, expr_b)
+function cpo_java_quot(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr)
     return jcall(cp.cp, "quot", IloNumExpr, (jdouble, IloNumExpr), expr_a, expr_b)
 end
 
-function cpo_java_quot(cp::JavaCPOModel, expr_a, expr_b::Real)
+function cpo_java_quot(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
     return jcall(cp.cp, "quot", IloNumExpr, (IloNumExpr, jdouble), expr_a, expr_b)
 end
 
-function cpo_java_quot(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_quot(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
     return jcall(cp.cp, "quot", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
 end
 
@@ -415,11 +428,11 @@ function cpo_java_sizeofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceV
     return jcall(cp.cp, "sizeOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jdouble), var_seq, var_interval, firstval, absval)
 end
 
-function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::Vector)
+function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "standardDeviation", IloNumExpr, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::Vector, mean_lb::Real, mean_ub::Real)
+function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::IntExprArray, mean_lb::Real, mean_ub::Real)
     return jcall(cp.cp, "standardDeviation", IloNumExpr, (Vector{IloIntExpr}, jdouble, jdouble), exprs, mean_lb, mean_ub)
 end
 
@@ -439,27 +452,27 @@ function cpo_java_startof(cp::JavaCPOModel, a::IloIntervalVar, absval::Real)
     return jcall(cp.cp, "startOf", IloNumExpr, (IloIntervalVar, jdouble), a, absval)
 end
 
-function cpo_java_startofnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, lastval)
+function cpo_java_startofnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, lastval::Integer)
     return jcall(cp.cp, "startOfNext", IloNumExpr, (IloIntervalSequenceVar, IloIntervalVar, jint), var_seq, var_interval, lastval)
 end
 
-function cpo_java_startofnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, lastval, absval::Real)
+function cpo_java_startofnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, lastval::Integer, absval::Real)
     return jcall(cp.cp, "startOfNext", IloNumExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jdouble), var_seq, var_interval, lastval, absval)
 end
 
-function cpo_java_startofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval)
+function cpo_java_startofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval::Integer)
     return jcall(cp.cp, "startOfPrevious", IloNumExpr, (IloIntervalSequenceVar, IloIntervalVar, jint), var_seq, var_interval, firstval)
 end
 
-function cpo_java_startofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval, absval::Real)
+function cpo_java_startofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval::Integer, absval::Real)
     return jcall(cp.cp, "startOfPrevious", IloNumExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jdouble), var_seq, var_interval, firstval, absval)
 end
 
-function cpo_java_sum_int(cp::JavaCPOModel, exprs) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
+function cpo_java_sum(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "sum", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_sum_num(cp::JavaCPOModel, exprs)
+function cpo_java_sum(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "sum", IloNumExpr, (Vector{IloNumExpr},), exprs)
 end
 
@@ -797,31 +810,31 @@ function cpo_java_cumulfunctionexpr(cp::JavaCPOModel, name::String="")
     end
 end
 
-function cpo_java_diff_int(cp::JavaCPOModel, e1::Integer, e2) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables (int/num).
+function cpo_java_diff(cp::JavaCPOModel, e1::Integer, e2::IntExpr)
     return jcall(cp.cp, "diff", IloIntExpr, (jint, IloIntExpr), f1, f2)
 end
 
-function cpo_java_diff_int(cp::JavaCPOModel, e1, e2::Integer)
+function cpo_java_diff(cp::JavaCPOModel, e1::IntExpr, e2::Integer)
     return jcall(cp.cp, "diff", IloIntExpr, (IloIntExpr, jint), e1, e2)
 end
 
-function cpo_java_diff_int(cp::JavaCPOModel, e1, e2)
+function cpo_java_diff(cp::JavaCPOModel, e1::IntExpr, e2::IntExpr)
     return jcall(cp.cp, "diff", IloIntExpr, (IloIntExpr, IloIntExpr), e1, e2)
 end
 
-function cpo_java_diff_num(cp::JavaCPOModel, e1::Real, e2)
+function cpo_java_diff(cp::JavaCPOModel, e1::Real, e2::NumExpr)
     return jcall(cp.cp, "diff", IloNumExpr, (jdouble, IloNumExpr), e1, e2)
 end
 
-function cpo_java_diff_num(cp::JavaCPOModel, e1, e2::Real)
+function cpo_java_diff(cp::JavaCPOModel, e1::NumExpr, e2::Real)
     return jcall(cp.cp, "diff", IloNumExpr, (jdouble, jdouble), e1, e2)
 end
 
-function cpo_java_diff_num(cp::JavaCPOModel, e1, e2)
+function cpo_java_diff(cp::JavaCPOModel, e1::NumExpr, e2::NumExpr)
     return jcall(cp.cp, "diff", IloNumExpr, (IloNumExpr, IloNumExpr), e1, e2)
 end
 
-function cpo_java_diff_cumulfunctionexpr(cp::JavaCPOModel, f1::IloCumulFunctionExpr, f2::IloCumulFunctionExpr)
+function cpo_java_diff(cp::JavaCPOModel, f1::IloCumulFunctionExpr, f2::IloCumulFunctionExpr)
     return jcall(cp.cp, "diff", IloCumulFunctionExpr, (IloCumulFunctionExpr, IloCumulFunctionExpr), f1, f2)
 end
 
@@ -841,7 +854,7 @@ function cpo_java_getsegmentvalue(cp::JavaCPOModel, f::IloCumulFunctionExpr, i::
     return jcall(cp.cp, "getSegmentValue", jint, (IloCumulFunctionExpr, jint), f, i)
 end
 
-function cpo_java_getvalue_cumulfunctionexpr(cp::JavaCPOModel, f::IloCumulFunctionExpr, i::Integer) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables (int/num).
+function cpo_java_getvalue(cp::JavaCPOModel, f::IloCumulFunctionExpr, i::Integer)
     return jcall(cp.cp, "getSegmentValue", jint, (IloCumulFunctionExpr, jint), f, i)
 end
 
@@ -865,7 +878,7 @@ function cpo_java_stepatstart(cp::JavaCPOModel, a::IloIntervalVar, vmin::Integer
     return jcall(cp.cp, "stepAtStart", IloCumulFunctionExpr, (IloIntervalVar, jint, jint), a, vmin, vmax)
 end
 
-function cpo_java_sum_cumulfunctionexpr(cp::JavaCPOModel, f1::IloIntervalVar, f2::IloIntervalVar) # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num vs. cumul).
+function cpo_java_sum(cp::JavaCPOModel, f1::IloIntervalVar, f2::IloIntervalVar)
     return jcall(cp.cp, "sum", IloCumulFunctionExpr, (IloCumulFunctionExpr, cumulfunctionexpr), f1, f2)
 end
 
@@ -904,23 +917,23 @@ end
 
 ## Constraint creation
 
-function cpo_java_add(cp::JavaCPOModel, addable)
+function cpo_java_add(cp::JavaCPOModel, addable::Addable)
     return jcall(cp.cp, "add", IloAddable, (IloAddable,), addable)
 end
 
-function cpo_java_alldiff(cp::JavaCPOModel, exprs::Vector)
+function cpo_java_alldiff(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "allDiff", IloConstraint, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_allmindistance(cp::JavaCPOModel, vars::Vector)
+function cpo_java_allmindistance(cp::JavaCPOModel, vars::Vector{IloIntVar})
     return jcall(cp.cp, "allMinDistance", IloConstraint, (Vector{IloIntVar},), vars)
 end
 
-function cpo_java_allowedassignments_expr(cp::JavaCPOModel, expr, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
-    return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntVar}, Vector{jint}), vars, values)
+function cpo_java_allowedassignments(cp::JavaCPOModel, expr::IntExprArray, values::Vector{T}) where {T <: Integer}
+    return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntExpr}, Vector{jint}), vars, values)
 end
 
-function cpo_java_allowedassignments_vars(cp::JavaCPOModel, vars::Vector, values::Vector)
+function cpo_java_allowedassignments(cp::JavaCPOModel, vars::Vector{IloIntVar}, values::Vector{IloIntTupleSet})
     return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntVar}, Vector{IloIntTupleSet}), vars, values)
 end
 
@@ -940,7 +953,7 @@ function cpo_java_alternative(cp::JavaCPOModel, interval_a::IloIntervalVar, inte
     end
 end
 
-function cpo_java_alternative(cp::JavaCPOModel, interval_a::IloIntervalVar, intervals_b::Vector{IloIntervalVar}, expr, name::String="")
+function cpo_java_alternative(cp::JavaCPOModel, interval_a::IloIntervalVar, intervals_b::Vector{IloIntervalVar}, expr::IntExpr, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "alternative", IloAlternative, (IloIntervalVar, Vector{IloIntervalVar}, IloIntExpr), interval_a, intervals_b, expr)
     else
@@ -964,43 +977,31 @@ function cpo_java_alwaysconstant(cp::JavaCPOModel, f::IloStateFunction, start::I
     return jcall(cp.cp, "alwaysConstant", IloConstraint, (IloStateFunction, jint, jint, jboolean, jboolean), f, start, end_, startalign, endalign)
 end
 
-function cpo_java_alwaysequal_cumul(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, v::Int) # TODO: cannot use Julia method dispatch due to missing type for expressions/functions.
-    return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloCumulFunctionExpr, IloIntervalVar, jint), f, a, v)
-end
-
-function cpo_java_alwaysequal_cumul(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, v::Int)
-    return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloCumulFunctionExpr, jint, jint, jint), f, start, end_, v)
-end
-
-function cpo_java_alwaysequal_state(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, v::Int)
-    return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloStateFunction, IloIntervalVar, jint), f, a, v)
-end
-
-function cpo_java_alwaysequal_state(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, v::Int, startalign::Bool, endalign::Bool)
+function cpo_java_alwaysequal(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, v::Int, startalign::Bool, endalign::Bool)
     return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloStateFunction, IloIntervalVar, jint, jboolean, jboolean), f, a, v, startalign, endalign)
 end
 
-function cpo_java_alwaysequal_state(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, v::Int, startalign::Bool, endalign::Bool)
+function cpo_java_alwaysequal(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, v::Int, startalign::Bool, endalign::Bool)
     return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloStateFunction, jint, jint, jint), f, start, end_, v)
 end
 
-function cpo_java_alwaysequal_state(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, v::Int)
+function cpo_java_alwaysequal(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, v::Int)
     return jcall(cp.cp, "alwaysEqual", IloConstraint, (IloStateFunction, jint, jint, jint, jboolean, jboolean), f, start, end_, v, startalign, endalign)
 end
 
-function cpo_java_alwaysin_cumul(cp::JavaCPOModel, f::IloCumulFunctionExpr, a::IloIntervalVar, vmin::Int, vmax::Int) # TODO: cannot use Julia method dispatch due to missing type for expressions/functions.
+function cpo_java_alwaysin(cp::JavaCPOModel, f::IloCumulFunctionExpr, a::IloIntervalVar, vmin::Int, vmax::Int)
     return jcall(cp.cp, "alwaysIn", IloConstraint, (IloCumulFunctionExpr, IloIntervalVar, jint, jint), f, a, vmin, vmax)
 end
 
-function cpo_java_alwaysin_cumul(cp::JavaCPOModel, f::IloCumulFunctionExpr, start::Integer, end_::Integer, vmin::Int, vmax::Int)
+function cpo_java_alwaysin(cp::JavaCPOModel, f::IloCumulFunctionExpr, start::Integer, end_::Integer, vmin::Int, vmax::Int)
     return jcall(cp.cp, "alwaysIn", IloConstraint, (IloCumulFunctionExpr, jint, jint, jint, jint), f, start, end_, vmin, vmax)
 end
 
-function cpo_java_alwaysin_state(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, vmin::Int, vmax::Int)
+function cpo_java_alwaysin(cp::JavaCPOModel, f::IloStateFunction, a::IloIntervalVar, vmin::Int, vmax::Int)
     return jcall(cp.cp, "alwaysIn", IloConstraint, (IloStateFunction, IloIntervalVar, jint, jint), f, a, vmin, vmax)
 end
 
-function cpo_java_alwaysin_state(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, vmin::Int, vmax::Int)
+function cpo_java_alwaysin(cp::JavaCPOModel, f::IloStateFunction, start::Integer, end_::Integer, vmin::Int, vmax::Int)
     return jcall(cp.cp, "alwaysIn", IloConstraint, (IloStateFunction, jint, jint, jint, jint), f, start, end_, vmin, vmax)
 end
 
@@ -1016,20 +1017,20 @@ function cpo_java_before(cp::JavaCPOModel, seq::IloIntervalSequenceVar, pred::Il
     return jcall(cp.cp, "before", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar, IloIntervalVar), seq, pred, succ)
 end
 
-function cpo_java_distribute(cp::JavaCPOModel, exprs_cards::Vector, exprs_vars::Vector)
+function cpo_java_distribute(cp::JavaCPOModel, exprs_cards::IntExprArray, exprs_vars::IntExprArray)
     return jcall(cp.cp, "distribute", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}), exprs_cards, exprs_vars)
 end
 
-function cpo_java_distribute(cp::JavaCPOModel, exprs_cards::Vector, values::Vector{T}, exprs_vars::Vector) where {T <: Integer}
+function cpo_java_distribute(cp::JavaCPOModel, exprs_cards::IntExprArray, values::Vector{T}, exprs_vars::IntExprArray) where {T <: Integer}
     return jcall(cp.cp, "distribute", IloConstraint, (Vector{IloIntExpr}, Vector{jint}, Vector{IloIntExpr}), exprs_cards, values, exprs_vars)
 end
 
-function cpo_java_element_int(cp::JavaCPOModel, expr_var, expr_index, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions (int/num).
+function cpo_java_element(cp::JavaCPOModel, expr_var::IntExpr, expr_index::IntExpr, values::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "element", IloConstraint, (IloIntExpr, IloIntExpr, Vector{jint}), expr_var, expr_index, values)
 end
 
-function cpo_java_element_num(cp::JavaCPOModel, expr_var, expr_index, values::Vector{T}) where {T <: Real}
-    return jcall(cp.cp, "element", IloConstraint, (IloIntExpr, IloIntExpr, Vector{jdouble}), expr_var, expr_index, values)
+function cpo_java_element(cp::JavaCPOModel, expr_var::NumExpr, expr_index::IntExpr, values::Vector{T}) where {T <: Real}
+    return jcall(cp.cp, "element", IloConstraint, (IloNumExpr, IloIntExpr, Vector{jdouble}), expr_var, expr_index, values)
 end
 
 function cpo_java_endatend(cp::JavaCPOModel, expr_a::IloIntervalVar, expr_b::IloIntervalVar)
@@ -1080,19 +1081,19 @@ function cpo_java_endbeforestart(cp::JavaCPOModel, expr_a::IloIntervalVar, expr_
     return jcall(cp.cp, "endBeforeStart", IloConstraint, (IloIntervalVar, IloIntervalVar, IloIntExpr), expr_a, expr_b, expr_z)
 end
 
-function cpo_java_eq(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "eq", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_eq(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "eq", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_eq(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "eq", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_equiv(cp::JavaCPOModel, constr_a, constr_b)
+function cpo_java_equiv(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint)
     return jcall(cp.cp, "eq", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
 end
 
@@ -1104,11 +1105,11 @@ function cpo_java_first(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_i
     return jcall(cp.cp, "first", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar), var_seq, var_interval)
 end
 
-function cpo_java_forbiddenassignments_expr(cp::JavaCPOModel, exprs::Vector, values::Vector{T}) where {T <: Integer} # TODO: cannot use Julia method dispatch due to missing type for expressions/variables.
+function cpo_java_forbiddenassignments(cp::JavaCPOModel, exprs::Vector{IloIntVar}, values::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (Vector{IloIntVar}, Vector{jint}), exprs, values)
 end
 
-function cpo_java_forbiddenassignments_vars(cp::JavaCPOModel, vars::Vector, values::Vector{IloIntTupleSet})
+function cpo_java_forbiddenassignments(cp::JavaCPOModel, vars::Vector{IloIntVar}, values::Vector{IloIntTupleSet})
     return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (Vector{IloIntVar}, Vector{IloIntTupleSet}), vars, values)
 end
 
@@ -1124,55 +1125,55 @@ function cpo_java_forbidstart(cp::JavaCPOModel, a::IloIntervalVar, f::IloNumToNu
     return jcall(cp.cp, "forbidStart", IloConstraint, (IloIntervalVar, IloNumToNumStepFunction), a, f)
 end
 
-function cpo_java_ge_cumul_intexpr(cp::JavaCPOModel, f::IloCumulFunctionExpr, vmin) # TODO: cannot use Julia method dispatch due to missing type for variables.
+function cpo_java_ge(cp::JavaCPOModel, f::IloCumulFunctionExpr, vmin::IntExpr)
     return jcall(cp.cp, "ge", IloConstraint, (IloCumulFunctionExpr, IloIntExpr), f, vmin)
 end
 
-function cpo_java_ge_cumul_int(cp::JavaCPOModel, f::IloCumulFunctionExpr, vmin::Integer)
+function cpo_java_ge(cp::JavaCPOModel, f::IloCumulFunctionExpr, vmin::Integer)
     return jcall(cp.cp, "ge", IloConstraint, (IloCumulFunctionExpr, jint), f, vmin)
 end
 
-function cpo_java_ge_intexpr_cumul(cp::JavaCPOModel, vmin, f::IloCumulFunctionExpr)
+function cpo_java_ge(cp::JavaCPOModel, vmin::IntExpr, f::IloCumulFunctionExpr)
     return jcall(cp.cp, "ge", IloConstraint, (IloIntExpr, IloCumulFunctionExpr), vmin, f)
 end
 
-function cpo_java_ge_int_cumul(cp::JavaCPOModel, vmin::Integer, f::IloCumulFunctionExpr)
+function cpo_java_ge(cp::JavaCPOModel, vmin::Integer, f::IloCumulFunctionExpr)
     return jcall(cp.cp, "ge", IloConstraint, (jint, IloCumulFunctionExpr), vmin, f)
 end
 
-function cpo_java_ge(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_ge(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "ge", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_ge(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_ge(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "ge", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_ge(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_ge(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "ge", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_gt(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_gt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "gt", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_gt(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_gt(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "gt", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_gt(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_gt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "gt", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_ifthenelse(cp::JavaCPOModel, constr_a, constr_b, constr_c)
+function cpo_java_ifthenelse(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint, constr_c::Constraint)
     return jcall(cp.cp, "ifThenElse", IloConstraint, (IloConstraint, IloConstraint, IloConstraint), constr_a, constr_b, constr_c)
 end
 
-function cpo_java_imply(cp::JavaCPOModel, constr_a, constr_b)
+function cpo_java_imply(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint)
     return jcall(cp.cp, "imply", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
 end
 
-function cpo_java_inverse(cp::JavaCPOModel, constrs_a::Vector, constrs_b::Vector)
+function cpo_java_inverse(cp::JavaCPOModel, constrs_a::ConstraintArray, constrs_b::ConstraintArray)
     return jcall(cp.cp, "inverse", IloConstraint, (Vector{IloConstraint}, Vector{IloConstraint}), constrs_a, constrs_b)
 end
 
@@ -1184,7 +1185,7 @@ function cpo_java_isomorphism(cp::JavaCPOModel, vars_a::Vector{IloIntervalVar}, 
     end
 end
 
-function cpo_java_isomorphism(cp::JavaCPOModel, vars_a::Vector{IloIntervalVar}, vars_b::Vector{IloIntervalVar}, map::Vector, absval::Integer, name::String="")
+function cpo_java_isomorphism(cp::JavaCPOModel, vars_a::Vector{IloIntervalVar}, vars_b::Vector{IloIntervalVar}, map::IntExprArray, absval::Integer, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "isomorphism", IloIsomorphism, (Vector{IloIntervalVar}, Vector{IloIntervalVar}, Vector{IloIntExpr}, jint), vars_a, vars_b, map, absval)
     else
@@ -1196,55 +1197,55 @@ function cpo_java_last(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_in
     return jcall(cp.cp, "last", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar), var_seq, var_interval)
 end
 
-function cpo_java_le(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_le(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "le", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_le(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_le(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "le", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_le(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_le(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "le", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_lexicographic(cp::JavaCPOModel, exprs_a::Vector, exprs_b::Vector)
+function cpo_java_lexicographic(cp::JavaCPOModel, exprs_a::IntExprArray, exprs_b::IntExprArray)
     return jcall(cp.cp, "lexicographic", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}), exprs_a, exprs_b)
 end
 
-function cpo_java_lt(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_lt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "lt", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_lt(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_lt(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "lt", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_lt(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_lt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "lt", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_neq_constraint(cp::JavaCPOModel, constr_a, constr_b)
+function cpo_java_neq(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint)
     return jcall(cp.cp, "neq", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
 end
 
-function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a, expr_b)
+function cpo_java_neq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "neq", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a::Integer, expr_b)
+function cpo_java_neq(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
     return jcall(cp.cp, "neq", IloConstraint, (jint, IloIntExpr), expr_a, expr_b)
 end
 
-function cpo_java_neq_intexpr(cp::JavaCPOModel, expr_a, expr_b::Integer)
+function cpo_java_neq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "neq", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
-function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq::IloIntervalSequenceVar) # TODO: cannot use Julia method dispatch due to missing type for variables.
+function cpo_java_nooverlap(cp::JavaCPOModel, seq::IloIntervalSequenceVar)
     return jcall(cp.cp, "noOverlap", IloNoOverlap, (IloIntervalSequenceVar,), seq)
 end
 
-function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq::IloIntervalSequenceVar, tdist::IloTransitionDistance, name::String="")
+function cpo_java_nooverlap(cp::JavaCPOModel, seq::IloIntervalSequenceVar, tdist::IloTransitionDistance, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "noOverlap", IloNoOverlap, (IloIntervalSequenceVar, IloTransitionDistance), seq, tdist)
     else
@@ -1252,7 +1253,7 @@ function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq::IloIntervalSequenceVar, t
     end
 end
 
-function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq::IloIntervalSequenceVar, tdist::IloTransitionDistance, direct::Bool, name::String="")
+function cpo_java_nooverlap(cp::JavaCPOModel, seq::IloIntervalSequenceVar, tdist::IloTransitionDistance, direct::Bool, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "noOverlap", IloNoOverlap, (IloIntervalSequenceVar, IloTransitionDistance, jboolean), seq, tdist, direct)
     else
@@ -1260,7 +1261,7 @@ function cpo_java_nooverlap_seq(cp::JavaCPOModel, seq::IloIntervalSequenceVar, t
     end
 end
 
-function cpo_java_nooverlap_vars(cp::JavaCPOModel, vars::Vector{IloIntervalVar}, name::String="")
+function cpo_java_nooverlap(cp::JavaCPOModel, vars::Vector{IloIntervalVar}, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "noOverlap", IloNoOverlap, (Vector{IloIntervalVar},), vars)
     else
@@ -1268,11 +1269,11 @@ function cpo_java_nooverlap_vars(cp::JavaCPOModel, vars::Vector{IloIntervalVar},
     end
 end
 
-function cpo_java_pack(cp::JavaCPOModel, expr_load::Vector, expr_where::Vector, weight::Vector{T}) where {T <: Integer}
+function cpo_java_pack(cp::JavaCPOModel, expr_load::IntExprArray, expr_where::IntExprArray, weight::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "pack", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}, Vector{jint}), expr_load, expr_where, weight)
 end
 
-function cpo_java_pack(cp::JavaCPOModel, expr_load::Vector, expr_where::Vector, weight::Vector{T}, used) where {T <: Integer}
+function cpo_java_pack(cp::JavaCPOModel, expr_load::IntExprArray, expr_where::IntExprArray, weight::Vector{T}, used::IntExpr) where {T <: Integer}
     return jcall(cp.cp, "pack", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}, Vector{jint}, IloIntExpr), expr_load, expr_where, weight, used)
 end
 
@@ -1320,11 +1321,11 @@ function cpo_java_samesubsequence(cp::JavaCPOModel, seq_1::IloIntervalSequenceVa
     end
 end
 
-function cpo_java_sequence(cp::JavaCPOModel, nbmin::T, nbmax::T, seqwidth::T, vars::Vector, values::Vector{T}, card::Vector) where {T <: Integer}
+function cpo_java_sequence(cp::JavaCPOModel, nbmin::T, nbmax::T, seqwidth::T, vars::Vector{IloIntVar}, values::Vector{T}, card::Vector{IloIntVar}) where {T <: Integer}
     return jcall(cp.cp, "sequence", IloConstraint, (jint, jint, jint, Vector{IloIntVar}, Vector{jint}, Vector{IloIntVar}), nbmin, nbmax, seqwidth, vars, values, card)
 end
 
-function cpo_java_span(cp::JavaCPOModel, a::IloIntervalVar, bs::Vector, name::String="")
+function cpo_java_span(cp::JavaCPOModel, a::IloIntervalVar, bs::Vector{IloIntervalVar}, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "span", IloSpan, (IloIntervalVar, Vector{IloIntervalVar}), a, bs)
     else
@@ -1380,11 +1381,11 @@ function cpo_java_startbeforestart(cp::JavaCPOModel, a::IloIntervalVar, b::IloIn
     return jcall(cp.cp, "startBeforeStart", IloConstraint, (IloIntervalVar, IloIntervalVar, IloIntExpr), a, b, z)
 end
 
-function cpo_java_strong(cp::JavaCPOModel, vars::Vector)
+function cpo_java_strong(cp::JavaCPOModel, vars::Vector{IloIntVar})
     return jcall(cp.cp, "strong", IloConstraint, (Vector{IloIntVar},), vars)
 end
 
-function cpo_java_subcircuit(cp::JavaCPOModel, vars::Vector)
+function cpo_java_subcircuit(cp::JavaCPOModel, vars::Vector{IloIntVar})
     return jcall(cp.cp, "subCircuit", IloConstraint, (Vector{IloIntVar},), vars)
 end
 
@@ -1402,23 +1403,23 @@ end
 
 ## Objective
 
-function cpo_java_maximize(cp::JavaCPOModel, expr)
+function cpo_java_maximize(cp::JavaCPOModel, expr::IloIntExpr)
     return jcall(cp.cp, "maximize", IloObjective, (IloIntExpr,), expr)
 end
 
-function cpo_java_maximize_multicriterion(cp::JavaCPOModel, expr::IloMultiCriterionExpr) # TODO: cannot use Julia method dispatch due to missing type for expressions.
+function cpo_java_maximize(cp::JavaCPOModel, expr::IloMultiCriterionExpr)
     return jcall(cp.cp, "maximize", IloObjective, (IloMultiCriterionExpr,), expr)
 end
 
-function cpo_java_minimize(cp::JavaCPOModel, expr)
+function cpo_java_minimize(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "minimize", IloObjective, (IloIntExpr,), expr)
 end
 
-function cpo_java_minimize_multicriterion(cp::JavaCPOModel, expr) # TODO: cannot use Julia method dispatch due to missing type for expressions.
+function cpo_java_minimize(cp::JavaCPOModel, expr::IloMultiCriterionExpr)
     return jcall(cp.cp, "minimize", IloObjective, (IloMultiCriterionExpr,), expr)
 end
 
-function cpo_java_staticlex(cp::JavaCPOModel, criteria::Vector, name::String="")
+function cpo_java_staticlex(cp::JavaCPOModel, criteria::NumExprArray, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "staticLex", IloMultiCriterionExpr, (Vector{IloNumExpr},), criteria)
     else
@@ -1457,7 +1458,7 @@ function cpo_java_getdomain(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "getDomain", JString, (IloIntervalVar,), var)
 end
 
-function cpo_java_getdomainsize(cp::JavaCPOModel, var)
+function cpo_java_getdomainsize(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "getDomainSize", jint, (IloNumVar,), var)
 end
 
@@ -1477,11 +1478,11 @@ function cpo_java_getfirst(cp::JavaCPOModel, var::IloIntervalSequenceVar)
     return jcall(cp.cp, "getFirst", IloIntervalVar, (IloIntervalSequenceVar,), var)
 end
 
-function cpo_java_getincumbentvalue(cp::JavaCPOModel, expr)
+function cpo_java_getincumbentvalue(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "getIncumbentValue", jdouble, (IloNumExpr,), expr)
 end
 
-function cpo_java_getintvalue(cp::JavaCPOModel, expr)
+function cpo_java_getintvalue(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "getInt", jint, (IloIntExpr,), expr)
 end
 
@@ -1501,11 +1502,11 @@ function cpo_java_getlengthmin(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "getLengthMin", jint, (IloIntervalVar,), var)
 end
 
-function cpo_java_getmax(cp::JavaCPOModel, var)
+function cpo_java_getmax(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "getMax", jdouble, (IloNumVar,), var)
 end
 
-function cpo_java_getmin(cp::JavaCPOModel, var)
+function cpo_java_getmin(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "getMin", jdouble, (IloNumVar,), var)
 end
 
@@ -1565,15 +1566,15 @@ function cpo_java_getstartmin(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "getStartMin", jint, (IloIntervalVar,), var)
 end
 
-function cpo_java_getvalue_intexpr(cp::JavaCPOModel, expr) # TODO: cannot use Julia method dispatch due to missing type for expressions/variables (int/num).
+function cpo_java_getvalue(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "getValue", jdouble, (IloIntExpr,), expr)
 end
 
-function cpo_java_getvalue_intvar(cp::JavaCPOModel, expr)
+function cpo_java_getvalue(cp::JavaCPOModel, expr::IloIntVar)
     return jcall(cp.cp, "getValue", jdouble, (IloIntVar,), expr)
 end
 
-function cpo_java_getvalue_numexpr(cp::JavaCPOModel, expr)
+function cpo_java_getvalue_numexpr(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "getValue", jdouble, (IloNumExpr,), expr)
 end
 
@@ -1589,15 +1590,15 @@ function cpo_java_isabsent(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "isAbsent", jboolean, (IloIntervalVar), var)
 end
 
-function cpo_java_isfixed_intervalsequencevar(cp::JavaCPOModel, var::IloIntervalSequenceVar) # TODO: cannot use Julia method dispatch due to missing type for variables.
+function cpo_java_isfixed(cp::JavaCPOModel, var::IloIntervalSequenceVar)
     return jcall(cp.cp, "isFixed", jboolean, (IloIntervalSequenceVar), var)
 end
 
-function cpo_java_isfixed_intervalvar(cp::JavaCPOModel, var::IloIntervalVar)
+function cpo_java_isfixed(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "isFixed", jboolean, (IloIntervalVar), var)
 end
 
-function cpo_java_isfixed_numvar(cp::JavaCPOModel, var)
+function cpo_java_isfixed(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "isFixed", jboolean, (IloNumVar,), var)
 end
 
@@ -1625,11 +1626,11 @@ function cpo_java_refineconflict(cp::JavaCPOModel)
     return jcall(cp.cp, "refineConflict", jboolean, ())
 end
 
-function cpo_java_refineconflict(cp::JavaCPOModel, constrs::Vector)
+function cpo_java_refineconflict(cp::JavaCPOModel, constrs::ConstraintArray)
     return jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint},), constrs)
 end
 
-function cpo_java_refineconflict(cp::JavaCPOModel, constrs::Vector, prefs::Vector{T}) where {T <: Real}
+function cpo_java_refineconflict(cp::JavaCPOModel, constrs::ConstraintArray, prefs::Vector{T}) where {T <: Real}
     return jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint}, Vector{jdouble}), constrs, prefs)
 end
 
@@ -1656,37 +1657,37 @@ function cpo_java_solution(cp::JavaCPOModel)
     return jcall(cp.cp, "solution", IloSolution, ())
 end
 
-function cpo_java_solution_add_intervalvar(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_add(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "add", Nothing, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_add_intervalvararray(cp::JavaCPOModel, solution::IloSolution, vars::Vector{IloIntervalVar})
+function cpo_java_solution_add(cp::JavaCPOModel, solution::IloSolution, vars::Vector{IloIntervalVar})
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "add", Nothing, (Vector{IloIntervalVar},), var)
 end
 
-function cpo_java_solution_add_intvar(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_add(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "add", Nothing, (IloIntVar,), var)
 end
 
-function cpo_java_solution_add_intvararray(cp::JavaCPOModel, solutio::IloSolution, vars::Vector)
+function cpo_java_solution_add(cp::JavaCPOModel, solutio::IloSolution, vars::Vector{IloIntVar})
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "add", Nothing, (Vector{IloIntVar},), vars)
 end
 
-function cpo_java_solution_add_numvar(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_add(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "add", Nothing, (IloNumVar,), var)
 end
 
-function cpo_java_solution_contains_intervalvar(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_contains(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "contains", jboolean, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_contains_intvar(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_contains(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "contains", jboolean, (IloIntVar,), var)
 end
@@ -1727,22 +1728,22 @@ function cpo_java_solution_getlengthmin(cp::JavaCPOModel, solution::IloSolution,
     return jcall(solution, "getLengthMin", jint, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_getmax_int(cp::JavaCPOModel, solution::IloSolution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_getmax(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getMax", jint, (IloIntVar,), var)
 end
 
-function cpo_java_solution_getmax_num(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_getmax(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getMax", jdouble, (IloNumVar,), var)
 end
 
-function cpo_java_solution_getmin_int(cp::JavaCPOModel, solution::IloSolution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_getmin(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getMin", jint, (IloIntVar,), var)
 end
 
-function cpo_java_solution_getmin_num(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_getmin(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getMin", jdouble, (IloNumVar,), var)
 end
@@ -1777,12 +1778,12 @@ function cpo_java_solution_getstartmin(cp::JavaCPOModel, solution::IloSolution, 
     return jcall(solution, "getStartMin", jint, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_getvalue_int(cp::JavaCPOModel, solution::IloSolution, var) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_getvalue(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getValue", jint, (IloIntVar,), var)
 end
 
-function cpo_java_solution_getvalue_num(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_getvalue(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "getValue", jdouble, (IloNumVar,), var)
 end
@@ -1792,7 +1793,7 @@ function cpo_java_solution_isabsent(cp::JavaCPOModel, solution::IloSolution, var
     return jcall(solution, "isAbsent", jboolean, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_isfixed(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_isfixed(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "isFixed", jboolean, (IloIntVar,), var)
 end
@@ -1807,22 +1808,22 @@ function cpo_java_solution_ispresent(cp::JavaCPOModel, solution::IloSolution, va
     return jcall(solution, "isPresent", jboolean, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_remove_intervalvar(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_remove(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "remove", Nothing, (IloIntervalVar,), var)
 end
 
-function cpo_java_solution_remove_intervalvararray(cp::JavaCPOModel, solution::IloSolution, vars::Vector{IloIntervalVar})
+function cpo_java_solution_remove(cp::JavaCPOModel, solution::IloSolution, vars::Vector{IloIntervalVar})
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "remove", Nothing, (Vector{IloIntervalVar},), vars)
 end
 
-function cpo_java_solution_remove_intvar(cp::JavaCPOModel, solution::IloSolution, var)
+function cpo_java_solution_remove(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "remove", Nothing, (IloIntVar,), var)
 end
 
-function cpo_java_solution_remove_intvararray(cp::JavaCPOModel, solution::IloSolution, vars::Vector)
+function cpo_java_solution_remove(cp::JavaCPOModel, solution::IloSolution, vars::Vector{IloIntVar})
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "remove", Nothing, (Vector{IloIntVar},), vars)
 end
@@ -1867,22 +1868,22 @@ function cpo_java_solution_setlengthmin(cp::JavaCPOModel, solution::IloSolution,
     return jcall(solution, "setLengthMin", void, (IloIntervalVar, jint), var, v)
 end
 
-function cpo_java_solution_setmax_int(cp::JavaCPOModel, solution::IloSolution, var, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_setmax(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setMax", jboolean, (IloIntVar, jint), var, v)
 end
 
-function cpo_java_solution_setmax_num(cp::JavaCPOModel, solution::IloSolution, var, v::Integer)
+function cpo_java_solution_setmax(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setMax", jboolean, (IloNumVar, jint), var, v)
 end
 
-function cpo_java_solution_setmin_int(cp::JavaCPOModel, solution::IloSolution, var, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_setmin(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setMin", jboolean, (IloIntVar, jint), var, v)
 end
 
-function cpo_java_solution_setmin_num(cp::JavaCPOModel, solution::IloSolution, var, v::Integer)
+function cpo_java_solution_setmin(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setMin", jboolean, (IloNumVar, jint), var, v)
 end
@@ -1927,12 +1928,12 @@ function cpo_java_solution_setstartmin(cp::JavaCPOModel, solution::IloSolution, 
     return jcall(solution, "setStartMin", jboolean, (IloIntervalVar, jint), var, v)
 end
 
-function cpo_java_solution_setvalue_int(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer) # TODO: cannot use Julia method dispatch due to missing type for variables (int/interval/num).
+function cpo_java_solution_setvalue(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setValue", jboolean, (IloIntVar, jint), var, v)
 end
 
-function cpo_java_solution_setvalue_num(cp::JavaCPOModel, solution::IloSolution, var, v::Integer)
+function cpo_java_solution_setvalue(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(solution, "setValue", jboolean, (IloNumVar, jint), var, v)
 end
@@ -1958,15 +1959,15 @@ function cpo_java_getbuildid(cp::JavaCPOModel)
     return jcall(cp.cp, "getBuildID", JString)
 end
 
-function cpo_java_getconflict_constraint(cp::JavaCPOModel, constr) # TODO: cannot use Julia method dispatch due to missing type for expressions (interval/num) and constraints.
+function cpo_java_getconflict(cp::JavaCPOModel, constr::Constraint)
     return jcall(cp.cp, "getConflict", ConflictStatus, (IloConstraint,), constr)
 end
 
-function cpo_java_getconflict_intervalval(cp::JavaCPOModel, var::IloIntervalVar)
+function cpo_java_getconflict(cp::JavaCPOModel, var::IloIntervalVar)
     return jcall(cp.cp, "getConflict", ConflictStatus, (IloIntervalVar,), constr)
 end
 
-function cpo_java_getconflict_numvar(cp::JavaCPOModel, var)
+function cpo_java_getconflict(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "getConflict", ConflictStatus, (IloNumVar,), constr)
 end
 
@@ -1980,7 +1981,7 @@ function cpo_java_printinformation(cp::JavaCPOModel)
     # TODO: OutputStream?
 end
 
-function cpo_java_remove(cp::JavaCPOModel, addable)
+function cpo_java_remove(cp::JavaCPOModel, addable::Addable)
     return jcall(cp.cp, "remove", IloAddable, (IloAddable,), addable)
 end
 
