@@ -12,7 +12,13 @@ if !@isdefined(libcplexcpojava)
     error("CPLEXCP not properly built. There probably was a problem when running Pkg.build(\"CPLEXCP\") or ]build CPLEXCP")
 end
 
-export cpo_java_init, JavaCPOModel, cpo_java_model, cpo_java_release,
+export cpo_java_init, JavaCPOModel,
+       IloCP, IloIntVar, IloIntervalVar, IloIntervalSequenceVar, IloNumVar, IloIntExpr,
+       IloNumExpr, IloIntTupleSet, IloNumToNumSegmentFunction, IloNumToNumStepFunction,
+       IloCumulFunctionExpr, IloTransitionDistance, IloStateFunction, IloConstraint,
+       IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize,
+       IloObjective, IloMultiCriterionExpr, IloSolution, IloAddable, Callback, ConflictStatus,
+       cpo_java_model, cpo_java_release,
        cpo_java_intvar, cpo_java_intvararray, cpo_java_numvar, cpo_java_numvararray,
        cpo_java_intervalvar, cpo_java_intervalsequencevar, cpo_java_abs, cpo_java_constant,
        cpo_java_count, cpo_java_countdifferent, cpo_java_div, cpo_java_element,

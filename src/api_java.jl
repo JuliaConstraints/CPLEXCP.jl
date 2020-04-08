@@ -64,6 +64,7 @@ function cpo_java_model()
     conflictstatus_excluded = jfield(conflictstatus, "ConflictExcluded", conflictstatus)
 
     # Actually build the model.
+    jcp = @jimport ilog.cp.IloCP
     model = jcp(())
 
     # Return the right data structure
