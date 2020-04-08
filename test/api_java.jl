@@ -50,6 +50,7 @@
 
     @testset "Integration tests" begin
         # Based on the provided examples, translated from Java.
+        # All that should be ported: https://perso.ensta-paris.fr/~diam/ro/online/cplex/cplex1271/CP_Optimizer/User_manual/topics/constraints_arithmetic_expr.html
 
         @testset "Color" begin
             model = cpo_java_model()
@@ -92,6 +93,7 @@
         end
 
         @testset "Alloc" begin
+            # Model data.
             ncell = 25
             nfreq = 256
             nchannel = [8, 6, 6, 1, 4, 4, 8, 8, 8, 8, 4, 9, 8, 4, 4, 10, 8, 9, 8, 4, 5, 4, 8, 1, 1]
@@ -133,10 +135,14 @@
                 return idx + channel
             end
 
+            # Test the helper function for discrepancies due to 1-based indexing.
+            @test transmitter_idx(1, 1) == 1
+            @test transmitter_idx(ncell, 1) == sum(nchannel)
+
             # Build the model.
             model = cpo_java_model()
-            ntransmitter = transmitter_idx(ncell, 0);
-            freq = cpo_java_intvararray(model, ntransmitter, 0, nfreq - 1, "freq");
+            ntransmitter = transmitter_idx(ncell, 1);
+            freq = cpo_java_intvararray(model, ntransmitter, 1, nfreq, "freq");
 
             for cell in 1:ncell
                 for channel1 in 1:nchannel[cell]
@@ -153,7 +159,7 @@
                     if dist[cell1, cell2] > 0
                         for channel1 in 1:nchannel[cell1]
                             for channel2 in 1:nchannel[cell2]
-                                diff = cpo_java_diff_int(model, freq[transmitter_idx(cell1, channel1)], freq[transmitter_idx(cell1, channel2)])
+                                diff = cpo_java_diff_int(model, freq[transmitter_idx(cell1, channel1)], freq[transmitter_idx(cell2, channel2)])
                                 cstr = cpo_java_ge(model, cpo_java_abs(model, diff), dist[cell1, cell2])
                                 cpo_java_add(model, cstr)
                             end
