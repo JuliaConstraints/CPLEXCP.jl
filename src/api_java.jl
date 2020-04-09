@@ -1583,63 +1583,62 @@ function cpo_java_getversion(cp::JavaCPOModel)
 end
 
 function cpo_java_hasobjective(cp::JavaCPOModel)
-    return jcall(cp.cp, "hasObjective", jboolean, ())
+    return Bool(jcall(cp.cp, "hasObjective", jboolean, ()))
 end
 
 function cpo_java_isabsent(cp::JavaCPOModel, var::IloIntervalVar)
-    return jcall(cp.cp, "isAbsent", jboolean, (IloIntervalVar), var)
+    return Bool(jcall(cp.cp, "isAbsent", jboolean, (IloIntervalVar), var))
 end
 
 function cpo_java_isfixed(cp::JavaCPOModel, var::IloIntervalSequenceVar)
-    return jcall(cp.cp, "isFixed", jboolean, (IloIntervalSequenceVar), var)
+    return Bool(jcall(cp.cp, "isFixed", jboolean, (IloIntervalSequenceVar), var))
 end
 
 function cpo_java_isfixed(cp::JavaCPOModel, var::IloIntervalVar)
-    return jcall(cp.cp, "isFixed", jboolean, (IloIntervalVar), var)
+    return Bool(jcall(cp.cp, "isFixed", jboolean, (IloIntervalVar), var))
 end
 
 function cpo_java_isfixed(cp::JavaCPOModel, var::NumVar)
-    return jcall(cp.cp, "isFixed", jboolean, (IloNumVar,), var)
+    return Bool(jcall(cp.cp, "isFixed", jboolean, (IloNumVar,), var))
 end
 
 function cpo_java_isindomain(cp::JavaCPOModel, var, value::Integer)
-    return jcall(cp.cp, "isInDomain", jboolean, (IloNumVar, jint), var, value)
+    return Bool(jcall(cp.cp, "isInDomain", jboolean, (IloNumVar, jint), var, value))
 end
 
 function cpo_java_ispresent(cp::JavaCPOModel, var::IloIntervalVar)
-    return jcall(cp.cp, "isPresent", jboolean, (IloIntervalVar,), var)
+    return Bool(jcall(cp.cp, "isPresent", jboolean, (IloIntervalVar,), var))
 end
 
 function cpo_java_next(cp::JavaCPOModel)
-    return jcall(cp.cp, "next", jboolean, ())
+    return Bool(jcall(cp.cp, "next", jboolean, ()))
 end
 
 function cpo_java_propagate(cp::JavaCPOModel)
-    return jcall(cp.cp, "propagate", jboolean, ())
+    return Bool(jcall(cp.cp, "propagate", jboolean, ()))
 end
 
 function cpo_java_propagate(cp::JavaCPOModel, constr)
-    return jcall(cp.cp, "propagate", jboolean, (IloConstraint,), constr)
+    return Bool(jcall(cp.cp, "propagate", jboolean, (IloConstraint,), constr))
 end
 
 function cpo_java_refineconflict(cp::JavaCPOModel)
-    return jcall(cp.cp, "refineConflict", jboolean, ())
+    return Bool(jcall(cp.cp, "refineConflict", jboolean, ()))
 end
 
 function cpo_java_refineconflict(cp::JavaCPOModel, constrs::ConstraintArray)
-    return jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint},), constrs)
+    return Bool(jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint},), constrs))
 end
 
 function cpo_java_refineconflict(cp::JavaCPOModel, constrs::ConstraintArray, prefs::Vector{T}) where {T <: Real}
-    return jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint}, Vector{jdouble}), constrs, prefs)
+    return Bool(jcall(cp.cp, "refineConflict", jboolean, (Vector{IloConstraint}, Vector{jdouble}), constrs, prefs))
 end
 
 function cpo_java_restore(cp::JavaCPOModel, solution::IloSolution)
-    return jcall(cp.cp, "restore", jboolean, (IloSolution,), solution)
+    return Bool(jcall(cp.cp, "restore", jboolean, (IloSolution,), solution))
 end
 
 function cpo_java_solve(cp::JavaCPOModel)
-    # Bool due to https://github.com/JuliaInterop/JavaCall.jl/issues/110
     return Bool(jcall(cp.cp, "solve", jboolean, ()))
 end
 
@@ -1684,17 +1683,17 @@ end
 
 function cpo_java_solution_contains(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "contains", jboolean, (IloIntervalVar,), var)
+    return Bool(jcall(solution, "contains", jboolean, (IloIntervalVar,), var))
 end
 
 function cpo_java_solution_contains(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "contains", jboolean, (IloIntVar,), var)
+    return Bool(jcall(solution, "contains", jboolean, (IloIntVar,), var))
 end
 
 function cpo_java_solution_end(cp::JavaCPOModel, solution::IloSolution)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "end", jboolean, ())
+    return jcall(solution, "end", Nothing, ())
 end
 
 function cpo_java_solution_getend(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
@@ -1790,22 +1789,22 @@ end
 
 function cpo_java_solution_isabsent(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "isAbsent", jboolean, (IloIntervalVar,), var)
+    return Bool(jcall(solution, "isAbsent", jboolean, (IloIntervalVar,), var))
 end
 
 function cpo_java_solution_isfixed(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "isFixed", jboolean, (IloIntVar,), var)
+    return Bool(jcall(solution, "isFixed", jboolean, (IloIntVar,), var))
 end
 
 function cpo_java_solution_isindomain(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, value::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "isInDomain", jboolean, (IloIntervalVar, jint), var, value)
+    return Bool(jcall(solution, "isInDomain", jboolean, (IloIntervalVar, jint), var, value))
 end
 
 function cpo_java_solution_ispresent(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "isPresent", jboolean, (IloIntervalVar,), var)
+    return Bool(jcall(solution, "isPresent", jboolean, (IloIntervalVar,), var))
 end
 
 function cpo_java_solution_remove(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
@@ -1835,7 +1834,7 @@ end
 
 function cpo_java_solution_setdomain(cp::JavaCPOModel, solution::IloSolution, var, vmin::Integer, vmax::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setDomain", jboolean, (IloIntVar, jint, jint), var, vmin, vmax)
+    return Bool(jcall(solution, "setDomain", jboolean, (IloIntVar, jint, jint), var, vmin, vmax))
 end
 
 function cpo_java_solution_setend(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
@@ -1870,22 +1869,22 @@ end
 
 function cpo_java_solution_setmax(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setMax", jboolean, (IloIntVar, jint), var, v)
+    return jcall(solution, "setMax", Nothing, (IloIntVar, jint), var, v)
 end
 
 function cpo_java_solution_setmax(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setMax", jboolean, (IloNumVar, jint), var, v)
+    return jcall(solution, "setMax", Nothing, (IloNumVar, jint), var, v)
 end
 
 function cpo_java_solution_setmin(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setMin", jboolean, (IloIntVar, jint), var, v)
+    return jcall(solution, "setMin", Nothing, (IloIntVar, jint), var, v)
 end
 
 function cpo_java_solution_setmin(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setMin", jboolean, (IloNumVar, jint), var, v)
+    return jcall(solution, "setMin", Nothing, (IloNumVar, jint), var, v)
 end
 
 function cpo_java_solution_setoptional(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar)
@@ -1900,47 +1899,47 @@ end
 
 function cpo_java_solution_setsize(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setSize", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setSize", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setsizemax(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setSizeMax", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setSizeMax", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setsizemin(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setSizeMin", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setSizeMin", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setstart(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setStart", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setStart", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setstartmax(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setStartMax", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setStartMax", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setstartmin(cp::JavaCPOModel, solution::IloSolution, var::IloIntervalVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setStartMin", jboolean, (IloIntervalVar, jint), var, v)
+    return jcall(solution, "setStartMin", Nothing, (IloIntervalVar, jint), var, v)
 end
 
 function cpo_java_solution_setvalue(cp::JavaCPOModel, solution::IloSolution, var::IloIntVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setValue", jboolean, (IloIntVar, jint), var, v)
+    return jcall(solution, "setValue", Nothing, (IloIntVar, jint), var, v)
 end
 
 function cpo_java_solution_setvalue(cp::JavaCPOModel, solution::IloSolution, var::IloNumVar, v::Integer)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "setValue", jboolean, (IloNumVar, jint), var, v)
+    return jcall(solution, "setValue", Nothing, (IloNumVar, jint), var, v)
 end
 
 function cpo_java_solution_store(cp::JavaCPOModel, solution::IloSolution)
     # cp argument is useless, but kept to be consistent with the rest of the API.
-    return jcall(solution, "store", jboolean, ())
+    return jcall(solution, "store", Nothing, ())
 end
 
 ## Miscellaneous
