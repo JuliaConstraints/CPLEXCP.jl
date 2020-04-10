@@ -26,6 +26,8 @@ const IloNoOverlap = JavaObject{Symbol("ilog.concert.IloNoOverlap")}
 const IloRange = JavaObject{Symbol("ilog.concert.IloRange")}
 const IloSpan = JavaObject{Symbol("ilog.concert.IloSpan")}
 const IloSynchronize = JavaObject{Symbol("ilog.concert.IloSynchronize")}
+const IloAnd = JavaObject{Symbol("ilog.concert.IloAnd")}
+const IloOr = JavaObject{Symbol("ilog.concert.IloOr")}
 
 const IloObjective = JavaObject{Symbol("ilog.concert.IloObjective")}
 const IloMultiCriterionExpr = JavaObject{Symbol("ilog.concert.IloMultiCriterionExpr")}
@@ -36,19 +38,17 @@ const Callback = JavaObject{Symbol("ilog.cp.IloCP\$Callback")}
 const ConflictStatus = JavaObject{Symbol("ilog.concert.IloCP\$ConflictStatus")}
 
 # Unions of types to model Java type hierarchy.
-const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize}
+const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize, IloAnd, IloOr}
 const IntExpr = Union{IloIntVar, IloIntExpr, Constraint}
 const NumVar = Union{IloIntVar, IloNumVar}
 const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr}
-const Addable = Constraint
+const Addable = Union{Constraint, IloObjective, IloMultiCriterionExpr}
 
 const ConstraintArray = Union{Vector{Constraint}, Vector{T} where {T <: Constraint}}
 const IntExprArray = Union{Vector{IntExpr}, Vector{T} where {T <: IntExpr}}
 const NumVarArray = Union{Vector{NumVar}, Vector{T} where {T <: NumVar}}
 const NumExprArray = Union{Vector{NumExpr}, Vector{T} where {T <: NumExpr}}
 const AddableArray = Union{Vector{Addable}, Vector{T} where {T <: Addable}}
-
-## TODO: missing methods from IloModeler?
 
 """
     cpo_java_init()
@@ -101,9 +101,9 @@ end
 
 function cpo_java_boolvararray(cp::JavaCPOModel, n::T, name::String="") where {T <: Integer}
     if length(name) == 0
-        return jcall(cp.cp, "boolVarArray", IloIntVar, (jint,), n)
+        return jcall(cp.cp, "boolVarArray", Vector{IloIntVar}, (jint,), n)
     else
-        return jcall(cp.cp, "boolVarArray", IloIntVar, (jint, JString), n, name)
+        return jcall(cp.cp, "boolVarArray", Vector{IloIntVar}, (jint, JString), n, name)
     end
 end
 
@@ -324,28 +324,100 @@ function cpo_java_lengthofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenc
     return jcall(cp.cp, "lengthOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jint), var_seq, var_interval, lastval, absval)
 end
 
+function cpo_java_linearintexpr(cp::JavaCPOModel)
+    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, ())
+end
+
+function cpo_java_linearintexpr(cp::JavaCPOModel, val::Integer)
+    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, (jint,), val)
+end
+
+function cpo_java_linearintexpr(cp::JavaCPOModel)
+    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, ())
+end
+
+function cpo_java_linearintexpr(cp::JavaCPOModel, val::Real)
+    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, (jdouble,), val)
+end
+
 function cpo_java_log(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "log", IloNumExpr, (IloNumExpr,), expr)
+end
+
+function cpo_java_max(cp::JavaCPOModel, val::Real, expr::NumExpr)
+    return jcall(cp.cp, "max", IloNumExpr, (jdouble, IloNumExpr), val, expr)
 end
 
 function cpo_java_max(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "max", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
+function cpo_java_max(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
+    return jcall(cp.cp, "max", IloIntExpr, (IloIntExpr, IloIntExpr), expr_a, expr_b)
+end
+
+function cpo_java_max(cp::JavaCPOModel, expr::IntExpr, val::Integer)
+    return jcall(cp.cp, "max", IloIntExpr, (IloIntExpr, jint), expr, val)
+end
+
 function cpo_java_max(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "max", IloNumExpr, (Vector{IloNumExpr},), exprs)
+end
+
+function cpo_java_max(cp::JavaCPOModel, expr::NumExpr, val::Real)
+    return jcall(cp.cp, "max", IloNumExpr, (IloNumExpr, jdouble), expr, val)
+end
+
+function cpo_java_max(cp::JavaCPOModel, expr::NumExpr, val::NumExpr)
+    return jcall(cp.cp, "max", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+end
+
+function cpo_java_max(cp::JavaCPOModel, val::Integer, expr::IntExpr)
+    return jcall(cp.cp, "max", IloIntExpr, (jint, IloIntExpr), val, expr)
+end
+
+function cpo_java_min(cp::JavaCPOModel, val::Real, expr::NumExpr)
+    return jcall(cp.cp, "min", IloNumExpr, (jdouble, IloNumExpr), val, expr)
 end
 
 function cpo_java_min(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "min", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
+function cpo_java_min(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
+    return jcall(cp.cp, "min", IloIntExpr, (IloIntExpr, IloIntExpr), expr_a, expr_b)
+end
+
+function cpo_java_min(cp::JavaCPOModel, expr::IntExpr, val::Integer)
+    return jcall(cp.cp, "min", IloIntExpr, (IloIntExpr, jint), expr, val)
+end
+
 function cpo_java_min(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "min", IloNumExpr, (Vector{IloNumExpr},), exprs)
 end
 
+function cpo_java_min(cp::JavaCPOModel, expr::NumExpr, val::Real)
+    return jcall(cp.cp, "min", IloNumExpr, (IloNumExpr, jdouble), expr, val)
+end
+
+function cpo_java_min(cp::JavaCPOModel, expr::NumExpr, val::NumExpr)
+    return jcall(cp.cp, "min", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+end
+
+function cpo_java_min(cp::JavaCPOModel, val::Integer, expr::IntExpr)
+    return jcall(cp.cp, "min", IloIntExpr, (jint, IloIntExpr), val, expr)
+end
+
 function cpo_java_modulo(cp::JavaCPOModel, expr, r::Integer)
     return jcall(cp.cp, "modulo", IloIntExpr, (IloIntExpr, jint), expr, r)
+end
+
+function cpo_java_negative(cp::JavaCPOModel, expr::IntExpr)
+    return jcall(cp.cp, "negative", IloIntExpr, (IloIntExpr,), expr)
+end
+
+function cpo_java_negative(cp::JavaCPOModel, expr::NumExpr)
+    return jcall(cp.cp, "negative", IloNumExpr, (IloNumExpr,), expr)
 end
 
 function cpo_java_numexprarray(cp::JavaCPOModel, n::Integer)
@@ -380,8 +452,40 @@ function cpo_java_piecewiselinear(cp::JavaCPOModel, var::IloIntervalVar, firstsl
     return jcall(cp.cp, "piecewiseLinear", IloNumExpr, (IloNumExpr, jdouble, Vector{jdouble}, Vector{jdouble}, jdouble), var, firstslope, point, value, lastslope)
 end
 
-function cpo_java_power(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr)
-    return jcall(cp.cp, "power", IloNumExpr, (jdouble, IloNumExpr), expr_a, expr_b)
+function cpo_java_prod(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr)
+    return jcall(cp.cp, "prod", IloNumExpr, (jdouble, IloNumExpr), expr_a, expr_b)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::Real, expr_b::NumVar, expr_c::NumVar)
+    return jcall(cp.cp, "prod", IloNumExpr, (jdouble, IloNumVar, IloNumVar), expr_a, expr_b, expr_c)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
+    return jcall(cp.cp, "prod", IloIntExpr, (IloIntExpr, IloIntExpr), expr_a, expr_b)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
+    return jcall(cp.cp, "prod", IloIntExpr, (IloIntExpr, jint), expr_a, expr_b)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
+    return jcall(cp.cp, "prod", IloNumExpr, (IloNumExpr, jdouble), expr_a, expr_b)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
+    return jcall(cp.cp, "prod", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::NumVar, expr_b::Real, expr_c::NumVar)
+    return jcall(cp.cp, "prod", IloNumExpr, (IloNumVar, jdouble, IloNumVar), expr_a, expr_b, expr_c)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::NumVar, expr_b::NumVar, expr_c::Real)
+    return jcall(cp.cp, "prod", IloNumExpr, (IloNumVar, IloNumVar, jdouble), expr_a, expr_b, expr_c)
+end
+
+function cpo_java_prod(cp::JavaCPOModel, expr_a::Integer, expr_b::IntExpr)
+    return jcall(cp.cp, "prod", IloIntExpr, (jint, IloIntExpr), expr_a, expr_b)
 end
 
 function cpo_java_power(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
@@ -428,6 +532,62 @@ function cpo_java_quot(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
     return jcall(cp.cp, "quot", IloNumExpr, (IloNumExpr, IloNumExpr), expr_a, expr_b)
 end
 
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{T}, vars::NumVarArray) where {T <: Real}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{jdouble}, Vector{IloNumVar}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{T}, vars::NumVarArray, start::Int, num::Int) where {T <: Real}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{jdouble}, Vector{IloNumVar}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{IloIntVar}, vars::Vector{IloIntVar})
+    return jcall(cp.cp, "scalProd", IloIntExpr, (Vector{IloIntVar}, Vector{IloIntVar}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{IloIntVar}, vars::Vector{IloIntVar}, start::Int, num::Int)
+    return jcall(cp.cp, "scalProd", IloIntExpr, (Vector{IloIntVar}, Vector{IloIntVar}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, vars::Vector{IloIntVar}, coefs::Vector{T}) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearIntExpr, (Vector{IloIntVar}, Vector{jint}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, vars::Vector{IloIntVar}, coefs::Vector{T}, start::Int, num::Int) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearIntExpr, (Vector{IloIntVar}, Vector{jint}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, vars::Vector{IloNumVar}, coefs::Vector{T}) where {T <: Real}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{IloNumVar}, Vector{jdouble}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, vars::Vector{IloNumVar}, coefs::Vector{T}, start::Int, num::Int) where {T <: Real}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{IloNumVar}, Vector{jdouble}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{IloNumVar}, vars::Vector{IloNumVar})
+    return jcall(cp.cp, "scalProd", IloNumExpr, (Vector{IloNumVar}, Vector{IloNumVar}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{IloNumVar}, vars::Vector{IloNumVar}, start::Int, num::Int)
+    return jcall(cp.cp, "scalProd", IloNumExpr, (Vector{IloNumVar}, Vector{IloNumVar}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::NumVarArray, vars::Vector{T}) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{IloNumVar}, Vector{jint}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{T}, vars::Vector{IloIntVar}) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearIntExpr, (Vector{jint}, Vector{IloIntVar}), coefs, vars)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, coefs::Vector{T}, vars::Vector{IloIntVar}, start::Int, num::Int) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearIntExpr, (Vector{jint}, Vector{IloIntVar}, jint, jint), coefs, vars, start, num)
+end
+
+function cpo_java_scalprod(cp::JavaCPOModel, vars::Vector{T}, coefs::NumVarArray) where {T <: Integer}
+    return jcall(cp.cp, "scalProd", IloLinearNumExpr, (Vector{IloNumVar}, Vector{jint}), coefs, vars)
+end
+
 function cpo_java_sizeeval(cp::JavaCPOModel, a::IloIntervalVar, f::IloNumToNumSegmentFunction)
     return jcall(cp.cp, "sizeEval", IloNumExpr, (IloIntervalVar, IloNumToNumSegmentFunction), a, f)
 end
@@ -458,6 +618,14 @@ end
 
 function cpo_java_sizeofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval::Integer, absval::Real)
     return jcall(cp.cp, "sizeOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jdouble), var_seq, var_interval, firstval, absval)
+end
+
+function cpo_java_square(cp::JavaCPOModel, e::IloIntExpr)
+    return jcall(cp.cp, "square", IloIntExpr, (IloIntExpr,), e)
+end
+
+function cpo_java_square(cp::JavaCPOModel, e::IloNumExpr)
+    return jcall(cp.cp, "square", IloNumExpr, (IloNumExpr,), e)
 end
 
 function cpo_java_standarddeviation(cp::JavaCPOModel, exprs::IntExprArray)
@@ -500,12 +668,28 @@ function cpo_java_startofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequence
     return jcall(cp.cp, "startOfPrevious", IloNumExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jdouble), var_seq, var_interval, firstval, absval)
 end
 
+function cpo_java_sum(cp::JavaCPOModel, v::Integer, expr::IntExpr)
+    return jcall(cp.cp, "sum", IloIntExpr, (jint, IloIntExpr), v, expr)
+end
+
 function cpo_java_sum(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "sum", IloIntExpr, (Vector{IloIntExpr},), exprs)
 end
 
+function cpo_java_sum(cp::JavaCPOModel, expr::IntExpr, v::Integer)
+    return jcall(cp.cp, "sum", IloIntExpr, (IloIntExpr, jint), expr, v)
+end
+
+function cpo_java_sum(cp::JavaCPOModel, v::Real, expr::NumExpr)
+    return jcall(cp.cp, "sum", IloNumExpr, (jdouble, IloNumExpr), v, expr)
+end
+
 function cpo_java_sum(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "sum", IloNumExpr, (Vector{IloNumExpr},), exprs)
+end
+
+function cpo_java_sum(cp::JavaCPOModel, expr::NumExpr, v::Real)
+    return jcall(cp.cp, "sum", IloNumExpr, (IloNumExpr, jdouble), expr, v)
 end
 
 function cpo_java_typeofnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, lastval::Integer)
@@ -1046,6 +1230,34 @@ function cpo_java_alwaysnostate(cp::JavaCPOModel, f::IloStateFunction, start::In
     return jcall(cp.cp, "alwaysNoState", IloConstraint, (IloStateFunction, jint, jint), f, start, end_)
 end
 
+function cpo_java_and(cp::JavaCPOModel)
+    return jcall(cp.cp, "and", IloAnd, ())
+end
+
+function cpo_java_and(cp::JavaCPOModel, constrs::ConstraintArray, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "and", IloAnd, (Vector{IloConstraint},), constrs)
+    else
+        return jcall(cp.cp, "and", IloAnd, (Vector{IloConstraint}, JString), constrs, name)
+    end
+end
+
+function cpo_java_and(cp::JavaCPOModel, constrs::ConstraintArray, start::Integer, num::Integer, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "and", IloAnd, (Vector{IloConstraint}, jint, jint), constrs, start, num)
+    else
+        return jcall(cp.cp, "and", IloAnd, (Vector{IloConstraint}, jint, jint, JString), constrs, start, num, name)
+    end
+end
+
+function cpo_java_and(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "and", IloAnd, (IloConstraint, IloConstraint, jint, jint), constr_a, constr_b)
+    else
+        return jcall(cp.cp, "and", IloAnd, (IloConstraint, IloConstraint, jint, jint, JString), constr_a, constr_b, name)
+    end
+end
+
 function cpo_java_before(cp::JavaCPOModel, seq::IloIntervalSequenceVar, pred::IloIntervalVar, succ::IloIntervalVar)
     return jcall(cp.cp, "before", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar, IloIntervalVar), seq, pred, succ)
 end
@@ -1114,6 +1326,30 @@ function cpo_java_endbeforestart(cp::JavaCPOModel, expr_a::IloIntervalVar, expr_
     return jcall(cp.cp, "endBeforeStart", IloConstraint, (IloIntervalVar, IloIntervalVar, IloIntExpr), expr_a, expr_b, expr_z)
 end
 
+function cpo_java_eq(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "eq", IloRange, (jdouble, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "eq", IloRange, (jdouble, IloNumExpr, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
+    if length(name) == 0
+        return jcall(cp.cp, "eq", IloRange, (IloNumExpr, jdouble), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "eq", IloRange, (IloNumExpr, jdouble, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
+    if length(name) == 0
+        return jcall(cp.cp, "eq", IloConstraint, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "eq", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr_a, expr_b, name)
+    end
+end
+
 function cpo_java_eq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "eq", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
@@ -1174,6 +1410,30 @@ function cpo_java_ge(cp::JavaCPOModel, vmin::Integer, f::IloCumulFunctionExpr)
     return jcall(cp.cp, "ge", IloConstraint, (jint, IloCumulFunctionExpr), vmin, f)
 end
 
+function cpo_java_ge(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "ge", IloRange, (jdouble, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "ge", IloRange, (jdouble, IloNumExpr, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_ge(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "ge", IloRange, (IloNumExpr, jdouble), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "ge", IloRange, (IloNumExpr, jdouble, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_ge(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "ge", IloConstraint, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "ge", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr_a, expr_b, name)
+    end
+end
+
 function cpo_java_ge(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "ge", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end
@@ -1196,6 +1456,14 @@ end
 
 function cpo_java_gt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "gt", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
+end
+
+function cpo_java_ifthen(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "ifThen", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
+    else
+        return jcall(cp.cp, "ifThen", IloConstraint, (IloConstraint, IloConstraint, JString), constr_a, constr_b, name)
+    end
 end
 
 function cpo_java_ifthenelse(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint, constr_c::Constraint)
@@ -1228,6 +1496,30 @@ end
 
 function cpo_java_last(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar)
     return jcall(cp.cp, "last", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar), var_seq, var_interval)
+end
+
+function cpo_java_le(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "le", IloRange, (jdouble, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "le", IloRange, (jdouble, IloNumExpr, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_le(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "le", IloRange, (IloNumExpr, jdouble), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "le", IloRange, (IloNumExpr, jdouble, JString), expr_a, expr_b, name)
+    end
+end
+
+function cpo_java_le(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "le", IloConstraint, (IloNumExpr, IloNumExpr), expr_a, expr_b)
+    else
+        return jcall(cp.cp, "le", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr_a, expr_b, name)
+    end
 end
 
 function cpo_java_le(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
@@ -1274,6 +1566,14 @@ function cpo_java_neq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
     return jcall(cp.cp, "neq", IloConstraint, (IloIntExpr, jint), expr_a, expr_b)
 end
 
+function cpo_java_not(cp::JavaCPOModel, constr::Constraint, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "not", IloConstraint, (IloConstraint), constr)
+    else
+        return jcall(cp.cp, "not", IloConstraint, (IloConstraint, JString), constr, name)
+    end
+end
+
 function cpo_java_nooverlap(cp::JavaCPOModel, seq::IloIntervalSequenceVar)
     return jcall(cp.cp, "noOverlap", IloNoOverlap, (IloIntervalSequenceVar,), seq)
 end
@@ -1302,6 +1602,34 @@ function cpo_java_nooverlap(cp::JavaCPOModel, vars::Vector{IloIntervalVar}, name
     end
 end
 
+function cpo_java_or(cp::JavaCPOModel)
+    return jcall(cp.cp, "or", IloOr, ())
+end
+
+function cpo_java_or(cp::JavaCPOModel, constrs::ConstraintArray, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "or", IloOr, (Vector{IloConstraint},), constrs)
+    else
+        return jcall(cp.cp, "or", IloOr, (Vector{IloConstraint}, JString), constrs, name)
+    end
+end
+
+function cpo_java_or(cp::JavaCPOModel, constrs::ConstraintArray, start::Integer, num::Integer, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "or", IloOr, (Vector{IloConstraint}, jint, jint), constrs, start, num)
+    else
+        return jcall(cp.cp, "or", IloOr, (Vector{IloConstraint}, jint, jint, JString), constrs, start, num, name)
+    end
+end
+
+function cpo_java_or(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "or", IloOr, (IloConstraint, IloConstraint, jint, jint), constr_a, constr_b)
+    else
+        return jcall(cp.cp, "or", IloOr, (IloConstraint, IloConstraint, jint, jint, JString), constr_a, constr_b, name)
+    end
+end
+
 function cpo_java_pack(cp::JavaCPOModel, expr_load::IntExprArray, expr_where::IntExprArray, weight::Vector{T}) where {T <: Integer}
     return jcall(cp.cp, "pack", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}, Vector{jint}), expr_load, expr_where, weight)
 end
@@ -1318,8 +1646,16 @@ function cpo_java_previous(cp::JavaCPOModel, seq::IloIntervalSequenceVar, prev::
     return jcall(cp.cp, "previous", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar, IloIntervalVar), seq, prev, next)
 end
 
-function cpo_java_range(cp::JavaCPOModel, expr, b::Real)
+function cpo_java_range(cp::JavaCPOModel, expr::NumExpr, b::Real)
     return jcall(cp.cp, "range", IloConstraint, (IloNumExpr, jdouble), expr, b)
+end
+
+function cpo_java_range(cp::JavaCPOModel, lb::Real, expr::NumExpr, ub::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "range", IloRange, (jdouble, IloNumExpr, jdouble), lb, expr, ub)
+    else
+        return jcall(cp.cp, "range", IloRange, (jdouble, IloNumExpr, jdouble, JString), lb, expr, ub, name)
+    end
 end
 
 function cpo_java_samecommonsubsequence(cp::JavaCPOModel, seq_1::IloIntervalSequenceVar, seq_2::IloIntervalSequenceVar, name::String="")
@@ -1436,8 +1772,16 @@ end
 
 ## Objective
 
-function cpo_java_maximize(cp::JavaCPOModel, expr::IloIntExpr)
+function cpo_java_maximize(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "maximize", IloObjective, (IloIntExpr,), expr)
+end
+
+function cpo_java_maximize(cp::JavaCPOModel, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "maximize", IloObjective, (IloNumExpr,), expr)
+    else
+        return jcall(cp.cp, "maximize", IloObjective, (IloNumExpr, JString), expr, name)
+    end
 end
 
 function cpo_java_maximize(cp::JavaCPOModel, expr::IloMultiCriterionExpr)
@@ -1446,6 +1790,14 @@ end
 
 function cpo_java_minimize(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "minimize", IloObjective, (IloIntExpr,), expr)
+end
+
+function cpo_java_minimize(cp::JavaCPOModel, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "minimize", IloObjective, (IloNumExpr,), expr)
+    else
+        return jcall(cp.cp, "minimize", IloObjective, (IloNumExpr, JString), expr, name)
+    end
 end
 
 function cpo_java_minimize(cp::JavaCPOModel, expr::IloMultiCriterionExpr)
@@ -1459,6 +1811,106 @@ function cpo_java_staticlex(cp::JavaCPOModel, criteria::NumExprArray, name::Stri
         return jcall(cp.cp, "staticLex", IloMultiCriterionExpr, (Vector{IloNumExpr}, JString), criteria, name)
     end
     # Other staticLex don't need to be mapped, just facility functions in Java for short arrays.
+end
+
+## Creation and addition
+
+function cpo_java_addeq(cp::JavaCPOModel, val::Real, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addEq", IloRange, (jdouble, IloNumExpr), val, expr)
+    else
+        return jcall(cp.cp, "addEq", IloRange, (jdouble, IloNumExpr, JString), val, expr, name)
+    end
+end
+
+function cpo_java_addeq(cp::JavaCPOModel, expr::NumExpr, val::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addEq", IloRange, (IloNumExpr, jdouble), expr, val)
+    else
+        return jcall(cp.cp, "addEq", IloRange, (IloNumExpr, jdouble, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addeq(cp::JavaCPOModel, expr::NumExpr, val::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addEq", IloConstraint, (IloNumExpr, IloNumExpr), expr, val)
+    else
+        return jcall(cp.cp, "addEq", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addge(cp::JavaCPOModel, val::Real, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addGe", IloRange, (jdouble, IloNumExpr), val, expr)
+    else
+        return jcall(cp.cp, "addGe", IloRange, (jdouble, IloNumExpr, JString), val, expr, name)
+    end
+end
+
+function cpo_java_addge(cp::JavaCPOModel, expr::NumExpr, val::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addGe", IloRange, (IloNumExpr, jdouble), expr, val)
+    else
+        return jcall(cp.cp, "addGe", IloRange, (IloNumExpr, jdouble, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addge(cp::JavaCPOModel, expr::NumExpr, val::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addGe", IloConstraint, (IloNumExpr, IloNumExpr), expr, val)
+    else
+        return jcall(cp.cp, "addGe", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addle(cp::JavaCPOModel, val::Real, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addLe", IloRange, (jdouble, IloNumExpr), val, expr)
+    else
+        return jcall(cp.cp, "addLe", IloRange, (jdouble, IloNumExpr, JString), val, expr, name)
+    end
+end
+
+function cpo_java_addle(cp::JavaCPOModel, expr::NumExpr, val::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addLe", IloRange, (IloNumExpr, jdouble), expr, val)
+    else
+        return jcall(cp.cp, "addLe", IloRange, (IloNumExpr, jdouble, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addle(cp::JavaCPOModel, expr::NumExpr, val::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addLe", IloConstraint, (IloNumExpr, IloNumExpr), expr, val)
+    else
+        return jcall(cp.cp, "addLe", IloConstraint, (IloNumExpr, IloNumExpr, JString), expr, val, name)
+    end
+end
+
+function cpo_java_addmaximize(cp::JavaCPOModel, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addMaximize", IloObjective, (IloNumExpr,), expr)
+    else
+        return jcall(cp.cp, "addMaximize", IloObjective, (IloNumExpr, JString), expr, name)
+    end
+end
+
+function cpo_java_addminimize(cp::JavaCPOModel, expr::NumExpr, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addMinimize", IloObjective, (IloNumExpr,), expr)
+    else
+        return jcall(cp.cp, "addMinimize", IloObjective, (IloNumExpr, JString), expr, name)
+    end
+end
+
+# TODO: addObjective? Redundant with the two previous ones.
+
+function cpo_java_addrange(cp::JavaCPOModel, lb::Real, expr::NumExpr, ub::Real, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "addRange", IloRange, (jdouble, IloNumExpr, jdouble), lb, expr, ub)
+    else
+        return jcall(cp.cp, "addRange", IloRange, (jdouble, IloNumExpr, jdouble, JString), lb, expr, ub, name)
+    end
 end
 
 ## Query solution and state
