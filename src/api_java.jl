@@ -11,7 +11,9 @@ const IloIntervalSequenceVar = JavaObject{Symbol("ilog.concert.IloIntervalSequen
 const IloNumVar = JavaObject{Symbol("ilog.concert.IloNumVar")}
 
 const IloIntExpr = JavaObject{Symbol("ilog.concert.IloIntExpr")}
+const IloLinearIntExpr = JavaObject{Symbol("ilog.concert.IloLinearIntExpr")}
 const IloNumExpr = JavaObject{Symbol("ilog.concert.IloNumExpr")}
+const IloLinearNumExpr = JavaObject{Symbol("ilog.concert.IloLinearNumExpr")}
 const IloIntTupleSet = JavaObject{Symbol("ilog.concert.IloIntTupleSet")}
 const IloNumToNumSegmentFunction = JavaObject{Symbol("ilog.concert.IloNumToNumSegmentFunction")}
 const IloNumToNumStepFunction = JavaObject{Symbol("ilog.concert.IloNumToNumStepFunction")}
@@ -39,9 +41,9 @@ const ConflictStatus = JavaObject{Symbol("ilog.concert.IloCP\$ConflictStatus")}
 
 # Unions of types to model Java type hierarchy.
 const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize, IloAnd, IloOr}
-const IntExpr = Union{IloIntVar, IloIntExpr, Constraint}
+const IntExpr = Union{IloIntVar, IloIntExpr, IloLinearIntExpr, Constraint}
 const NumVar = Union{IloIntVar, IloNumVar}
-const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr}
+const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr, IloLinearNumExpr}
 const Addable = Union{Constraint, IloObjective, IloMultiCriterionExpr}
 
 const ConstraintArray = Union{Vector{Constraint}, Vector{T} where {T <: Constraint}}
@@ -322,22 +324,6 @@ end
 
 function cpo_java_lengthofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval::Integer, absval::Integer)
     return jcall(cp.cp, "lengthOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jint), var_seq, var_interval, lastval, absval)
-end
-
-function cpo_java_linearintexpr(cp::JavaCPOModel)
-    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, ())
-end
-
-function cpo_java_linearintexpr(cp::JavaCPOModel, val::Integer)
-    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, (jint,), val)
-end
-
-function cpo_java_linearintexpr(cp::JavaCPOModel)
-    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, ())
-end
-
-function cpo_java_linearintexpr(cp::JavaCPOModel, val::Real)
-    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, (jdouble,), val)
 end
 
 function cpo_java_log(cp::JavaCPOModel, expr::NumExpr)
@@ -706,6 +692,160 @@ end
 
 function cpo_java_typeofprevious(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar, firstval::Integer, absval::Integer)
     return jcall(cp.cp, "typeOfPrevious", IloIntExpr, (IloIntervalSequenceVar, IloIntervalVar, jint, jint), var_seq, var_interval, firstval, absval)
+end
+
+## IloLinearIntExpr: functions
+
+function cpo_java_linearintexpr(cp::JavaCPOModel)
+    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, ())
+end
+
+function cpo_java_linearintexpr(cp::JavaCPOModel, val::Integer)
+    return jcall(cp.cp, "linearIntExpr", IloLinearIntExpr, (jint,), val)
+end
+
+function cpo_java_linearintexpr_add(cp::JavaCPOModel, lis::IloLinearIntExpr, sc::IloLinearIntExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "add", Nothing, (IloLinearIntExpr,), sc)
+end
+
+function cpo_java_linearintexpr_addterm(cp::JavaCPOModel, lis::IloLinearIntExpr, var::IloIntVar, coef::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerm", Nothing, (IloIntVar, jint), var, coef)
+end
+
+function cpo_java_linearintexpr_addterm(cp::JavaCPOModel, lis::IloLinearIntExpr, coef::Integer, var::IloIntVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerm", Nothing, (jint, IloIntVar), coef, var)
+end
+
+function cpo_java_linearintexpr_addterms(cp::JavaCPOModel, lis::IloLinearIntExpr, var::Vector{IloIntVar}, coef::Vector{T}) where {T <: Integer}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{IloIntVar}, Vector{jint}), var, coef)
+end
+
+function cpo_java_linearintexpr_addterms(cp::JavaCPOModel, lis::IloLinearIntExpr, var::Vector{IloIntVar}, coef::Vector{T}, start::Integer, num::Integer) where {T <: Integer}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{IloIntVar}, Vector{jint}, jint, jint), var, coef, start, num)
+end
+
+function cpo_java_linearintexpr_addterms(cp::JavaCPOModel, lis::IloLinearIntExpr, coef::Vector{T}, var::Vector{IloIntVar}) where {T <: Integer}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{jint}, Vector{IloIntVar}), coef, var)
+end
+
+function cpo_java_linearintexpr_addterms(cp::JavaCPOModel, lis::IloLinearIntExpr, coef::Vector{T}, var::Vector{IloIntVar}, start::Integer, num::Integer) where {T <: Integer}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{jint}, Vector{IloIntVar}, jint, jint), coef, var, start, num)
+end
+
+function cpo_java_linearintexpr_clear(cp::JavaCPOModel, lis::IloLinearIntExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "clear", Nothing, ())
+end
+
+function cpo_java_linearintexpr_getconstant(cp::JavaCPOModel, lis::IloLinearIntExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "getConstant", jint, ())
+end
+
+# TODO: linearIterator?
+
+function cpo_java_linearintexpr_remove(cp::JavaCPOModel, lis::IloLinearIntExpr, var::IloIntVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (IloIntVar,), var)
+end
+
+function cpo_java_linearintexpr_remove(cp::JavaCPOModel, lis::IloLinearIntExpr, var::Vector{IloIntVar})
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (Vector{IloIntVar},), var)
+end
+
+function cpo_java_linearintexpr_remove(cp::JavaCPOModel, lis::IloLinearIntExpr, var::Vector{IloIntVar}, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (Vector{IloIntVar}, jint, jint), var, start, num)
+end
+
+function cpo_java_linearintexpr_setconstant(cp::JavaCPOModel, lis::IloLinearIntExpr, val::Int)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "setConstant", Nothing, (jint,), val)
+end
+
+## IloLinearNumExpr: functions
+
+function cpo_java_linearnumexpr(cp::JavaCPOModel)
+    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, ())
+end
+
+function cpo_java_linearnumexpr(cp::JavaCPOModel, val::Real)
+    return jcall(cp.cp, "linearNumExpr", IloLinearNumExpr, (jdouble,), val)
+end
+
+function cpo_java_linearnumexpr_add(cp::JavaCPOModel, lis::IloLinearNumExpr, sc::IloLinearNumExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "add", Nothing, (IloLinearNumExpr,), sc)
+end
+
+function cpo_java_linearnumexpr_addterm(cp::JavaCPOModel, lis::IloLinearNumExpr, var::IloNumVar, coef::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerm", Nothing, (IloNumVar, jdouble), var, coef)
+end
+
+function cpo_java_linearnumexpr_addterm(cp::JavaCPOModel, lis::IloLinearNumExpr, coef::Integer, var::IloNumVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerm", Nothing, (jdouble, IloNumVar), coef, var)
+end
+
+function cpo_java_linearnumexpr_addterms(cp::JavaCPOModel, lis::IloLinearNumExpr, var::Vector{IloNumVar}, coef::Vector{T}) where {T <: Real}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{IloNumVar}, Vector{jdouble}), var, coef)
+end
+
+function cpo_java_linearnumexpr_addterms(cp::JavaCPOModel, lis::IloLinearNumExpr, var::Vector{IloNumVar}, coef::Vector{T}, start::Integer, num::Integer) where {T <: Real}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{IloNumVar}, Vector{jdouble}, jint, jint), var, coef, start, num)
+end
+
+function cpo_java_linearnumexpr_addterms(cp::JavaCPOModel, lis::IloLinearNumExpr, coef::Vector{T}, var::Vector{IloNumVar}) where {T <: Real}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{jdouble}, Vector{IloNumVar}), coef, var)
+end
+
+function cpo_java_linearnumexpr_addterms(cp::JavaCPOModel, lis::IloLinearNumExpr, coef::Vector{T}, var::Vector{IloNumVar}, start::Integer, num::Integer) where {T <: Real}
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "addTerms", Nothing, (Vector{jdouble}, Vector{IloNumVar}, jint, jint), coef, var, start, num)
+end
+
+function cpo_java_linearnumexpr_clear(cp::JavaCPOModel, lis::IloLinearNumExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "clear", Nothing, ())
+end
+
+function cpo_java_linearnumexpr_getconstant(cp::JavaCPOModel, lis::IloLinearNumExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "getConstant", jdouble, ())
+end
+
+# TODO: linearIterator?
+
+function cpo_java_linearnumexpr_remove(cp::JavaCPOModel, lis::IloLinearNumExpr, var::IloNumVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (IloNumVar,), var)
+end
+
+function cpo_java_linearnumexpr_remove(cp::JavaCPOModel, lis::IloLinearNumExpr, var::Vector{IloNumVar})
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (Vector{IloNumVar},), var)
+end
+
+function cpo_java_linearnumexpr_remove(cp::JavaCPOModel, lis::IloLinearNumExpr, var::Vector{IloNumVar}, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "remove", Nothing, (Vector{IloNumVar}, jint, jint), var, start, num)
+end
+
+function cpo_java_linearnumexpr_setconstant(cp::JavaCPOModel, lis::IloLinearNumExpr, val::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(lis, "setConstant", Nothing, (jdouble,), val)
 end
 
 ## IloIntTupleSet: functions
