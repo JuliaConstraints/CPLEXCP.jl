@@ -1913,53 +1913,119 @@ end
 ## IloAdd.
 
 function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::Constraint)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "add", IloConstraint, (IloConstraint,), constr)
 end
 
 function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "add", IloConstraint, (Vector{IloConstraint},), constr)
 end
 
 function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "add", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
 end
 
 function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::Constraint)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "remove", IloConstraint, (IloConstraint,), constr)
 end
 
 function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "remove", IloConstraint, (Vector{IloConstraint},), constr)
 end
 
 function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(and, "remove", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
 end
 
 ## IloOr.
 
 function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::Constraint)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "add", IloConstraint, (IloConstraint,), constr)
 end
 
 function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "add", IloConstraint, (Vector{IloConstraint},), constr)
 end
 
 function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "add", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
 end
 
 function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::Constraint)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "remove", IloConstraint, (IloConstraint,), constr)
 end
 
 function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "remove", IloConstraint, (Vector{IloConstraint},), constr)
 end
 
 function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray, start::Integer, num::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
     return jcall(or, "remove", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
+end
+
+## IloConstraint
+
+function cpo_java_addable_getname(cp::JavaCPOModel, addable::Addable)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(addable, "getName", JString, ())
+end
+
+function cpo_java_addable_setname(cp::JavaCPOModel, addable::Addable, name::String)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(addable, "setName", Nothing, (JString,), name)
+end
+
+## IloRange
+
+function cpo_java_range_clearexpr(cp::JavaCPOModel, range::IloRange)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "clearExpr", Nothing, ())
+end
+
+function cpo_java_range_getexpr(cp::JavaCPOModel, range::IloRange)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "getExpr", IloNumExpr, ())
+end
+
+function cpo_java_range_getlb(cp::JavaCPOModel, range::IloRange)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "getLB", jdouble, ())
+end
+
+function cpo_java_range_getub(cp::JavaCPOModel, range::IloRange)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "getUB", jdouble, ())
+end
+
+function cpo_java_range_setbounds(cp::JavaCPOModel, range::IloRange, lb::Real, ub::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "setBounds", Nothing, (jdouble, jdouble), lb, ub)
+end
+
+function cpo_java_range_setexpr(cp::JavaCPOModel, range::IloRange, expr::NumExpr)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "setExpr", Nothing, (IloNumExpr,), expr)
+end
+
+function cpo_java_range_setlb(cp::JavaCPOModel, range::IloRange, lb::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "setLB", Nothing, (jdouble,), lb)
+end
+
+function cpo_java_range_setub(cp::JavaCPOModel, range::IloRange, ub::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(range, "setUB", Nothing, (jdouble,), ub)
 end
 
 ## Objective
