@@ -353,5 +353,43 @@
             status = cpo_java_solve(model)
             @test status
         end
+
+        @testset "Facility" begin
+            # Model data.
+            nlocations = 5
+            nstores = 8
+            capacity = [3, 1, 2, 4, 1]
+            fixedcost = [480, 200, 320, 340, 300]
+            cost = [24 74 31 51 84
+                    57 54 86 61 68
+                    57 67 29 91 71
+                    54 54 65 82 94
+                    98 81 16 61 27
+                    13 92 34 94 87
+                    54 72 41 12 78
+                    54 64 65 89 89]
+
+            # Build the model.
+            model = cpo_java_model()
+            supplier = cpo_java_intvararray(model, nstores, 0, nlocations - 1)
+            open = cpo_java_boolvararray(model, nlocations)
+
+            for i in 1:nstores
+                cpo_java_add(model, cpo_java_eq(model, cpo_java_element(model, open, supplier[i]), 1))
+            end
+
+            for j in 1:nlocations
+                cpo_java_add(model, cpo_java_le(model, cpo_java_count(model, supplier, j), capacity[j]))
+            end
+
+            obj = cpo_java_scalprod(model, fixedcost, open)
+            for i in 1:nstores
+                obj = cpo_java_sum(model, IntExpr[obj, cpo_java_element(model, cost[i, :], supplier[i])])
+            end
+            cpo_java_add(model, cpo_java_minimize(model, obj))
+
+            status = cpo_java_solve(model)
+            @test status
+        end
     end
 end
