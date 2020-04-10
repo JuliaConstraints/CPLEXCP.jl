@@ -1,4 +1,6 @@
 @testset "Java API" begin
+    cpo_java_init()
+
     @testset "Unit tests" begin
         @testset "Type hierarchy" begin
             for T in [IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize]
@@ -28,7 +30,6 @@
         end
 
         @testset "Model initialisation" begin
-            cpo_java_init()
             model = cpo_java_model()
             @test typeof(model) == JavaCPOModel
         end
@@ -197,6 +198,157 @@
 
             obj = cpo_java_countdifferent(model, freq)
             cpo_java_minimize(model, obj)
+
+            status = cpo_java_solve(model)
+            @test status
+        end
+
+        @testset "Sports" begin
+            # Model data.
+            n = 10
+            nweeks = 2 * (n - 1)
+            ngamesperweek = Int(n / 2)
+            ngames = n * (n - 1)
+
+            function game(h::Int, a::Int, n::Int)
+                if a > h
+                    return h * (n - 1) + a - 1
+                else
+                    return h * (n - 1) + a
+                end
+            end
+
+            # Build the model.
+            model = cpo_java_model()
+            games = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
+            home = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
+            away = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
+
+            for i in 0:(nweeks - 1)
+                for j in 0:(ngamesperweek - 1)
+                    home[i, j] = cpo_java_intvar(model, 0, n - 1)
+                    away[i, j] = cpo_java_intvar(model, 0, n - 1)
+                    games[i, j] = cpo_java_intvar(model, 0, ngames - 1)
+                end
+            end
+
+            # For each play slot, set up correspondance between game id, home team, and away team
+            gha = cpo_java_inttable(model, 3)
+            for i in 0:(n - 1)
+                for j in 0:(n - 1)
+                    if i != j
+                        cpo_java_inttupleset_addtuple(model, gha, [i, j, game(i, j, n)])
+                    end
+                end
+            end
+
+            for i in 0:(nweeks - 1)
+                for j in 0:(ngamesperweek - 1)
+                    vars = [home[i, j], away[i, j], games[i, j]]
+                    cpo_java_add(model, cpo_java_allowedassignments(model, vars, gha))
+                end
+            end
+
+            # All teams play each week
+            for i in 0:(nweeks - 1)
+                teamsthisweek = Dict{Int, IloIntVar}() # n
+                for j in 0:(ngamesperweek - 1)
+                    teamsthisweek[j] = home[i, j]
+                    teamsthisweek[ngamesperweek + j] = away[i, j]
+                end
+                teamsthisweek_vec = [teamsthisweek[i] for i in 0:(n - 1)]
+                cpo_java_add(model, cpo_java_alldiff(model, teamsthisweek_vec))
+            end
+
+            # Dual representation: for each game id, the play slot is maintained
+            weekofgame = Dict{Int, IloIntVar}() # ngames
+            allgames = Dict{Int, IloIntVar}() # ngames
+            allslots = Dict{Int, IloIntVar}() # ngames
+
+            for i in 0:(ngames - 1)
+                weekofgame[i] = cpo_java_intvar(model, 0, nweeks - 1)
+                allslots[i] = cpo_java_intvar(model, 0, ngames - 1)
+            end
+
+            for i in 0:(nweeks - 1)
+                for j in 0:(ngamesperweek - 1)
+                    allgames[i * ngamesperweek + j] = games[i, j]
+                end
+            end
+            allgames_vec = [allgames[i] for i in 0:(ngames - 1)]
+            allslots_vec = [allslots[i] for i in 0:(ngames - 1)]
+            cpo_java_add(model, cpo_java_inverse(model, allgames_vec, allslots_vec))
+
+            for i in 0:(ngames - 1)
+                cpo_java_add(model, cpo_java_eq(model, weekofgame[i], cpo_java_div(model, allslots[i], ngamesperweek)))
+            end
+
+            # Two half schedules.  Cannot play the same pair twice in the same half.
+            # Plus, impose a minimum number of weeks between two games involving
+            # the same teams (up to six weeks)
+            mid = Int(nweeks / 2)
+            overlap = 0
+            if n >= 6
+                overlap = min(Int(n / 2), 6)
+            end
+
+            for i in 0:(n - 1)
+                for j in (i + 1):(n - 1)
+                    g1 = game(i, j, n)
+                    g2 = game(j, i, n)
+
+                    c = cpo_java_equiv(model, cpo_java_ge(model, weekofgame[g1], mid), cpo_java_lt(model, weekofgame[g2], mid))
+                    cpo_java_add(model, c)
+
+                    if (overlap != 0)
+                        c = cpo_java_ge(model, cpo_java_abs(model, cpo_java_diff(model, weekofgame[g1], weekofgame[g2])), overlap)
+                        cpo_java_add(model, c)
+                    end
+                end
+            end
+
+            # Can't have three homes or three aways in a row.
+            playhome = Dict{Tuple{Int, Int}, IloIntVar}() # n, nweeks
+            for i in 0:(n - 1)
+                for j in 0:(nweeks - 1)
+                    playhome[i, j] = cpo_java_boolvar(model)
+                    home_vec = [home[j, k] for k in 0:(ngamesperweek - 1)]
+                    cpo_java_add(model, cpo_java_eq(model, playhome[i, j], cpo_java_count(model, home_vec, i)))
+                end
+
+                for j in 0:(nweeks - 3 - 1)
+                    windowsum = cpo_java_sum(model, [playhome[i, k] for k in j:(j + 2)])
+                    cpo_java_add(model, cpo_java_ge(model, windowsum, 1))
+                    cpo_java_add(model, cpo_java_le(model, windowsum, 2))
+                end
+            end
+
+            # If we start the season home, we finish away and vice versa.
+            for i in 0:(n - 1)
+                cpo_java_add(model, cpo_java_neq(model, playhome[i, 0], playhome[i, nweeks - 1]))
+            end
+
+            # Objective is skipped, not useful for tests. Finds a solution in 0.5s on a powerful machine,
+            # no need for more complexity.
+
+            # Each team plays home the same number of times as away
+            for i in 0:(n - 1)
+                playhomesum = cpo_java_sum(model, [playhome[i, j] for j in 0:(nweeks - 1)])
+                cpo_java_add(model, cpo_java_eq(model, playhomesum, Int(nweeks / 2)))
+            end
+
+            # Teams are interchangeable. Fix first week. Also breaks reflection symmetry of the whole schedule.
+            for i in 0:(ngamesperweek - 1)
+                cpo_java_add(model, cpo_java_eq(model, home[0, i], i * 2))
+                cpo_java_add(model, cpo_java_eq(model, away[0, i], i * 2 + 1))
+            end
+
+            # Order of games in each week is arbitrary. Break symmetry by forcing an order.
+            for i in 0:(nweeks - 1)
+                for j in 1:(ngamesperweek - 1)
+                    cpo_java_add(model, cpo_java_gt(model, games[i, j], games[i, j - 1]))
+                end
+            end
 
             status = cpo_java_solve(model)
             @test status

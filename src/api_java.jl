@@ -90,6 +90,23 @@ end
 
 ## Variable creation
 
+# Boolean variables
+function cpo_java_boolvar(cp::JavaCPOModel, name::String="")
+    if length(name) == 0
+        return jcall(cp.cp, "boolVar", IloIntVar, ())
+    else
+        return jcall(cp.cp, "boolVar", IloIntVar, (JString,), name)
+    end
+end
+
+function cpo_java_boolvararray(cp::JavaCPOModel, n::T, name::String="") where {T <: Integer}
+    if length(name) == 0
+        return jcall(cp.cp, "boolVarArray", IloIntVar, (jint,), n)
+    else
+        return jcall(cp.cp, "boolVarArray", IloIntVar, (jint, JString), n, name)
+    end
+end
+
 # Integer variables
 function cpo_java_intvar(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Integer}
     return jcall(cp.cp, "intVar", IloIntVar, (jint, jint, JString), lb, ub, name)
@@ -103,21 +120,36 @@ function cpo_java_intvar(cp::JavaCPOModel, values::Vector{T}, name::String="") w
     end
 end
 
+function cpo_java_intvararray(cp::JavaCPOModel, n::T) where {T <: Integer}
+    return jcall(cp.cp, "intVarArray", Vector{IloIntVar}, (jint,), n)
+end
+
 function cpo_java_intvararray(cp::JavaCPOModel, n::T, lb::T, ub::T, name::String="") where {T <: Integer}
+    # Java API doesn't allow no name.
     return jcall(cp.cp, "intVarArray", Vector{IloIntVar}, (jint, jint, jint, JString), n, lb, ub, name)
 end
 
 function cpo_java_intvararray(cp::JavaCPOModel, n::T, values::Vector{T}, name::String="") where {T <: Integer}
+    # Java API doesn't allow no name.
     return jcall(cp.cp, "intVarArray", Vector{IloIntVar}, (jint, Vector{jint}, JString), n, values, name)
 end
 
 # Numerical variables
 function cpo_java_numvar(cp::JavaCPOModel, lb::T, ub::T, name::String="") where {T <: Real}
-    return jcall(cp.cp, "numVarArray", Vector{IloNumVar}, (jint, jdouble, jdouble, JString), 1, lb, ub, name)[1]
+    if length(name) == 0
+        return jcall(cp.cp, "numVar", IloNumVar, (jdouble, jdouble), lb, ub)
+    else
+        return jcall(cp.cp, "numVar", IloNumVar, (jdouble, jdouble, JString), lb, ub, name)
+    end
+    # TODO: IloNumVarType? Should not be required, as there is IntVar, BoolVar, NumVar.
 end
 
 function cpo_java_numvararray(cp::JavaCPOModel, n::Int, lb::T, ub::T, name::String="") where {T <: Real}
-    return jcall(cp.cp, "numVarArray", Vector{IloNumVar}, (jint, jdouble, jdouble, JString), n, lb, ub, name)
+    if length(name) == 0
+        return jcall(cp.cp, "numVarArray", Vector{IloNumVar}, (jint, jdouble, jdouble, JString), n, lb, ub, name)
+    else
+        return jcall(cp.cp, "numVarArray", Vector{IloNumVar}, (jint, jdouble, jdouble), n, lb, ub)
+    end
 end
 
 # Interval variables
@@ -495,11 +527,12 @@ end
 ## IloIntTupleSet: functions
 
 function cpo_java_inttable(cp::JavaCPOModel, dimension::Integer)
-    return jcall(cp.cp, "intTable", Vector{IloIntTupleSet}, (jint,), dimension)
+    return jcall(cp.cp, "intTable", IloIntTupleSet, (jint,), dimension)
 end
 
 function cpo_java_inttupleset_addtuple(cp::JavaCPOModel, its::IloIntTupleSet, tuple::Vector{T}) where {T <: Integer}
-    return jcall(cp.cp, "addTuple", Nothing, (Vector{IloIntTupleSet}, Vector{jint}), its, tuple)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(cp.cp, "addTuple", Nothing, (IloIntTupleSet, Vector{jint}), its, tuple)
 end
 
 function cpo_java_inttupleset_getarity(cp::JavaCPOModel, its::IloIntTupleSet)
@@ -933,8 +966,8 @@ function cpo_java_allowedassignments(cp::JavaCPOModel, expr::IntExprArray, value
     return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntExpr}, Vector{jint}), vars, values)
 end
 
-function cpo_java_allowedassignments(cp::JavaCPOModel, vars::Vector{IloIntVar}, values::Vector{IloIntTupleSet})
-    return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntVar}, Vector{IloIntTupleSet}), vars, values)
+function cpo_java_allowedassignments(cp::JavaCPOModel, vars::Vector{IloIntVar}, values::IloIntTupleSet)
+    return jcall(cp.cp, "allowedAssignments", IloConstraint, (Vector{IloIntVar}, IloIntTupleSet), vars, values)
 end
 
 function cpo_java_alternative(cp::JavaCPOModel, interval_a::IloIntervalVar, intervals_b::Vector{IloIntervalVar}, name::String="")
@@ -1094,7 +1127,7 @@ function cpo_java_eq(cp::JavaCPOModel, expr_a::IntExpr, expr_b::Integer)
 end
 
 function cpo_java_equiv(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constraint)
-    return jcall(cp.cp, "eq", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
+    return jcall(cp.cp, "equiv", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
 end
 
 function cpo_java_falseconstraint(cp::JavaCPOModel)
@@ -1173,8 +1206,8 @@ function cpo_java_imply(cp::JavaCPOModel, constr_a::Constraint, constr_b::Constr
     return jcall(cp.cp, "imply", IloConstraint, (IloConstraint, IloConstraint), constr_a, constr_b)
 end
 
-function cpo_java_inverse(cp::JavaCPOModel, constrs_a::ConstraintArray, constrs_b::ConstraintArray)
-    return jcall(cp.cp, "inverse", IloConstraint, (Vector{IloConstraint}, Vector{IloConstraint}), constrs_a, constrs_b)
+function cpo_java_inverse(cp::JavaCPOModel, f::IntExprArray, invf::IntExprArray)
+    return jcall(cp.cp, "inverse", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}), f, invf)
 end
 
 function cpo_java_isomorphism(cp::JavaCPOModel, vars_a::Vector{IloIntervalVar}, vars_b::Vector{IloIntervalVar}, name::String="")
