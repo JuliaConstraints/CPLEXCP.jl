@@ -78,7 +78,6 @@
 
     @testset "Integration tests" begin
         # Based on the provided examples, translated from Java.
-        # All that should be ported: https://perso.ensta-paris.fr/~diam/ro/online/cplex/cplex1271/CP_Optimizer/User_manual/topics/constraints_arithmetic_expr.html
 
         @testset "Color" begin
             model = cpo_java_model()
