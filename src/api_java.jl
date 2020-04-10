@@ -1910,6 +1910,58 @@ function cpo_java_trueconstraint(cp::JavaCPOModel)
     return jcall(cp.cp, "trueConstraint", IloConstraint, ())
 end
 
+## IloAdd.
+
+function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::Constraint)
+    return jcall(and, "add", IloConstraint, (IloConstraint,), constr)
+end
+
+function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray)
+    return jcall(and, "add", IloConstraint, (Vector{IloConstraint},), constr)
+end
+
+function cpo_java_and_add(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray, start::Integer, num::Integer)
+    return jcall(and, "add", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
+end
+
+function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::Constraint)
+    return jcall(and, "remove", IloConstraint, (IloConstraint,), constr)
+end
+
+function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray)
+    return jcall(and, "remove", IloConstraint, (Vector{IloConstraint},), constr)
+end
+
+function cpo_java_and_remove(cp::JavaCPOModel, and::IloAnd, constr::ConstraintArray, start::Integer, num::Integer)
+    return jcall(and, "remove", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
+end
+
+## IloOr.
+
+function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::Constraint)
+    return jcall(or, "add", IloConstraint, (IloConstraint,), constr)
+end
+
+function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray)
+    return jcall(or, "add", IloConstraint, (Vector{IloConstraint},), constr)
+end
+
+function cpo_java_or_add(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray, start::Integer, num::Integer)
+    return jcall(or, "add", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
+end
+
+function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::Constraint)
+    return jcall(or, "remove", IloConstraint, (IloConstraint,), constr)
+end
+
+function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray)
+    return jcall(or, "remove", IloConstraint, (Vector{IloConstraint},), constr)
+end
+
+function cpo_java_or_remove(cp::JavaCPOModel, or::IloOr, constr::ConstraintArray, start::Integer, num::Integer)
+    return jcall(or, "remove", IloConstraint, (Vector{IloConstraint}, jint, jint), constr, start, num)
+end
+
 ## Objective
 
 function cpo_java_maximize(cp::JavaCPOModel, expr::IntExpr)
