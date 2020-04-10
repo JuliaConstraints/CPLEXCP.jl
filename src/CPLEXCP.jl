@@ -12,6 +12,12 @@ if !@isdefined(libcplexcpojava)
     error("CPLEXCP not properly built. There probably was a problem when running Pkg.build(\"CPLEXCP\") or ]build CPLEXCP")
 end
 
+function __init__()
+    cpo_java_init()
+
+    # TODO: conflict refiner statuses and others too?
+end
+
 export cpo_java_init, JavaCPOModel,
        IloCP, IloIntVar, IloIntervalVar, IloIntervalSequenceVar, IloNumVar, IloIntExpr,
        IloNumExpr, IloIntTupleSet, IloNumToNumSegmentFunction, IloNumToNumStepFunction,

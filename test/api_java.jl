@@ -1,6 +1,4 @@
 @testset "Java API" begin
-    cpo_java_init()
-
     @testset "Unit tests" begin
         @testset "Type hierarchy" begin
             for T in [IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize]
