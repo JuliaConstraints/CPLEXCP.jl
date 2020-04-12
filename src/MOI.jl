@@ -48,6 +48,12 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     # VariableInfo also stores some additional fields like the type of variable.
     constraint_info::Dict{MOI.ConstraintIndex, ConstraintInfo}
 
+    # Memorise the objective sense and the function separately, as the Concert
+    # API forces to give both at the same time.
+    objective_sense::OptimizationSense
+    objective_function_cp::Union{Nothing, NumExpr}
+    objective_cp::Union{Nothing, IloObjective}
+
     # # Mappings from variable and constraint names to their indices. These are
     # # lazily built on-demand, so most of the time, they are `nothing`.
     # name_to_variable::Union{Nothing, Dict{String, Union{Nothing, MOI.VariableIndex}}}
@@ -69,6 +75,8 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
         model.variable_info = CleverDicts.CleverDict{MOI.VariableIndex, VariableInfo}()
         model.constraint_info = CleverDicts.CleverDict{MOI.ConstraintIndex, VariableInfo}()
+        model.objective_sense = MOI.FEASIBILITY_SENSE
+        model.objective_function = nothing
 
         MOI.empty!(model)
         return model
@@ -86,6 +94,8 @@ function MOI.empty!(model::Optimizer)
     # end
     empty!(model.variable_info)
     empty!(model.constraint_info)
+    model.objective_sense = MOI.FEASIBILITY_SENSE
+    model.objective_function = nothing
     return
 end
 
@@ -94,6 +104,8 @@ function MOI.is_empty(model::Optimizer)
     !isempty(model.name) && return false
     !isempty(model.variable_info) && return false
     !isempty(model.constraint_info) && return false
+    model.objective_sense != MOI.FEASIBILITY_SENSE && return false
+    model.objective_function !== nothing && return false
     return true
 end
 
@@ -309,3 +321,113 @@ function MOI.set(
     # model.name_to_variable = nothing
     return
 end
+
+## Expression parsing (not part of MOI API)
+
+function _parse(model::Optimizer, expr)
+    error("_parse not yet implemented for type: $(typeof(expr))")
+end
+
+function _parse(model::Optimizer, f::MOI.SingleVariable)
+    # A Concert Variable is already an expression.
+    return _info(model, f.variable).variable
+end
+
+function _parse(model::Optimizer, terms::Vector{MOI.ScalarAffineTerm{T}}) where {T <: Integer}
+    cp = model.inner.cp
+    coeffs = T[t.coefficient for t in terms.terms]
+    vars = NumVar[_info(model, t.variable_index).variable for t in terms.terms]
+    return cpo_java_scalprod(cp, coeffs, vars)
+end
+
+function _parse(model::Optimizer, f::MOI.ScalarAffineFunction{T}) where {T <: Integer}
+    f = MOI.Utilities.canonical(f)
+    e = _parse(model, f.terms)
+    if !iszero(f.constant)
+        cp = model.inner.cp
+        e = cpo_java_sum(cp, e, cpo_java_constant(cp, f.constant))
+    end
+    return e
+end
+
+function _parse(model::Optimizer, f::MOI.ScalarQuadraticFunction{T}) where {T <: Integer}
+    f = MOI.Utilities.canonical(f)
+    cp = model.inner.cp
+    e = _parse(model, f.quadratic_terms)
+    if length(f.affine_terms) > 0
+        e = cpo_java_sum(cp, e, _parse(model, f.affine_terms))
+    end
+    if !iszero(f.constant)
+        e = cpo_java_sum(cp, e, cpo_java_constant(cp, f.constant))
+    end
+end
+
+## Objective
+# TODO: what about @objective(m, Max, count(x .== 1))? Automatically add a constraint (i.e. bridge)? And/or support the constraint as a function?
+
+function _update_objective(model::Optimizer)
+    # If the sense is feasibility and there is an internal Concert objective, remove it.
+    # Otherwise, this is an optimisation problem.
+    if model.objective_sense == MOI.FEASIBILITY_SENSE && model.objective_cp !== nothing
+        cpo_java_remove(model.inner.cp, model.objective_cp)
+        model.objective_cp = nothing
+    end
+
+    # If only no function is available, don't do anything.
+    if model.objective_function_cp === nothing
+        return
+    end
+
+    # Set the new objective.
+    if model.objective_sense == MOI.MIN_SENSE
+        cpo_java_minimize(model.inner.cp, model.objective_function_cp)
+    else
+        cpo_java_maximize(model.inner.cp, model.objective_function_cp)
+    end
+end
+
+function MOI.set(model::Optimizer, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+    model.objective_sense = sense
+    _update_objective(model)
+    return
+end
+
+function MOI.get(model::Optimizer, ::MOI.ObjectiveSense)
+    return model.objective_sense
+end
+
+function MOI.set(
+    model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F
+) where {F <: MOI.SingleVariable}
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        convert(MOI.ScalarAffineFunction{Float64}, f)
+    )
+    model.objective_type = SINGLE_VARIABLE
+    return
+end
+
+function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: AbstractScalarFunction}
+    if model.objective_function <: T
+        return model.objective_function
+    else
+        error("Unable to get objective function. Current objective: $(model.objective_function).")
+    end
+end
+
+function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: AbstractScalarFunction}
+    model.objective_function_cp = _parse(f)
+    _update_objective(model)
+    return
+end
+
+# TODO: modifications. Easy to do, as we have a pointer on the Concert expression!
+# function MOI.modify(
+#     model::Optimizer,
+#     ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}},
+#     chg::MOI.ScalarConstantChange{Float64}
+# )
+#     CPLEX.c_api_chgobjoffset(model.inner, chg.new_constant)
+#     return
+# end

@@ -44,8 +44,8 @@ const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOve
 const IntExpr = Union{IloIntVar, IloIntExpr, IloLinearIntExpr, Constraint}
 const NumVar = Union{IloIntVar, IloNumVar}
 const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr, IloLinearNumExpr}
-const Addable = Union{Constraint, IloObjective, IloMultiCriterionExpr}
 const Variable = Union{NumVar, IloIntervalVar, IloIntervalSequenceVar}
+const Addable = Union{Constraint, IloObjective, IloMultiCriterionExpr, Variable, NumExpr}
 
 const ConstraintArray = Union{Vector{Constraint}, Vector{T} where {T <: Constraint}}
 const IntExprArray = Union{Vector{IntExpr}, Vector{T} where {T <: IntExpr}}
