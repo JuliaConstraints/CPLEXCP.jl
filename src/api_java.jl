@@ -45,12 +45,23 @@ const IntExpr = Union{IloIntVar, IloIntExpr, IloLinearIntExpr, Constraint}
 const NumVar = Union{IloIntVar, IloNumVar}
 const NumExpr = Union{IntExpr, IloNumVar, IloNumExpr, IloLinearNumExpr}
 const Addable = Union{Constraint, IloObjective, IloMultiCriterionExpr}
+const Variable = Union{NumVar, IloIntervalVar, IloIntervalSequenceVar}
 
 const ConstraintArray = Union{Vector{Constraint}, Vector{T} where {T <: Constraint}}
 const IntExprArray = Union{Vector{IntExpr}, Vector{T} where {T <: IntExpr}}
 const NumVarArray = Union{Vector{NumVar}, Vector{T} where {T <: NumVar}}
 const NumExprArray = Union{Vector{NumExpr}, Vector{T} where {T <: NumExpr}}
 const AddableArray = Union{Vector{Addable}, Vector{T} where {T <: Addable}}
+
+# Variable bounds. Name from C++ API, as they don't exist in Java.
+# const JavaDouble = @jimport java.lang.Double
+# const JavaInteger = @jimport java.lang.Integer
+# const IloInfinity = jfield(JavaDouble, "MAX_VALUE", jdouble)
+# const IloMaxInt = jfield(JavaInteger, "MAX_VALUE", jdouble)
+# const IloMinInt = jfield(JavaInteger, "MIN_VALUE", jdouble)
+const IloInfinity = typemax(Float64)
+const IloMaxInt = typemax(Int) # Platform-dependent value.
+const IloMinInt = typemin(Int)
 
 """
     cpo_java_init()
@@ -71,6 +82,8 @@ struct JavaCPOModel
 end
 
 function cpo_java_model()
+    # TODO: move this to JavaCPOModel constructor?
+
     # Getting access to the values is not possible before the JVM is started, i.e. before cpo_java_init() is called.
     # It is thus not possible to use const for these values, unfortunately. TODO: Or just hard-code the values?
     conflictstatus = @jimport ilog.cp.IloCP$ConflictStatus

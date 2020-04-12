@@ -1,7 +1,12 @@
 module CPLEXCP
 
 using JavaCall
+import MathOptInterface
 
+const MOI = MathOptInterface
+const CleverDicts = MOI.Utilities.CleverDicts
+
+# Check if the package has been built correctly.
 if isfile(joinpath(dirname(@__FILE__), "..", "deps", "deps.jl"))
     include("../deps/deps.jl")
 else
@@ -12,20 +17,24 @@ if !@isdefined(libcplexcpojava)
     error("CPLEXCP not properly built. There probably was a problem when running Pkg.build(\"CPLEXCP\") or ]build CPLEXCP")
 end
 
+# Initialise the package by setting the right parameters for Java. This assumes
+# no other code uses JavaCall...
 function __init__()
     cpo_java_init()
 
     # TODO: conflict refiner statuses and others too?
 end
 
+# Export the Java API.
 export cpo_java_init, JavaCPOModel,
        IloCP, IloIntVar, IloIntervalVar, IloIntervalSequenceVar, IloNumVar, IloIntExpr,
        IloNumExpr, IloIntTupleSet, IloNumToNumSegmentFunction, IloNumToNumStepFunction,
        IloCumulFunctionExpr, IloTransitionDistance, IloStateFunction, IloConstraint,
        IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize,
        IloObjective, IloMultiCriterionExpr, IloSolution, IloAddable, Callback, ConflictStatus,
-       Constraint, IntExpr, NumVar, NumExpr, Addable, ConstraintArray, IntExprArray,
+       Constraint, IntExpr, NumVar, NumExpr, Addable, Variable, ConstraintArray, IntExprArray,
        NumVarArray, NumExprArray, AddableArray,
+       IloInfinity, IloMaxInt, IloMinInt,
        cpo_java_model, cpo_java_release,
        cpo_java_boolvar, cpo_java_boolvararray,
        cpo_java_intvar, cpo_java_intvararray, cpo_java_numvar, cpo_java_numvararray,
@@ -141,6 +150,8 @@ export cpo_java_init, JavaCPOModel,
        cpo_java_importmodel, cpo_java_printinformation, cpo_java_remove, cpo_java_removeallcallbacks,
        cpo_java_removeallkpis, cpo_java_removecallback, cpo_java_removekpi, cpo_java_runseeds
 
+# Finally, the code.
 include("api_java.jl")
+include("MOI.jl")
 
 end # module
