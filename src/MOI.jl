@@ -5,8 +5,8 @@
     CONTINUOUS,
     BINARY,
     INTEGER,
-    # SEMIINTEGER, # TODO: Only for IloMPModeler; useful to support?
-    # SEMICONTINUOUS, # TODO: Only for IloMPModeler; useful to support?
+    # SEMIINTEGER, # TODO: Only for IloMPModeler; useful to support? Must be implemented from scratch...
+    # SEMICONTINUOUS, # TODO: Only for IloMPModeler; useful to support? Must be implemented from scratch...
     INTERVAL,
     SEQUENCEINTERVAL
 )
@@ -17,7 +17,11 @@ mutable struct VariableInfo
     name::String
     type::VariableType
 
-    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS)
+    # Variable bounds: either integers or floats. Needed for is_valid on SingleVariable and bound constraints.
+    lb::Real
+    ub::Real
+
+    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS, -IloInfinity, IloInfinity)
 end
 
 mutable struct ConstraintInfo
@@ -51,6 +55,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     # Memorise the objective sense and the function separately, as the Concert
     # API forces to give both at the same time.
     objective_sense::OptimizationSense
+    objective_function::Union{Nothing, MOI.AbstractScalarFunction}
     objective_function_cp::Union{Nothing, NumExpr}
     objective_cp::Union{Nothing, IloObjective}
 
@@ -59,6 +64,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     # name_to_variable::Union{Nothing, Dict{String, Union{Nothing, MOI.VariableIndex}}}
     # name_to_constraint_index::Union{Nothing, Dict{String, Union{Nothing, MOI.ConstraintIndex}}}
     # # TODO: Or rather use the solver's functionalities?
+    # # TODO: For SingleVariable-in-Anything, constraint names are never passed to the solver (handled as bounds on the variable).
 
     """
         Optimizer()
@@ -333,11 +339,31 @@ function _parse(model::Optimizer, f::MOI.SingleVariable)
     return _info(model, f.variable).variable
 end
 
-function _parse(model::Optimizer, terms::Vector{MOI.ScalarAffineTerm{T}}) where {T <: Integer}
+function _parse(model::Optimizer, f::MOI.VariableIndex)
+    return _info(model, f).variable
+end
+
+function _parse(model::Optimizer, terms::Vector{MOI.ScalarAffineTerm{T}}) where {T <: Real}
     cp = model.inner.cp
     coeffs = T[t.coefficient for t in terms.terms]
-    vars = NumVar[_info(model, t.variable_index).variable for t in terms.terms]
+    vars = NumVar[_parse(t.variable_index) for t in terms.terms]
     return cpo_java_scalprod(cp, coeffs, vars)
+end
+
+function _parse(model::Optimizer, terms::Vector{MOI.ScalarQuadraticTerm{T}}) where {T <: Real}
+    # IloCP.scalprod only works for unweighted vectors of variables, which is not always the case here.
+    cp = model.inner.cp
+
+    prod_vars(term::MOI.ScalarQuadraticTerm{T}) where {T <: Integer} =
+        cpo_java_prod(cp, _parse(term.variable_index_1), _parse(term.variable_index_2))
+    prod(term::MOI.ScalarQuadraticTerm{T}) where {T <: Integer} =
+        cpo_java_prod(cp, term.coefficient, prod_vars(term))
+
+    e = prod(terms[1])
+    for t in terms[2:end]
+        e = cpo_java_sum(cp, e, prod(t))
+    end
+    return e
 end
 
 function _parse(model::Optimizer, f::MOI.ScalarAffineFunction{T}) where {T <: Integer}
@@ -364,6 +390,7 @@ end
 
 ## Objective
 # TODO: what about @objective(m, Max, count(x .== 1))? Automatically add a constraint (i.e. bridge)? And/or support the constraint as a function?
+# TODO: -> rather all constraints, more consistent with how other solvers work.
 
 function _update_objective(model::Optimizer)
     # If the sense is feasibility and there is an internal Concert objective, remove it.
@@ -409,7 +436,7 @@ function MOI.set(
 end
 
 function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: AbstractScalarFunction}
-    if model.objective_function <: T
+    if model.objective_function <: F
         return model.objective_function
     else
         error("Unable to get objective function. Current objective: $(model.objective_function).")
@@ -417,12 +444,13 @@ function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: Abstr
 end
 
 function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: AbstractScalarFunction}
+    model.objective_function = f
     model.objective_function_cp = _parse(f)
     _update_objective(model)
     return
 end
 
-# TODO: modifications. Easy to do, as we have a pointer on the Concert expression!
+# TODO: modifications. Easy to do, as we have a pointer on the Concert expression! Hard to do, as the MOI function must be rebuilt.
 # function MOI.modify(
 #     model::Optimizer,
 #     ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}},
@@ -431,3 +459,250 @@ end
 #     CPLEX.c_api_chgobjoffset(model.inner, chg.new_constant)
 #     return
 # end
+
+## SingleVariable-in-set
+
+_get_lb(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+    cpo_java_numvar_getlb(model.inner.cp, _info(model, index))
+_get_lb(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+    cpo_java_intvar_getlb(model.inner.cp, _info(model, index))
+
+_get_ub(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+    cpo_java_numvar_getub(model.inner.cp, _info(model, index))
+_get_ub(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+    cpo_java_intvar_getub(model.inner.cp, _info(model, index))
+
+_has_lb(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+    _get_lb(model, index, Float64) != -IloInfinity
+_has_lb(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+    _get_lb(model, index, Int) != IloMinInt
+
+_has_ub(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+    _get_ub(model, index, Float64) != IloInfinity
+_has_ub(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+    _get_ub(model, index, Int) != IloMaxInt
+
+function _bounds_to_set(model::Optimizer, index::VariableIndex, ::Type{T}) where {T <: Real}
+    if _has_lb(model, index, T)
+        if _has_ub(model, index, T)
+            if _info(model, index).ub == _info(model, index).ub
+                return MOI.EqualTo{T}
+            else
+                return MOI.Interval{T}
+            end
+        else
+            return MOI.GreaterThan{T}
+        end
+    else
+        if _has_ub(model, index, T)
+            return MOI.LessThan{T}
+        else
+            # No bounds set!
+            return nothing
+        end
+    end
+end
+
+_assert_no_lb(model::Optimizer, i::VariableIndex, ::Type{T}) where {T <: Real} =
+    _has_lb(model, i, T) && throw(MOI.LowerBoundAlreadySet{_bounds_to_set(i, T), s}(i))
+_assert_no_ub(model::Optimizer, i::VariableIndex, ::Type{T}) where {T <: Real} =
+    _has_ub(model, i, T) && throw(MOI.UpperBoundAlreadySet{_bounds_to_set(i, T), s}(i))
+
+function _set_lb(model::Optimizer, index::MOI.VariableIndex, lb::Float64, ::Type{Float64})
+    info = _info(model, index)
+    info.lb = lb
+    cpo_java_numvar_setlb(model.inner.cp, info.variable, lb)
+end
+function _set_ub(model::Optimizer, index::MOI.VariableIndex, ub::Float64, ::Type{Float64})
+    info = _info(model, index)
+    info.ub = ub
+    cpo_java_numvar_setub(model.inner.cp, info.variable, ub)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _has_ub(model, c.variable, T)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _has_lb(model, c.variable, T)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _has_lb(model, c.variable, T) && _has_ub(model, c.variable, T)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _get_lb(model, c.variable, T) == _get_ub(model, c.variable, T)
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _info(model, c).type == BINARY
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}
+) where {T <: Real}
+    return MOI.is_valid(MOI.VariableIndex(c.value)) && _info(model, c).type == INTEGER
+end
+
+function MOI.get(
+    model::Optimizer, ::MOI.ConstraintFunction,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any}
+)
+    MOI.throw_if_not_valid(model, c)
+    return MOI.SingleVariable(MOI.VariableIndex(c.value))
+end
+
+function MOI.set(
+    model::Optimizer, ::MOI.ConstraintFunction,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any}, ::MOI.SingleVariable
+)
+    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
+end
+
+function MOI.add_constraint(
+    model::Optimizer, f::MOI.SingleVariable, s::MOI.LessThan{T}
+) where {T <: Real}
+    @assert _info(model, f.variable).type == (T == Float64) ? CONTINUOUS : INTEGER
+    _assert_no_ub(model, f.variable, T)
+    _set_ub(model, f.variable, s.upper, T)
+end
+
+function MOI.add_constraint(
+    model::Optimizer, f::MOI.SingleVariable, s::MOI.GreaterThan{T}
+) where {T <: Real}
+    @assert _info(model, f.variable).type == (T == Float64) ? CONTINUOUS : INTEGER
+    _assert_no_lb(model, f.variable, T)
+    _set_lb(model, f.variable, s.lower, T)
+end
+
+function MOI.add_constraint(
+    model::Optimizer, f::MOI.SingleVariable, s::MOI.EqualTo{T}
+) where {T <: Real}
+    @assert _info(model, f.variable).type == (T == Float64) ? CONTINUOUS : INTEGER
+    _assert_no_lb(model, f.variable, T)
+    _assert_no_ub(model, f.variable, T)
+    _set_lb(model, f.variable, s.value, T)
+    _set_ub(model, f.variable, s.value, T)
+end
+
+function MOI.add_constraint(
+    model::Optimizer, f::MOI.SingleVariable, s::MOI.Interval{T}
+) where {T <: Real}
+    @assert _info(model, f.variable).type == (T == Float64) ? CONTINUOUS : INTEGER
+    _assert_no_lb(model, f.variable, T)
+    _assert_no_ub(model, f.variable, T)
+    _set_lb(model, f.variable, s.lower, T)
+    _set_ub(model, f.variable, s.upper, T)
+end
+
+# No similar function for a vector of variables, no way to do it more efficiently.
+
+function MOI.delete(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
+end
+
+function MOI.delete(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+end
+
+function MOI.delete(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+end
+
+function MOI.delete(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    return MOI.GreaterThan(_get_lb(model, c.value))
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    return MOI.LessThan(_get_ub(model, c.value))
+end
+
+function MOI.get(
+    model::Optimizer, ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    return MOI.EqualTo(_get_ub(model, c.value))
+end
+
+function MOI.get(
+    model::Optimizer, ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}
+) where {T <: Real}
+    MOI.throw_if_not_valid(model, c)
+    return MOI.Interval(_get_lb(model, c.value), _get_ub(model, c.value))
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}
+)
+    MOI.throw_if_not_valid(model, c)
+    return MOI.ZeroOne()
+end
+
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}
+)
+    MOI.throw_if_not_valid(model, c)
+    return MOI.Integer()
+end
+
+# TODO: MOI.set?
+# TODO: make variable integer/binary?
+# TODO: constraint names here? They don't get passed to the solver.
+
+## ScalarAffineFunction-in-Set

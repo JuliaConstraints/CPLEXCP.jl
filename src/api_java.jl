@@ -209,6 +209,47 @@ function cpo_java_intervalsequencevar(cp::JavaCPOModel, intervalvararray::Vector
     end
 end
 
+# Getters and setters
+function cpo_java_numvar_getlb(cp::JavaCPOModel, var::IloNumVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "getLB", jdouble, ())
+end
+
+function cpo_java_numvar_getub(cp::JavaCPOModel, var::IloNumVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "getUB", jdouble, ())
+end
+
+function cpo_java_numvar_setlb(cp::JavaCPOModel, var::IloNumVar, value::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "setLB", Nothing, (jdouble,), value)
+end
+
+function cpo_java_numvar_setub(cp::JavaCPOModel, var::IloNumVar, value::Real)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "setUB", Nothing, (jdouble,), value)
+end
+
+function cpo_java_intvar_getlb(cp::JavaCPOModel, var::IloIntVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "getLB", jint, ())
+end
+
+function cpo_java_intvar_getub(cp::JavaCPOModel, var::IloIntVar)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "getUB", jint, ())
+end
+
+function cpo_java_intvar_setlb(cp::JavaCPOModel, var::IloIntVar, value::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "setLB", Nothing, (jint,), value)
+end
+
+function cpo_java_intvar_setub(cp::JavaCPOModel, var::IloIntVar, value::Integer)
+    # cp argument is useless, but kept to be consistent with the rest of the API.
+    return jcall(var, "setUB", Nothing, (jint,), value)
+end
+
 ## Expression creation
 
 function cpo_java_abs(cp::JavaCPOModel, var::IntExpr)
