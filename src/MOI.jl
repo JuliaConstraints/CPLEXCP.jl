@@ -27,6 +27,7 @@ end
 mutable struct ConstraintInfo
     index::MOI.ConstraintIndex
     constraint::Constraint
+    f::MOI.AbstractScalarFunction
     set::MOI.AbstractSet
     name::String
 
@@ -58,6 +59,10 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     objective_function::Union{Nothing, MOI.AbstractScalarFunction}
     objective_function_cp::Union{Nothing, NumExpr}
     objective_cp::Union{Nothing, IloObjective}
+
+    # Cache a solution.
+    cached_solution::Union{Nothing, IloSolution}
+    cached_solution_solve_time::Union{Nothing, Float64}
 
     # # Mappings from variable and constraint names to their indices. These are
     # # lazily built on-demand, so most of the time, they are `nothing`.
@@ -705,4 +710,103 @@ end
 # TODO: make variable integer/binary?
 # TODO: constraint names here? They don't get passed to the solver.
 
+## Constraint names
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintName, c::MOI.ConstraintIndex)
+    return _info(model, c).name
+end
+
+function MOI.set(model::Optimizer, ::MOI.ConstraintName, c::MOI.ConstraintIndex, name::String)
+    info = _info(model, c)
+    info.name = name
+    cpo_java_addable_setname(model.inner.cp, info.constraint, name)
+    return
+end
+
+# TODO: function MOI.get(model::Optimizer, ::Type{MOI.ConstraintIndex}, name::String)
+# TODO: function MOI.get(model::Optimizer, C::Type{MOI.ConstraintIndex{F, S}}, name::String)
+
 ## ScalarAffineFunction-in-Set
+## ScalarQuadraticFunction-in-Set
+
+function _info(
+    model::Optimizer,
+    key::MOI.ConstraintIndex
+)
+    if haskey(model.constraint_info, key.value)
+        return model.constraint_info[key.value]
+    end
+    throw(MOI.InvalidIndex(key))
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{F, S}
+) where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    info = get(model.constraint_info, c.value, nothing)
+    if info === nothing
+        return false
+    else
+        return typeof(info.set) == S
+    end
+end
+
+function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T})
+where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_gt(model.inner.cp, _parse(model, f), zero(T))
+    model.constraint_info[index] = ConstraintInfo(index, constr, s)
+    return index
+end
+
+function MOI.add_constraint(model::Optimizer, f::F, s::MOI.LessThan{T})
+where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_lt(model.inner.cp, _parse(model, f), zero(T))
+    model.constraint_info[index] = ConstraintInfo(index, constr, s)
+    return index
+end
+
+function MOI.add_constraint(model::Optimizer, f::F}, s::MOI.EqualTo{T})
+where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_eq(model.inner.cp, _parse(model, f), zero(T))
+    model.constraint_info[index] = ConstraintInfo(index, constr, s)
+    return index
+end
+
+# No vector of constraints, there is no more efficient way to do it.
+
+function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{F})
+where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    cpo_java_remove(model.inner.cp, _info(c).constraint)
+    delete!(model.constraint_info, c)
+    return
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{F, S})
+where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    return _info(c).set
+end
+
+# TODO: function MOI.set(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, S}, s::S) where {S}
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{F, S})
+where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    return _info(c).f
+end
+
+## VectorOfVariables-in-SOS{I|II}
+# Not available.
+
+## Optimize methods
+
+function MOI.optimize!(model::Optimizer)
+    model.cached_solution = nothing
+    model.cached_solution_solve_time = nothing
+
+    start_time = time()
+    cpo_java_solve(model.inner.cp)
+    solve_time = time() - start_time
+    model.cached_solution_solve_time = solve_time
+end
