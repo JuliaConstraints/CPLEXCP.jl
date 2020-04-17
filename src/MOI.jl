@@ -11,6 +11,12 @@
     SEQUENCEINTERVAL
 )
 
+@enum(
+    CallbackState,
+    CB_NONE
+    # Others at some point.
+)
+
 mutable struct VariableInfo
     index::MOI.VariableIndex
     variable::Variable
@@ -62,7 +68,11 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
     # Cache a solution.
     cached_solution::Union{Nothing, IloSolution}
+    cached_solution_state::Union{Nothing, Bool}
     cached_solution_solve_time::Union{Nothing, Float64}
+
+    # Handle callbacks. WIP.
+    callback_state::CallbackState
 
     # # Mappings from variable and constraint names to their indices. These are
     # # lazily built on-demand, so most of the time, they are `nothing`.
@@ -86,8 +96,17 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
         model.variable_info = CleverDicts.CleverDict{MOI.VariableIndex, VariableInfo}()
         model.constraint_info = CleverDicts.CleverDict{MOI.ConstraintIndex, VariableInfo}()
+
         model.objective_sense = MOI.FEASIBILITY_SENSE
         model.objective_function = nothing
+        model.objective_function_cp = nothing
+        model.objective_cp = nothing
+
+        model.cached_solution = nothing
+        model.cached_solution_state = nothing
+        model.cached_solution_solve_time = nothing
+
+        model.callback_state = CB_NONE
 
         MOI.empty!(model)
         return model
@@ -105,8 +124,17 @@ function MOI.empty!(model::Optimizer)
     # end
     empty!(model.variable_info)
     empty!(model.constraint_info)
+
     model.objective_sense = MOI.FEASIBILITY_SENSE
     model.objective_function = nothing
+    model.objective_function_cp = nothing
+    model.objective_cp = nothing
+
+    model.cached_solution = nothing
+    model.cached_solution_state = nothing
+    model.cached_solution_solve_time = nothing
+
+    model.callback_state = CB_NONE
     return
 end
 
@@ -117,6 +145,12 @@ function MOI.is_empty(model::Optimizer)
     !isempty(model.constraint_info) && return false
     model.objective_sense != MOI.FEASIBILITY_SENSE && return false
     model.objective_function !== nothing && return false
+    model.objective_function_cp !== nothing && return false
+    model.objective_cp !== nothing && return false
+    model.cached_solution !== nothing && return false
+    model.cached_solution_state !== nothing && return false
+    model.cached_solution_solve_time !== nothing && return false
+    model.callback_state != CB_NONE && return false
     return true
 end
 
@@ -806,7 +840,63 @@ function MOI.optimize!(model::Optimizer)
     model.cached_solution_solve_time = nothing
 
     start_time = time()
-    cpo_java_solve(model.inner.cp)
+    model.cached_solution_state = cpo_java_solve(model.inner.cp)
     solve_time = time() - start_time
     model.cached_solution_solve_time = solve_time
+end
+
+function _throw_if_optimize_in_progress(model, attr)
+    if model.callback_state != CB_NONE
+        throw(MOI.OptimizeInProgress(attr))
+    end
+end
+
+function MOI.get(model::Optimizer, attr::MOI.TerminationStatus)
+    _throw_if_optimize_in_progress(model, attr)
+    if model.cached_solution === nothing
+        return MOI.OPTIMIZE_NOT_CALLED
+    end
+
+    if model.cached_solution_state
+        return MOI.OPTIMAL
+    else
+        return MOI.INFEASIBLE
+    end
+
+    # TODO: exploit the attributes. 
+
+    # if stat == 1 # CPX_STAT_OPTIMAL
+    #     return MOI.OPTIMAL
+    # elseif stat == 3 # CPX_STAT_INFEASIBLE
+    #     return MOI.INFEASIBLE
+    # elseif stat == 4 # CPX_STAT_INForUNBD
+    #     return MOI.INFEASIBLE_OR_UNBOUNDED
+    # elseif stat == 2 # CPX_STAT_UNBOUNDED
+    #     return MOI.DUAL_INFEASIBLE
+    # elseif stat in (12, 21, 22, 36) # CPX_STAT_*ABORT*_OBJ_LIM
+    #     return MOI.OBJECTIVE_LIMIT
+    # elseif stat in (10, 34) # CPX_STAT_*ABORT_IT_LIM
+    #     return MOI.ITERATION_LIMIT
+    # elseif stat == 53 # CPX_STAT_CONFLICT_ABORT_NODE_LIM
+    #     return MOI.NODE_LIMIT
+    # elseif stat in (11, 25, 33, 39) # CPX_STAT_*ABORT*TIME_LIM
+    #     return MOI.TIME_LIMIT
+    # elseif stat == 5 # CPX_STAT_OPTIMAL_INFEAS
+    #     return MOI.NUMERICAL_ERROR
+    # # MIP STATUS
+    # elseif stat in (101, 102) # CPXMIP_OPTIMAL, CPXMIP_OPTIMAL_TOL
+    #     return MOI.OPTIMAL
+    # elseif stat == 103 # CPXMIP_INFEASIBLE
+    #     return MOI.INFEASIBLE
+    # elseif stat == 119 # CPXMIP_INForUNBD
+    #     return MOI.INFEASIBLE_OR_UNBOUNDED
+    # elseif stat == 118 # CPXMIP_UNBOUNDED
+    #     return MOI.DUAL_INFEASIBLE
+    # elseif stat in (105, 106) # CPXMIP_NODE_LIM*
+    #     return MOI.NODE_LIMIT
+    # elseif stat in (107, 108, 131, 132) # CPXMIP_*TIME_LIM*
+    #     return MOI.TIME_LIMIT
+    # else
+    #     return MOI.OTHER_ERROR
+    # end
 end
