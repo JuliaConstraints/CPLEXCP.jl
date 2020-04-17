@@ -63,7 +63,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
     # A mapping from the MOI.ConstraintIndex to the CPLEX variable object.
     # VariableInfo also stores some additional fields like the type of variable.
-    constraint_info::Dict{MOI.ConstraintIndex, ConstraintInfo}
+    constraint_info::CleverDicts.CleverDict{MOI.ConstraintIndex, ConstraintInfo}
 
     # Memorise the objective sense and the function separately, as the Concert
     # API forces to give both at the same time.
@@ -99,7 +99,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
         model.silent = false
 
         model.variable_info = CleverDicts.CleverDict{MOI.VariableIndex, VariableInfo}()
-        model.constraint_info = CleverDicts.CleverDict{MOI.ConstraintIndex, VariableInfo}()
+        model.constraint_info = CleverDicts.CleverDict{MOI.ConstraintIndex, ConstraintInfo}()
 
         model.objective_sense = MOI.FEASIBILITY_SENSE
         model.objective_function = nothing

@@ -5,13 +5,13 @@ const MOIB = MOI.Bridges
 const CONFIG = MOIT.TestConfig()
 
 const OPTIMIZER = CPLEXCP.Optimizer()
-MOI.set(OPTIMIZER, MOI.Silent(), true)
+# MOI.set(OPTIMIZER, MOI.Silent(), true)
 const BRIDGED_OPTIMIZER = MOI.Bridges.full_bridge_optimizer(OPTIMIZER, Float64)
 
 const CERTIFICATE_OPTIMIZER = CPLEXCP.Optimizer()
-MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
-MOI.set(CERTIFICATE_OPTIMIZER, MOI.RawParameter("CPX_PARAM_REDUCE"), 0)
-MOI.set(CERTIFICATE_OPTIMIZER, MOI.RawParameter("CPX_PARAM_PRELINEAR"), 0)
+# MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
+# MOI.set(CERTIFICATE_OPTIMIZER, MOI.RawParameter("CPX_PARAM_REDUCE"), 0)
+# MOI.set(CERTIFICATE_OPTIMIZER, MOI.RawParameter("CPX_PARAM_PRELINEAR"), 0)
 const BRIDGED_CERTIFICATE_OPTIMIZER =
     MOI.Bridges.full_bridge_optimizer(CERTIFICATE_OPTIMIZER, Float64)
 
