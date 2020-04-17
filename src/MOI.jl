@@ -67,7 +67,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
 
     # Memorise the objective sense and the function separately, as the Concert
     # API forces to give both at the same time.
-    objective_sense::OptimizationSense
+    objective_sense::MOI.OptimizationSense
     objective_function::Union{Nothing, MOI.AbstractScalarFunction}
     objective_function_cp::Union{Nothing, NumExpr}
     objective_cp::Union{Nothing, IloObjective}
@@ -275,15 +275,15 @@ function _make_vars(model::Optimizer, variables::Vector{Variable}, sets::Vector{
     return indices, cindices
 end
 
-function _make_numvar(model::Optimizer, set::AbstractScalarSet; lb::Float64=-IloInfinity, ub::Float64=IloInfinity)
+function _make_numvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Float64=-IloInfinity, ub::Float64=IloInfinity)
     return _make_var(model, cpo_java_numvar(model.inner, lb, ub))
 end
 
-function _make_intvar(model::Optimizer, set::AbstractScalarSet; lb::Int=-IloMinInt, ub::Int=IloMaxInt)
+function _make_intvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Int=-IloMinInt, ub::Int=IloMaxInt)
     return _make_var(model, cpo_java_intvar(model.inner, lb, ub))
 end
 
-function _make_boolvar(model::Optimizer, set::AbstractScalarSet)
+function _make_boolvar(model::Optimizer, set::MOI.AbstractScalarSet)
     return _make_var(model, cpo_java_boolvar(model.inner))
 end
 
@@ -482,7 +482,7 @@ function MOI.set(
     return
 end
 
-function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: AbstractScalarFunction}
+function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: MOI.AbstractScalarFunction}
     if model.objective_function <: F
         return model.objective_function
     else
@@ -490,7 +490,7 @@ function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: Abstr
     end
 end
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: AbstractScalarFunction}
+function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: MOI.AbstractScalarFunction}
     model.objective_function = f
     model.objective_function_cp = _parse(f)
     _update_objective(model)
@@ -509,27 +509,27 @@ end
 
 ## SingleVariable-in-set
 
-_get_lb(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+_get_lb(model::Optimizer, index::MOI.VariableIndex, ::Type{Float64}) =
     cpo_java_numvar_getlb(model.inner.cp, _info(model, index))
-_get_lb(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+_get_lb(model::Optimizer, index::MOI.VariableIndex, ::Type{Int}) =
     cpo_java_intvar_getlb(model.inner.cp, _info(model, index))
 
-_get_ub(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+_get_ub(model::Optimizer, index::MOI.VariableIndex, ::Type{Float64}) =
     cpo_java_numvar_getub(model.inner.cp, _info(model, index))
-_get_ub(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+_get_ub(model::Optimizer, index::MOI.VariableIndex, ::Type{Int}) =
     cpo_java_intvar_getub(model.inner.cp, _info(model, index))
 
-_has_lb(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+_has_lb(model::Optimizer, index::MOI.VariableIndex, ::Type{Float64}) =
     _get_lb(model, index, Float64) != -IloInfinity
-_has_lb(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+_has_lb(model::Optimizer, index::MOI.VariableIndex, ::Type{Int}) =
     _get_lb(model, index, Int) != IloMinInt
 
-_has_ub(model::Optimizer, index::VariableIndex, ::Type{Float64}) =
+_has_ub(model::Optimizer, index::MOI.VariableIndex, ::Type{Float64}) =
     _get_ub(model, index, Float64) != IloInfinity
-_has_ub(model::Optimizer, index::VariableIndex, ::Type{Int}) =
+_has_ub(model::Optimizer, index::MOI.VariableIndex, ::Type{Int}) =
     _get_ub(model, index, Int) != IloMaxInt
 
-function _bounds_to_set(model::Optimizer, index::VariableIndex, ::Type{T}) where {T <: Real}
+function _bounds_to_set(model::Optimizer, index::MOI.VariableIndex, ::Type{T}) where {T <: Real}
     if _has_lb(model, index, T)
         if _has_ub(model, index, T)
             if _info(model, index).ub == _info(model, index).ub
@@ -550,9 +550,9 @@ function _bounds_to_set(model::Optimizer, index::VariableIndex, ::Type{T}) where
     end
 end
 
-_assert_no_lb(model::Optimizer, i::VariableIndex, ::Type{T}) where {T <: Real} =
+_assert_no_lb(model::Optimizer, i::MOI.VariableIndex, ::Type{T}) where {T <: Real} =
     _has_lb(model, i, T) && throw(MOI.LowerBoundAlreadySet{_bounds_to_set(i, T), s}(i))
-_assert_no_ub(model::Optimizer, i::VariableIndex, ::Type{T}) where {T <: Real} =
+_assert_no_ub(model::Optimizer, i::MOI.VariableIndex, ::Type{T}) where {T <: Real} =
     _has_ub(model, i, T) && throw(MOI.UpperBoundAlreadySet{_bounds_to_set(i, T), s}(i))
 
 function _set_lb(model::Optimizer, index::MOI.VariableIndex, lb::Float64, ::Type{Float64})
@@ -666,7 +666,7 @@ function MOI.delete(
     c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}
 ) where {T <: Real}
     MOI.throw_if_not_valid(model, c)
-    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt, T)
 end
 
 function MOI.delete(
@@ -674,8 +674,8 @@ function MOI.delete(
     c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}
 ) where {T <: Real}
     MOI.throw_if_not_valid(model, c)
-    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
-    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt, T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt, T)
 end
 
 function MOI.delete(
@@ -683,8 +683,8 @@ function MOI.delete(
     c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}
 ) where {T <: Real}
     MOI.throw_if_not_valid(model, c)
-    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
-    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt, T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt, T)
 end
 
 function MOI.delete(
@@ -692,8 +692,8 @@ function MOI.delete(
     c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}
 ) where {T <: Real}
     MOI.throw_if_not_valid(model, c)
-    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt), T)
-    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt), T)
+    _set_ub(model, f.variable, (T == Float64) ? IloInfinity : IloMaxInt, T)
+    _set_lb(model, f.variable, (T == Float64) ? -IloInfinity : IloMinInt, T)
 end
 
 function MOI.get(
@@ -793,24 +793,27 @@ function MOI.is_valid(
     end
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T})
-where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.add_constraint(
+        model::Optimizer, f::F, s::MOI.GreaterThan{T}
+) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_gt(model.inner.cp, _parse(model, f), zero(T))
     model.constraint_info[index] = ConstraintInfo(index, constr, s)
     return index
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.LessThan{T})
-where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.add_constraint(
+        model::Optimizer, f::F, s::MOI.LessThan{T}
+) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_lt(model.inner.cp, _parse(model, f), zero(T))
     model.constraint_info[index] = ConstraintInfo(index, constr, s)
     return index
 end
 
-function MOI.add_constraint(model::Optimizer, f::F}, s::MOI.EqualTo{T})
-where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.add_constraint(
+        model::Optimizer, f::F, s::MOI.EqualTo{T}
+) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_eq(model.inner.cp, _parse(model, f), zero(T))
     model.constraint_info[index] = ConstraintInfo(index, constr, s)
@@ -819,8 +822,9 @@ end
 
 # No vector of constraints, there is no more efficient way to do it.
 
-function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{F})
-where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.delete(
+        model::Optimizer, c::MOI.ConstraintIndex{F}
+) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     cpo_java_remove(model.inner.cp, _info(c).constraint)
     delete!(model.constraint_info, c)
     return
@@ -1055,11 +1059,11 @@ _type_enums(::Type{<:MOI.Semicontinuous}) = (SEMICONTINUOUS,)
 _type_enums(::Type{<:MOI.Semiinteger}) = (SEMIINTEGER,)
 _type_enums(::Any) = (nothing,)
 
-_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.LessThan{T}}) where T = _has_ub(model, idx, T)
-_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.GreaterThan{T}}) where T = _has_lb(model, idx, T)
-_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.Interval{T}}) where T = _has_lb(model, idx, T) && _has_ub(model, idx, T)
-_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.EqualTo{T}}) where T = _get_lb(model, idx, T) == _get_ub(model, idx, T)
-_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Any) = false
+_check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Type{<:MOI.LessThan{T}}) where T = _has_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Type{<:MOI.GreaterThan{T}}) where T = _has_lb(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Type{<:MOI.Interval{T}}) where T = _has_lb(model, idx, T) && _has_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Type{<:MOI.EqualTo{T}}) where T = _get_lb(model, idx, T) == _get_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Any) = false
 
 function MOI.get(
     model::Optimizer, ::MOI.ListOfConstraintIndices{MOI.SingleVariable, S}
