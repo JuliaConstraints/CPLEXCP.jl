@@ -66,10 +66,8 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     objective_function_cp::Union{Nothing, NumExpr}
     objective_cp::Union{Nothing, IloObjective}
 
-    # Cache a solution.
-    cached_solution::Union{Nothing, IloSolution}
+    # Cache parts of a solution.
     cached_solution_state::Union{Nothing, Bool}
-    cached_solution_solve_time::Union{Nothing, Float64}
 
     # Handle callbacks. WIP.
     callback_state::CallbackState
@@ -102,10 +100,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
         model.objective_function_cp = nothing
         model.objective_cp = nothing
 
-        model.cached_solution = nothing
         model.cached_solution_state = nothing
-        model.cached_solution_solve_time = nothing
-
         model.callback_state = CB_NONE
 
         MOI.empty!(model)
@@ -130,10 +125,7 @@ function MOI.empty!(model::Optimizer)
     model.objective_function_cp = nothing
     model.objective_cp = nothing
 
-    model.cached_solution = nothing
     model.cached_solution_state = nothing
-    model.cached_solution_solve_time = nothing
-
     model.callback_state = CB_NONE
     return
 end
@@ -147,9 +139,7 @@ function MOI.is_empty(model::Optimizer)
     model.objective_function !== nothing && return false
     model.objective_function_cp !== nothing && return false
     model.objective_cp !== nothing && return false
-    model.cached_solution !== nothing && return false
     model.cached_solution_state !== nothing && return false
-    model.cached_solution_solve_time !== nothing && return false
     model.callback_state != CB_NONE && return false
     return true
 end
@@ -836,13 +826,8 @@ end
 ## Optimize methods
 
 function MOI.optimize!(model::Optimizer)
-    model.cached_solution = nothing
-    model.cached_solution_solve_time = nothing
-
-    start_time = time()
     model.cached_solution_state = cpo_java_solve(model.inner.cp)
-    solve_time = time() - start_time
-    model.cached_solution_solve_time = solve_time
+    return
 end
 
 function _throw_if_optimize_in_progress(model, attr)
@@ -853,7 +838,7 @@ end
 
 function MOI.get(model::Optimizer, attr::MOI.TerminationStatus)
     _throw_if_optimize_in_progress(model, attr)
-    if model.cached_solution === nothing
+    if model.cached_solution_state === nothing
         return MOI.OPTIMIZE_NOT_CALLED
     end
 
@@ -863,7 +848,7 @@ function MOI.get(model::Optimizer, attr::MOI.TerminationStatus)
         return MOI.INFEASIBLE
     end
 
-    # TODO: exploit the attributes. 
+    # TODO: exploit the attributes.
 
     # if stat == 1 # CPX_STAT_OPTIMAL
     #     return MOI.OPTIMAL
@@ -899,4 +884,216 @@ function MOI.get(model::Optimizer, attr::MOI.TerminationStatus)
     # else
     #     return MOI.OTHER_ERROR
     # end
+end
+
+function MOI.get(model::Optimizer, attr::MOI.PrimalStatus)
+    _throw_if_optimize_in_progress(model, attr)
+    if model.cached_solution_state
+        return MOI.FEASIBLE_POINT
+    else
+        return MOI.NO_SOLUTION
+    end
+end
+
+function MOI.get(model::Optimizer, attr::MOI.VariablePrimal, x::MOI.VariableIndex)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    variable = _info(model, x).variable
+    return cpo_java_getvalue(model.inner.cp, variable)
+end
+
+function MOI.get(
+    model::Optimizer, attr::MOI.ConstraintPrimal,
+    c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any}
+)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    return MOI.get(model, MOI.VariablePrimal(), MOI.VariableIndex(c.value))
+end
+
+function MOI.get(model::Optimizer, attr::MOI.ConstraintPrimal, c::MOI.ConstraintIndex)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    constraint = _info(model, x).constraint # IloConstraint <: IloIntExpr
+    return cpo_java_getvalue(model.inner.cp, constraint)
+end
+
+# No dual values are available.
+
+function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    return cpo_java_getobjvalue(model.inner.cp)
+end
+
+function MOI.get(model::Optimizer, attr::MOI.ObjectiveBound)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    return cpo_java_getobjbound(model.inner.cp)
+end
+
+# TODO
+# function MOI.get(model::Optimizer, attr::MOI.SolveTime)
+#     _throw_if_optimize_in_progress(model, attr)
+#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.DoubleInfo.html#SolveTime
+# end
+
+# No SimplexIterations or BarrierIterations.
+
+# TODO
+# function MOI.get(model::Optimizer, attr::MOI.NodeCount)
+#     _throw_if_optimize_in_progress(model, attr)
+#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntInfo.html#NumberOfBranches
+# end
+
+function MOI.get(model::Optimizer, attr::MOI.RelativeGap)
+    _throw_if_optimize_in_progress(model, attr)
+    MOI.check_result_index_bounds(model, attr)
+    return cpo_java_getobjgap(model.inner.cp)
+end
+
+# No DualObjectiveValue.
+
+function MOI.get(model::Optimizer, ::MOI.Silent)
+    return model.silent
+end
+
+# TODO
+# function MOI.get(model::Optimizer, attr::MOI.ResultCount)
+#     _throw_if_optimize_in_progress(model, attr)
+#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntInfo.html#NumberOfSolutions
+# end
+
+# TODO
+# function MOI.set(model::Optimizer, ::MOI.Silent, flag::Bool)
+#     model.silent = flag
+#     MOI.set(model, MOI.RawParameter("CPX_PARAM_SCRIND"), flag ? 0 : 1)
+#     return
+# end
+
+# TODO
+# function MOI.get(model::Optimizer, ::MOI.NumberOfThreads)
+#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntParam.html#Workers
+#     return Int(MOI.get(model, MOI.RawParameter("CPX_PARAM_THREADS")))
+# end
+
+# TODO
+# function MOI.set(model::Optimizer, ::MOI.NumberOfThreads, x::Int)
+#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntParam.html#Workers
+#     return MOI.set(model, MOI.RawParameter("CPX_PARAM_THREADS"), x)
+# end
+
+function MOI.get(model::Optimizer, ::MOI.Name)
+    return model.name
+end
+
+function MOI.set(model::Optimizer, ::MOI.Name, name::String)
+    model.name = name
+    cpo_java_setname(model.inner.cp, name)
+    return
+end
+
+function MOI.get(model::Optimizer, ::MOI.NumberOfVariables)
+    return length(model.variable_info)
+end
+
+function MOI.get(model::Optimizer, ::MOI.ListOfVariableIndices)
+    return sort!(collect(keys(model.variable_info)), by = x -> x.value)
+end
+
+function MOI.get(model::Optimizer, ::MOI.RawSolver)
+    return model.inner
+end
+
+# # TODO: initial values (also for constraints?). Use these values in optimize!?
+# function MOI.set(
+#     model::Optimizer,
+#     ::MOI.VariablePrimalStart,
+#     x::MOI.VariableIndex,
+#     value::Union{Nothing, Float64}
+# )
+#     info = _info(model, x)
+#     info.start = value
+#     return
+# end
+#
+# function MOI.get(
+#     model::Optimizer, ::MOI.VariablePrimalStart, x::MOI.VariableIndex
+# )
+#     return _info(model, x).start
+# end
+#
+# function MOI.supports(
+#     ::Optimizer, ::MOI.VariablePrimalStart, ::Type{MOI.VariableIndex})
+#     return true
+# end
+
+function MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{F, S}) where {F, S}
+    # TODO: this could be more efficient.
+    return length(MOI.get(model, MOI.ListOfConstraintIndices{F, S}()))
+end
+
+_type_enums(::Type{MOI.ZeroOne}) = (BINARY,)
+_type_enums(::Type{MOI.Integer}) = (INTEGER,)
+_type_enums(::Type{<:MOI.Semicontinuous}) = (SEMICONTINUOUS,)
+_type_enums(::Type{<:MOI.Semiinteger}) = (SEMIINTEGER,)
+_type_enums(::Any) = (nothing,)
+
+_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.LessThan{T}}) where T = _has_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.GreaterThan{T}}) where T = _has_lb(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.Interval{T}}) where T = _has_lb(model, idx, T) && _has_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Type{<:MOI.EqualTo{T}}) where T = _get_lb(model, idx, T) == _get_ub(model, idx, T)
+_check_bound_compatible(model::Optimizer, idx::VariableIndex, ::Any) = false
+
+function MOI.get(
+    model::Optimizer, ::MOI.ListOfConstraintIndices{MOI.SingleVariable, S}
+) where {S}
+    indices = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
+    for (key, info) in model.variable_info
+        if _check_bound_compatible(model, key, S) || info.type in _type_enums(S)
+            push!(indices, MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value))
+        end
+    end
+    return sort!(indices, by = x -> x.value)
+end
+
+function MOI.get(model::Optimizer, ::MOI.ListOfConstraintIndices{F, S}) where {F, S}
+    indices = MOI.ConstraintIndex{F, S}[]
+    for (key, info) in model.constraint_info
+        if typeof(info.set) == S
+            push!(indices, MOI.ConstraintIndex{F, S}(key))
+        end
+    end
+    return sort!(indices, by = x -> x.value)
+end
+
+# No SOS1/SOS2.
+# TODO: SOCP.
+
+function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
+    constraints = Set{Tuple{DataType, DataType}}()
+
+    for info in values(model.variable_info)
+        if _get_lb(model, info.index, T) == _get_ub(model, info.index, T)
+            push!(constraints, (MOI.SingleVariable, MOI.EqualTo{typeof(_get_lb(model, info.index, T))}))
+        elseif _has_lb(model, idx, T) && _has_ub(model, idx, T)
+            push!(constraints, (MOI.SingleVariable, MOI.Interval{typeof(_get_lb(model, info.index, T))}))
+        elseif _has_ub(model, idx, T)
+            push!(constraints, (MOI.SingleVariable, MOI.LessThan{typeof(_get_lb(model, info.index, T))}))
+        elseif _has_lb(model, idx, T)
+            push!(constraints, (MOI.SingleVariable, MOI.GreaterThan{typeof(_get_lb(model, info.index, T))}))
+        end
+        if info.type == CONTINUOUS
+        elseif info.type == BINARY
+            push!(constraints, (MOI.SingleVariable, MOI.ZeroOne))
+        elseif info.type == INTEGER
+            push!(constraints, (MOI.SingleVariable, MOI.Integer))
+        end
+    end
+
+    for (key, info) in model.constraint_info
+        push!(constraints, (info.f, info.set))
+    end
+
+    return collect(constraints)
 end

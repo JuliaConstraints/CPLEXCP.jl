@@ -2307,6 +2307,10 @@ function cpo_java_getmin(cp::JavaCPOModel, var::NumVar)
     return jcall(cp.cp, "getMin", jdouble, (IloNumVar,), var)
 end
 
+function cpo_java_getname(cp::JavaCPOModel)
+    return jcall(cp.cp, "getName", JString, ())
+end
+
 function cpo_java_getnext(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_interval::IloIntervalVar)
     return jcall(cp.cp, "getNext", IloIntervalVar, (IloIntervalSequenceVar, IloIntervalVar), var_seq, var_interval)
 end
@@ -2371,7 +2375,7 @@ function cpo_java_getvalue(cp::JavaCPOModel, expr::IloIntVar)
     return jcall(cp.cp, "getValue", jdouble, (IloIntVar,), expr)
 end
 
-function cpo_java_getvalue_numexpr(cp::JavaCPOModel, expr::NumExpr)
+function cpo_java_getvalue(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "getValue", jdouble, (IloNumExpr,), expr)
 end
 
@@ -2433,6 +2437,10 @@ end
 
 function cpo_java_restore(cp::JavaCPOModel, solution::IloSolution)
     return Bool(jcall(cp.cp, "restore", jboolean, (IloSolution,), solution))
+end
+
+function cpo_java_setname(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "setName", Nothing, (JString,), name)
 end
 
 function cpo_java_solve(cp::JavaCPOModel)
