@@ -27,7 +27,13 @@ mutable struct VariableInfo
     lb::Real
     ub::Real
 
-    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS, -IloInfinity, IloInfinity)
+    # For second-order cones, the variable must be constrained to be >= 0.
+    # However, when removing all cones this variable participates in,
+    # the previous lower bound must be restored.
+    n_socs::Int
+    old_lb::Union{Nothing, Real}
+
+    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS, -IloInfinity, IloInfinity, 0, nothing)
 end
 
 mutable struct ConstraintInfo
@@ -37,7 +43,7 @@ mutable struct ConstraintInfo
     set::MOI.AbstractSet
     name::String
 
-    ConstraintInfo(index::MOI.ConstraintIndex, constraint::Constraint, set::MOI.AbstractSet) = new(index, constraint, set, "")
+    ConstraintInfo(index::MOI.ConstraintIndex, constraint::Constraint, f::MOI.AbstractScalarFunction, set::MOI.AbstractSet) = new(index, constraint, f, set, "")
 end
 
 mutable struct Optimizer <: MOI.AbstractOptimizer
@@ -415,6 +421,18 @@ function _parse(model::Optimizer, f::MOI.ScalarQuadraticFunction{T}) where {T <:
     if !iszero(f.constant)
         e = cpo_java_sum(cp, e, cpo_java_constant(cp, f.constant))
     end
+end
+
+function _parse(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.SecondOrderCone)
+    # SOC is the cone: t ≥ ||x||₂ ≥ 0. In quadratic form, this is
+    # t² - Σᵢ xᵢ² ≥ 0 and t ≥ 0.
+    # This function returns the expression t² - Σᵢ xᵢ².
+    vars = [_info(model, v) for v in f.variables]
+    e = cpo_java_square(model, vars[1].variable)
+    for i in 2:length(vars)
+        e = cpo_java_diff(model, e, vars[i].variable)
+    end
+    return r
 end
 
 ## Objective
@@ -808,15 +826,13 @@ where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFun
     return
 end
 
-function MOI.get(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{F, S})
-where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.get(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{F, S}) where {S, F}
     return _info(c).set
 end
 
 # TODO: function MOI.set(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, S}, s::S) where {S}
 
-function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{F, S})
-where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{F, S}) where {S, F}
     return _info(c).f
 end
 
@@ -1097,3 +1113,82 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
 
     return collect(constraints)
 end
+
+function MOI.get(model::Optimizer, ::MOI.ObjectiveFunctionType)
+    if model.objective_sense == MOI.FEASIBILITY_SENSE
+        return nothing
+    else
+        return typeof(model.objective_function)
+    end
+end
+
+# TODO: modify the objective and the constraints.
+
+# ConstraintBasisStatus makes no sense.
+
+## VectorOfVariables-in-SecondOrderCone
+
+function MOI.add_constraint(
+    model::Optimizer, f::MOI.VectorOfVariables, s::MOI.SecondOrderCone
+)
+    if length(f.variables) != s.dimension
+        error("Dimension of $(s) does not match number of terms in $(f)")
+    end
+
+    # SOC is the cone: t ≥ ||x||₂ ≥ 0. In quadratic form, this is
+    # t² - Σᵢ xᵢ² ≥ 0 and t ≥ 0.
+
+    # First, check the lower bound on t.
+    t_info = _info(model, f.variables[1])
+    if !_has_lb(model, t_info.index, Float64) || _get_lb(model, t_info.index, Float64) < 0.0
+        if _get_lb(model, t_info.index, Float64) < 0.0
+            t_info.old_lb = _get_lb(model, t_info.index, Float64)
+        end
+
+        t_info.n_socs += 1
+        _set_lb(model, t_info.index, 0.0, Float64)
+    end
+
+    # Then, add the quadratic constraint.
+    cindex = MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}(length(model.constraint_info) + 1)
+    expr = _parse(f, s)
+    constr = cpo_java_ge(model, expr, 0)
+    model.constraint_info[cindex] = ConstraintInfo(cindex, constr, f, s)
+    return cindex
+end
+
+function MOI.is_valid(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}
+)
+    info = get(model.constraint_info, c.value, nothing)
+    return info !== nothing && typeof(info.set) == MOI.SecondOrderCone
+end
+
+function MOI.delete(
+    model::Optimizer,
+    c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}
+)
+    # Remove the constraint.
+    cpo_java_remove(model, _info(model, c).constraint)
+
+    # Maybe restore the old bound on t.
+    t_info = _info(model, f.variables[1])
+    t_info.n_socs -= 1
+
+    if t_info.n_socs == 0
+        _set_lb(model, t_info.index, t_info.old_lb, typeof(t_info.old_lb))
+        t_info.old_lb = nothing
+    end
+
+    return
+end
+
+function MOI.get(
+    model::Optimizer, ::MOI.ConstraintSet,
+    c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}
+)
+    return _info(model, c).set
+end
+
+# ConstraintFunction, ConstraintPrimal, and ConstraintName handled in the most generic case.
