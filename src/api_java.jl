@@ -724,6 +724,10 @@ function cpo_java_sum(cp::JavaCPOModel, v::Real, expr::NumExpr)
     return jcall(cp.cp, "sum", IloNumExpr, (jdouble, IloNumExpr), v, expr)
 end
 
+function cpo_java_sum(cp::JavaCPOModel, v::NumExpr, expr::NumExpr)
+    return jcall(cp.cp, "sum", IloNumExpr, (IloNumExpr, IloNumExpr), v, expr)
+end
+
 function cpo_java_sum(cp::JavaCPOModel, exprs::NumExprArray)
     return jcall(cp.cp, "sum", IloNumExpr, (Vector{IloNumExpr},), exprs)
 end
@@ -1528,7 +1532,7 @@ function cpo_java_eq(cp::JavaCPOModel, expr_a::Real, expr_b::NumExpr, name::Stri
     end
 end
 
-function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "eq", IloRange, (IloNumExpr, jdouble), expr_a, expr_b)
     else
@@ -1536,7 +1540,7 @@ function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::Real)
     end
 end
 
-function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr)
+function cpo_java_eq(cp::JavaCPOModel, expr_a::NumExpr, expr_b::NumExpr, name::String="")
     if length(name) == 0
         return jcall(cp.cp, "eq", IloConstraint, (IloNumExpr, IloNumExpr), expr_a, expr_b)
     else
