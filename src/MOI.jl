@@ -104,9 +104,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
         model = new()
         model.inner = cpo_java_model()
 
-        # TODO: set the solver to silent.
-        # MOI.set(model, MOI.RawParameter("CPXPARAM_ScreenOutput"), 1)
-        model.silent = false
+        MOI.set(model, MOI.Silent(), false)
 
         model.variable_info = CleverDicts.CleverDict{MOI.VariableIndex, VariableInfo}()
         model.constraint_info = Dict{MOI.ConstraintIndex, ConstraintInfo}()
@@ -148,7 +146,6 @@ function MOI.empty!(model::Optimizer)
     return
 end
 
-
 function MOI.is_empty(model::Optimizer)
     !isempty(model.name) && return false
     !isempty(model.variable_info) && return false
@@ -157,8 +154,8 @@ function MOI.is_empty(model::Optimizer)
     model.objective_function !== nothing && return false
     model.objective_function_cp !== nothing && return false
     model.objective_cp !== nothing && return false
-    !isempty(model.name_to_variable) && return false
-    !isempty(model.name_to_constraint) && return false
+    model.name_to_variable !== nothing && return false
+    model.name_to_constraint !== nothing && return false
     model.cached_solution_state !== nothing && return false
     model.callback_state != CB_NONE && return false
     return true
@@ -221,8 +218,8 @@ MOI.supports(::Optimizer, ::MOI.VariableName, ::Type{MOI.VariableIndex}) = true
 MOI.supports(::Optimizer, ::MOI.ConstraintName, ::Type{<:MOI.ConstraintIndex}) = true
 
 MOI.supports(::Optimizer, ::MOI.Name) = true
-MOI.supports(::Optimizer, ::MOI.Silent) = true # TODO
-MOI.supports(::Optimizer, ::MOI.NumberOfThreads) = true # TODO
+MOI.supports(::Optimizer, ::MOI.Silent) = true
+MOI.supports(::Optimizer, ::MOI.NumberOfThreads) = true
 MOI.supports(::Optimizer, ::MOI.TimeLimitSec) = true # TODO
 MOI.supports(::Optimizer, ::MOI.ObjectiveSense) = true
 MOI.supports(::Optimizer, ::MOI.RawParameter) = true # TODO
@@ -896,7 +893,7 @@ function _rebuild_name_to_constraint(model::Optimizer)
 
     # Other constraints.
     for (index, info) in model.constraint_info
-        _rebuild_name_to_constraint_add!(model, info.name, MOI.ConstraintIndex{typeof(info.f), typeof(info.set)}(key.value))
+        _rebuild_name_to_constraint_add!(model, info.name, MOI.ConstraintIndex{typeof(info.f), typeof(info.set)}(index.value))
     end
 
     return
@@ -1106,30 +1103,27 @@ function MOI.get(model::Optimizer, ::MOI.Silent)
     return model.silent
 end
 
-# TODO
-# function MOI.get(model::Optimizer, attr::MOI.ResultCount)
-#     _throw_if_optimize_in_progress(model, attr)
-#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntInfo.html#NumberOfSolutions
-# end
+function MOI.get(model::Optimizer, attr::MOI.ResultCount)
+    _throw_if_optimize_in_progress(model, attr)
+    return cpo_java_getintinfo(model.inner, "NumberOfSolutions")
+end
 
-# TODO
-# function MOI.set(model::Optimizer, ::MOI.Silent, flag::Bool)
-#     model.silent = flag
-#     MOI.set(model, MOI.RawParameter("CPX_PARAM_SCRIND"), flag ? 0 : 1)
-#     return
-# end
+function MOI.set(model::Optimizer, ::MOI.Silent, flag::Bool)
+    model.silent = flag
+    cpo_java_setintparameter(model.inner, "LogVerbosity", flag ? "Normal" : "Quiet")
+    return
+end
 
-# TODO
-# function MOI.get(model::Optimizer, ::MOI.NumberOfThreads)
-#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntParam.html#Workers
-#     return Int(MOI.get(model, MOI.RawParameter("CPX_PARAM_THREADS")))
-# end
+function MOI.get(model::Optimizer, ::MOI.NumberOfThreads)
+    _throw_if_optimize_in_progress(model, attr)
+    return cpo_java_getintparam(model.inner, "Workers")
+end
 
-# TODO
-# function MOI.set(model::Optimizer, ::MOI.NumberOfThreads, x::Int)
-#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntParam.html#Workers
-#     return MOI.set(model, MOI.RawParameter("CPX_PARAM_THREADS"), x)
-# end
+function MOI.set(model::Optimizer, ::MOI.NumberOfThreads, x::Int)
+    _throw_if_optimize_in_progress(model, attr)
+    cpo_java_setintparameter(model.inner, "Workers", x)
+    return
+end
 
 function MOI.get(model::Optimizer, ::MOI.Name)
     return model.name

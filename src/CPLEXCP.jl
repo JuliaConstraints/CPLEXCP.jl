@@ -150,7 +150,10 @@ export cpo_java_init, JavaCPOModel,
        cpo_java_solution_store, cpo_java_dumpmodel, cpo_java_exportmodel, cpo_java_getbuildid,
        cpo_java_getconflict_constraint, cpo_java_getconflict_intervalval, cpo_java_getconflict_numvar,
        cpo_java_importmodel, cpo_java_printinformation, cpo_java_remove, cpo_java_removeallcallbacks,
-       cpo_java_removeallkpis, cpo_java_removecallback, cpo_java_removekpi, cpo_java_runseeds
+       cpo_java_removeallkpis, cpo_java_removecallback, cpo_java_removekpi, cpo_java_runseeds,
+       cpo_java_getintinfo, cpo_java_getdoubleinfo, cpo_java_getdoubleparameter,
+       cpo_java_getdoubledefaultparameter, cpo_java_getintparameter, cpo_java_getintdefaultparameter,
+       cpo_java_setdoubleparameter, cpo_java_setintparameter
 
 # Finally, the code.
 include("api_java.jl")

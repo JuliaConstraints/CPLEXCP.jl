@@ -39,6 +39,12 @@ const IloAddable = JavaObject{Symbol("ilog.concert.IloAddable")}
 const Callback = JavaObject{Symbol("ilog.cp.IloCP\$Callback")}
 const ConflictStatus = JavaObject{Symbol("ilog.concert.IloCP\$ConflictStatus")}
 
+const IloDoubleInfo = JavaObject{Symbol("ilog.cp.IloCP\$DoubleInfo")} # No need to export
+const IloIntInfo = JavaObject{Symbol("ilog.cp.IloCP\$IntInfo")} # No need to export
+const IloDoubleParam = JavaObject{Symbol("ilog.cp.IloCP\$DoubleParam")} # No need to export
+const IloIntParam = JavaObject{Symbol("ilog.cp.IloCP\$IntParam")} # No need to export
+const IloParameterValues = JavaObject{Symbol("ilog.cp.IloCP\$ParameterValues")} # No need to export
+
 # Unions of types to model Java type hierarchy.
 const Constraint = Union{IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize, IloAnd, IloOr}
 const IntExpr = Union{IloIntVar, IloIntExpr, IloLinearIntExpr, Constraint}
@@ -2842,3 +2848,56 @@ function cpo_java_runseeds(cp::JavaCPOModel, n::Integer)
 end
 
 # TODO: searchPhase
+
+## Parameters
+# This section deviates from the Java API, as binding all parameters would
+# create a lot of functions. Moreover, these values must be loaded at runtime,
+# i.e. in the __init__ function.
+# Hence, take as input the string name of the parameter, as defined in IntParam,
+# DoubleParam, or their info twins.
+
+function cpo_java_getintinfo(cp::JavaCPOModel, name::String)
+    param = jfield(IloIntInfo, name, IloIntInfo)
+    return jcall(cp.cp, "getInfo", jint, (IloIntInfo,), param)
+end
+
+function cpo_java_getdoubleinfo(cp::JavaCPOModel, name::String)
+    param = jfield(IloDoubleInfo, name, IloDoubleInfo)
+    return jcall(cp.cp, "getInfo", jdouble, (IloDoubleInfo,), param)
+end
+
+function cpo_java_getdoubleparameter(cp::JavaCPOModel, name::String)
+    param = jfield(IloDoubleParam, name, IloDoubleParam)
+    return jcall(cp.cp, "getParameter", jdouble, (IloDoubleParam,), param)
+end
+
+function cpo_java_getdoubledefaultparameter(cp::JavaCPOModel, name::String)
+    param = jfield(IloDoubleParam, name, IloDoubleParam)
+    return jcall(cp.cp, "getParameterDefault", jdouble, (IloDoubleParam,), param)
+end
+
+function cpo_java_getintparameter(cp::JavaCPOModel, name::String)
+    param = jfield(IloIntParam, name, IloIntParam)
+    return jcall(cp.cp, "getParameter", jint, (IloIntParam,), param)
+end
+
+function cpo_java_getintdefaultparameter(cp::JavaCPOModel, name::String)
+    param = jfield(IloIntParam, name, IloIntParam)
+    return jcall(cp.cp, "getParameterDefault", jint, (IloIntParam,), param)
+end
+
+function cpo_java_setdoubleparameter(cp::JavaCPOModel, name::String, value::Real)
+    param = jfield(IloDoubleParam, name, IloDoubleParam)
+    return jcall(cp.cp, "setParameter", Nothing, (IloIntParam, jdouble), param, value)
+end
+
+function cpo_java_setintparameter(cp::JavaCPOModel, name::String, value::String)
+    param = jfield(IloIntParam, name, IloIntParam)
+    field = jfield(IloParameterValues, value, IloParameterValues)
+    return jcall(cp.cp, "setParameter", Nothing, (IloIntParam, IloParameterValues), param, field)
+end
+
+function cpo_java_setintparameter(cp::JavaCPOModel, name::String, value::Int)
+    param = jfield(IloIntParam, name, IloIntParam)
+    return jcall(cp.cp, "setParameter", Nothing, (IloIntParam, jint), param, value)
+end
