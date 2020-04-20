@@ -27,6 +27,8 @@ mutable struct VariableInfo
     # Variable bounds: either integers or floats. Needed for is_valid on SingleVariable and bound constraints.
     lb::Real
     ub::Real
+    integer::Union{Nothing, Tuple{MOI.VariableIndex, MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}, Constraint}}
+    binary::Union{Nothing, Tuple{MOI.VariableIndex, MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}, Constraint}}
 
     # Bound-constraint names.
     lb_name::String
@@ -42,7 +44,7 @@ mutable struct VariableInfo
     n_socs::Int
     old_lb::Union{Nothing, Real}
 
-    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS, -IloInfinity, IloInfinity, "", "", "", "", "", "", 0, nothing)
+    VariableInfo(index::MOI.VariableIndex, variable::Variable) = new(index, variable, "", CONTINUOUS, -IloInfinity, IloInfinity, nothing, nothing, "", "", "", "", "", "", 0, nothing)
 end
 
 mutable struct ConstraintInfo
@@ -182,8 +184,9 @@ function MOI.supports_constraint(::Optimizer, ::Type{MOI.SingleVariable}, ::Type
     MOI.EqualTo{Int}, # TODO: Int (platform-dependent) or Int64?
     MOI.LessThan{Int},
     MOI.GreaterThan{Int},
-    MOI.Interval{Int}
-    # No ZeroOne or Integer, this is supposed to be done when creating a variable.
+    MOI.Interval{Int},
+    MOI.ZeroOne,
+    MOI.Integer
 }}
     return true
 end
@@ -270,7 +273,7 @@ end
 
 function _make_var(model::Optimizer, variable::Variable, set::MOI.AbstractScalarSet)
     index = _make_var(model, variable)
-    return index, MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(index)
+    return index, MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(index.value)
 end
 
 function _make_vars(model::Optimizer, variables::Vector{<:Variable})
@@ -508,11 +511,12 @@ function _update_objective(model::Optimizer)
     end
 
     # Set the new objective.
-    if model.objective_sense == MOI.MIN_SENSE
+    obj = if model.objective_sense == MOI.MIN_SENSE
         cpo_java_minimize(model.inner, model.objective_function_cp)
     else
         cpo_java_maximize(model.inner, model.objective_function_cp)
     end
+    cpo_java_add(model.inner, obj)
 end
 
 function MOI.set(model::Optimizer, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
@@ -639,12 +643,24 @@ function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariabl
     return MOI.is_valid(model, index) && _get_lb(model, index, T) == _get_ub(model, index, T)
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}) where {T <: Real}
-    return MOI.is_valid(model, MOI.VariableIndex(c.value)) && _info(model, c).type == BINARY
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne})
+    if !MOI.is_valid(model, MOI.VariableIndex(c.value))
+        return false
+    end
+
+    index = MOI.VariableIndex(c.value)
+    info = _info(model, index)
+    return info.type == BINARY || info.binary !== nothing
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer}) where {T <: Real}
-    return MOI.is_valid(model, MOI.VariableIndex(c.value)) && _info(model, c).type == INTEGER
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer})
+    if !MOI.is_valid(model, MOI.VariableIndex(c.value))
+        return false
+    end
+
+    index = MOI.VariableIndex(c.value)
+    info = _info(model, index)
+    return info.type == INTEGER || info.integer !== nothing
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
@@ -703,6 +719,34 @@ function MOI.add_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.Inte
     return MOI.ConstraintIndex{MOI.SingleVariable, typeof(s)}(f.variable.value)
 end
 
+function MOI.add_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.ZeroOne)
+    info = _info(model, f.variable)
+    @assert info.type == CONTINUOUS || info.type == INTEGER
+    @assert info.binary === nothing
+
+    # Bad trick: create a binary variable, impose equality. Don't show this variable to MOI, though.
+    bindex, cindex = MOI.add_constrained_variable(model, MOI.ZeroOne())
+    eqcstr = cpo_java_eq(model.inner, info.variable, _info(model, bindex).variable)
+    cpo_java_add(model.inner, eqcstr)
+    info.binary = (bindex, cindex, eqcstr)
+
+    return MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}(f.variable.value)
+end
+
+function MOI.add_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.Integer)
+    info = _info(model, f.variable)
+    @assert info.type == CONTINUOUS
+    @assert info.integer === nothing
+
+    # Bad trick: create an integer variable, impose equality. Don't show this variable to MOI, though.
+    bindex, cindex = MOI.add_constrained_variable(model, MOI.Integer())
+    eqcstr = cpo_java_eq(model.inner, info.variable, _info(model, bindex).variable)
+    cpo_java_add(model.inner, eqcstr)
+    info.integer = (bindex, cindex, eqcstr)
+
+    return MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne}(f.variable.value)
+end
+
 # No similar function for a vector of variables, no way to do it more efficiently.
 
 function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}) where {T <: Real}
@@ -736,6 +780,23 @@ function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable,
     _set_lb(model, MOI.VariableIndex(c.value), (T == Float64) ? -IloInfinity : IloMinInt, T)
     _info(model, MOI.VariableIndex(c.value)).interval_name = ""
     model.name_to_constraint = nothing
+    return
+end
+
+function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, S}) where {S <: Union{MOI.ZeroOne, MOI.Integer}}
+    MOI.throw_if_not_valid(model, c)
+    info = _info(model, MOI.VariableIndex(c.value))
+    @assert info.type == CONTINUOUS || info.type == INTEGER
+    @assert info.binary !== nothing
+
+    if S == MOI.ZeroOne
+        cpo_java_remove(model.inner, info.binary[3])
+        info.binary = nothing
+    else
+        cpo_java_remove(model.inner, info.integer[3])
+        info.integer = nothing
+    end
+
     return
 end
 
@@ -899,9 +960,9 @@ function _rebuild_name_to_constraint(model::Optimizer)
             _rebuild_name_to_constraint_add!(model, info.lb_name, MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}(index.value))
         end
 
-        if info.type == INTEGER
+        if info.type == INTEGER || info.integer !== nothing
             _rebuild_name_to_constraint_add!(model, info.integer_name, index)
-        elseif info.type == BINARY
+        elseif info.type == BINARY || info.binary !== nothing
             _rebuild_name_to_constraint_add!(model, info.binary_name, index)
         end
     end
@@ -1086,13 +1147,11 @@ end
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveValue)
     _throw_if_optimize_in_progress(model, attr)
-    MOI.check_result_index_bounds(model, attr)
     return cpo_java_getobjvalue(model.inner)
 end
 
 function MOI.get(model::Optimizer, attr::MOI.ObjectiveBound)
     _throw_if_optimize_in_progress(model, attr)
-    MOI.check_result_index_bounds(model, attr)
     return cpo_java_getobjbound(model.inner)
 end
 
@@ -1197,6 +1256,13 @@ function MOI.get(model::Optimizer, ::MOI.NumberOfConstraints{MOI.SingleVariable,
         if _check_bound_compatible(model, key, S) || info.type in _type_enums(S)
             n += 1
         end
+
+        if S == MOI.ZeroOne && info.binary !== nothing
+            n += 1
+        end
+        if S == MOI.Integer && info.integer !== nothing
+            n += 1
+        end
     end
     return n
 end
@@ -1215,6 +1281,13 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraintIndices{MOI.SingleVaria
     indices = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
     for (key, info) in model.variable_info
         if _check_bound_compatible(model, key, S) || info.type in _type_enums(S)
+            push!(indices, MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value))
+        end
+
+        if S == MOI.ZeroOne && info.binary !== nothing
+            push!(indices, MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value))
+        end
+        if S == MOI.Integer && info.integer !== nothing
             push!(indices, MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value))
         end
     end
