@@ -874,7 +874,7 @@ function MOI.add_constraint(
         model::Optimizer, f::F, s::MOI.GreaterThan{T}
 ) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_ge(model.inner, _parse(model, f), zero(T))
+    constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
@@ -883,7 +883,7 @@ function MOI.add_constraint(
         model::Optimizer, f::F, s::MOI.LessThan{T}
 ) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_le(model.inner, _parse(model, f), zero(T))
+    constr = cpo_java_le(model.inner, _parse(model, f), s.upper)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
@@ -892,7 +892,24 @@ function MOI.add_constraint(
         model::Optimizer, f::F, s::MOI.EqualTo{T}
 ) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_eq(model.inner, _parse(model, f), zero(T))
+    constr = cpo_java_eq(model.inner, _parse(model, f), s.value)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+function MOI.add_constraint(
+        model::Optimizer, f::F, s::MOI.Interval{T}
+) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    if s.lower == Inf
+        return MOI.add_constraint(model, f, MOI.LessThan(s.upper))
+    elseif s.upper == Inf
+        return MOI.add_constraint(model, f, MOI.GreaterThan(s.lower))
+    elseif s.lower == s.upper
+        return MOI.add_constraint(model, f, MOI.EqualTo(s.lower))
+    end
+
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_range(model.inner, s.lower, _parse(model, f), s.upper)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
