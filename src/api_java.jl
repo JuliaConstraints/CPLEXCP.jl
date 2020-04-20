@@ -2279,12 +2279,36 @@ function cpo_java_getfirst(cp::JavaCPOModel, var::IloIntervalSequenceVar)
     return jcall(cp.cp, "getFirst", IloIntervalVar, (IloIntervalSequenceVar,), var)
 end
 
+function cpo_java_getilocumulfunctionexpr(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getIloCumulFunctionExpr", IloCumulFunctionExpr, (JString,), name)
+end
+
+function cpo_java_getilointervalsequencevar(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getIloIntervalSequenceVar", IloIntervalSequenceVar, (JString,), name)
+end
+
+function cpo_java_getilointervalvar(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getIloIntervalVar", IloIntervalVar, (JString,), name)
+end
+
+function cpo_java_getilointvar(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getIloIntVar", IloIntVar, (JString,), name)
+end
+
+function cpo_java_getilostatefunction(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getIloStateFunction", IloStateFunction, (JString,), name)
+end
+
 function cpo_java_getincumbentvalue(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "getIncumbentValue", jdouble, (IloNumExpr,), expr)
 end
 
 function cpo_java_getintvalue(cp::JavaCPOModel, expr::IntExpr)
     return jcall(cp.cp, "getInt", jint, (IloIntExpr,), expr)
+end
+
+function cpo_java_getkpivalue(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getKPIValue", jint, (JString,), name)
 end
 
 function cpo_java_getlast(cp::JavaCPOModel, var::IloIntervalSequenceVar)
@@ -2381,6 +2405,10 @@ end
 
 function cpo_java_getvalue(cp::JavaCPOModel, expr::NumExpr)
     return jcall(cp.cp, "getValue", jdouble, (IloNumExpr,), expr)
+end
+
+function cpo_java_getvalue(cp::JavaCPOModel, name::String)
+    return jcall(cp.cp, "getValue", jdouble, (JString,), name)
 end
 
 function cpo_java_getversion(cp::JavaCPOModel)
