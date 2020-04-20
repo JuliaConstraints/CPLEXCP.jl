@@ -531,12 +531,12 @@ function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <:
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
         convert(MOI.ScalarAffineFunction{Float64}, f)
     )
-    model.objective_type = SINGLE_VARIABLE
+    model.objective_type = MOI.SINGLE_VARIABLE
     return
 end
 
 function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: MOI.AbstractScalarFunction}
-    if model.objective_function <: F
+    if typeof(model.objective_function) <: F
         return model.objective_function
     else
         error("Unable to get objective function. Current objective: $(model.objective_function).")
@@ -652,8 +652,23 @@ function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIn
     return MOI.SingleVariable(MOI.VariableIndex(c.value))
 end
 
-function MOI.set(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any}, ::MOI.SingleVariable)
-    return throw(MOI.SettingSingleVariableFunctionNotAllowed())
+function MOI.set(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{MOI.SingleVariable, S}, v::MOI.SingleVariable) where {S}
+    throw(MOI.SettingSingleVariableFunctionNotAllowed())
+end
+
+function MOI.set(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.SingleVariable, S}, s::S) where {S}
+    if S <: MOI.Interval
+        _set_ub(model, MOI.VariableIndex(c.value), s.upper, typeof(s.upper))
+        _set_lb(model, MOI.VariableIndex(c.value), s.lower, typeof(s.lower))
+    elseif S <: MOI.EqualTo
+        _set_ub(model, MOI.VariableIndex(c.value), s.value, typeof(s.value))
+        _set_lb(model, MOI.VariableIndex(c.value), s.value, typeof(s.value))
+    elseif S <: MOI.GreaterThan
+        _set_lb(model, MOI.VariableIndex(c.value), s.lower, typeof(s.lower))
+    elseif S <: MOI.LessThan
+        _set_ub(model, MOI.VariableIndex(c.value), s.upper, typeof(s.upper))
+    end
+    return
 end
 
 function MOI.add_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.LessThan{T}) where {T <: Real}
@@ -921,6 +936,7 @@ end
 function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
+    cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
@@ -928,6 +944,7 @@ end
 function MOI.add_constraint(model::Optimizer, f::F, s::MOI.LessThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_le(model.inner, _parse(model, f), s.upper)
+    cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
@@ -935,6 +952,7 @@ end
 function MOI.add_constraint(model::Optimizer, f::F, s::MOI.EqualTo{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_eq(model.inner, _parse(model, f), s.value)
+    cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
@@ -950,6 +968,7 @@ function MOI.add_constraint(model::Optimizer, f::F, s::MOI.Interval{T}) where {T
 
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_range(model.inner, s.lower, _parse(model, f), s.upper)
+    cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
