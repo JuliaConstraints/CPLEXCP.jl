@@ -291,8 +291,8 @@ function _make_numvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Float64=
     return _make_var(model, cpo_java_numvar(model.inner, lb, ub), set)
 end
 
-function _make_intvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Int=-IloMinInt, ub::Int=IloMaxInt)
-    return _make_var(model, cpo_java_intvar(model.inner, lb, ub), set)
+function _make_intvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Int32=-IloMinInt, ub::Int32=IloMaxInt)
+    return _make_var(model, cpo_java_intvar(model.inner, Int32(lb), Int32(ub)), set)
 end
 
 function _make_boolvar(model::Optimizer, set::MOI.AbstractScalarSet)
@@ -319,7 +319,7 @@ function MOI.add_variable(model::Optimizer)
 end
 
 function MOI.add_variables(model::Optimizer, N::Int)
-    return _make_vars(model, cpo_java_numvararray(model.inner, N, -IloInfinity, IloInfinity))
+    return _make_vars(model, cpo_java_numvararray(model.inner, Int32(N), -IloInfinity, IloInfinity))
 end
 
 function MOI.add_constrained_variable(model::Optimizer, set::MOI.GreaterThan{T}) where {T <: Real}
@@ -644,21 +644,21 @@ function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariabl
 end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne})
-    if !MOI.is_valid(model, MOI.VariableIndex(c.value))
+    index = MOI.VariableIndex(c.value)
+    if !MOI.is_valid(model, index)
         return false
     end
 
-    index = MOI.VariableIndex(c.value)
     info = _info(model, index)
     return info.type == BINARY || info.binary !== nothing
 end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer})
-    if !MOI.is_valid(model, MOI.VariableIndex(c.value))
+    index = MOI.VariableIndex(c.value)
+    if !MOI.is_valid(model, index)
         return false
     end
 
-    index = MOI.VariableIndex(c.value)
     info = _info(model, index)
     return info.type == INTEGER || info.integer !== nothing
 end
@@ -1125,20 +1125,17 @@ end
 
 function MOI.get(model::Optimizer, attr::MOI.VariablePrimal, x::MOI.VariableIndex)
     _throw_if_optimize_in_progress(model, attr)
-    MOI.check_result_index_bounds(model, attr)
     variable = _info(model, x).variable
     return cpo_java_getvalue(model.inner, variable)
 end
 
 function MOI.get(model::Optimizer, attr::MOI.ConstraintPrimal, c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
     _throw_if_optimize_in_progress(model, attr)
-    MOI.check_result_index_bounds(model, attr)
     return MOI.get(model, MOI.VariablePrimal(), MOI.VariableIndex(c.value))
 end
 
 function MOI.get(model::Optimizer, attr::MOI.ConstraintPrimal, c::MOI.ConstraintIndex)
     _throw_if_optimize_in_progress(model, attr)
-    MOI.check_result_index_bounds(model, attr)
     constraint = _info(model, x).constraint # IloConstraint <: IloIntExpr
     return cpo_java_getvalue(model.inner, constraint)
 end
