@@ -2,9 +2,11 @@ module CPLEXCP
 
 using JavaCall
 import MathOptInterface
+import ConstraintProgrammingExtensions
 
 const MOI = MathOptInterface
 const CleverDicts = MOI.Utilities.CleverDicts
+const CP = ConstraintProgrammingExtensions
 
 # Check if the package has been built correctly.
 if isfile(joinpath(dirname(@__FILE__), "..", "deps", "deps.jl"))

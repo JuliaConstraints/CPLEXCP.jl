@@ -1,6 +1,7 @@
 const MOI  = MathOptInterface
 const MOIT = MOI.Test
 const MOIB = MOI.Bridges
+const CP   = ConstraintProgrammingExtensions
 
 const CONFIG = MOIT.TestConfig(duals = false)
 
@@ -33,27 +34,32 @@ const BRIDGED_CERTIFICATE_OPTIMIZER =
         MOI.add_constraint(model, luxembourg, MOI.Interval(0, 3))
         MOI.add_constraint(model, netherlands, MOI.Interval(0, 3))
 
-        # cpo_java_add(model, cpo_java_neq(model, belgium, france))
-        # cpo_java_add(model, cpo_java_neq(model, belgium, germany))
-        # cpo_java_add(model, cpo_java_neq(model, belgium, netherlands))
-        # cpo_java_add(model, cpo_java_neq(model, belgium, luxembourg))
-        # cpo_java_add(model, cpo_java_neq(model, denmark, germany))
-        # cpo_java_add(model, cpo_java_neq(model, france, germany))
-        # cpo_java_add(model, cpo_java_neq(model, france, luxembourg))
-        # cpo_java_add(model, cpo_java_neq(model, germany, luxembourg))
-        # cpo_java_add(model, cpo_java_neq(model, germany, netherlands))
-        #
-        # status = cpo_java_solve(model)
-        # @test status
-        #
-        # @test cpo_java_getvalue(model, belgium) == cpo_java_getvalue(model, belgium)
-        # @test cpo_java_getvalue(model, denmark) == cpo_java_getvalue(model, denmark)
-        # @test cpo_java_getvalue(model, france) == cpo_java_getvalue(model, france)
-        # @test cpo_java_getvalue(model, germany) == cpo_java_getvalue(model, germany)
-        # @test cpo_java_getvalue(model, luxembourg) == cpo_java_getvalue(model, luxembourg)
-        # @test cpo_java_getvalue(model, netherlands) == cpo_java_getvalue(model, netherlands)
-        #
-        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, france)
+        countries(c1, c2) = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [c1, c2]), 0)
+        MOI.add_constraint(model, countries(belgium, france), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(belgium, germany), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(belgium, netherlands), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(belgium, luxembourg), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(denmark, germany), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(france, germany), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(france, luxembourg), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(germany, luxembourg), CP.DifferentFrom(0))
+        MOI.add_constraint(model, countries(germany, netherlands), CP.DifferentFrom(0))
+
+        status = MOI.optimize!(model)
+        @test status
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), france)
+        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), germany)
+        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), netherlands)
+        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+        @test MOI.get(model, MOI.VariablePrimal(), denmark) != MOI.get(model, MOI.VariablePrimal(), germany)
+        @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), germany)
+        @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+        @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+        @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), netherlands)
         # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, germany)
         # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, netherlands)
         # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, luxembourg)
