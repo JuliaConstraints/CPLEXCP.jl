@@ -2,7 +2,7 @@ const MOI  = MathOptInterface
 const MOIT = MOI.Test
 const MOIB = MOI.Bridges
 
-const CONFIG = MOIT.TestConfig()
+const CONFIG = MOIT.TestConfig(duals = false)
 
 const OPTIMIZER = CPLEXCP.Optimizer()
 MOI.set(OPTIMIZER, MOI.Silent(), true)
@@ -13,80 +13,89 @@ MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
 const BRIDGED_CERTIFICATE_OPTIMIZER =
     MOI.Bridges.full_bridge_optimizer(CERTIFICATE_OPTIMIZER, Float64)
 
+@testset "Integration tests" begin
+    # Same tests as for the Java API.
+    @testset "Color" begin
+        model = OPTIMIZER
+        MOI.empty!(model)
+
+        belgium, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        denmark, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        france, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        germany, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        luxembourg, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        netherlands, _ = MOI.add_constrained_variable(model, MOI.Integer())
+
+        MOI.add_constraint(model, belgium, MOI.Interval(0, 3))
+        MOI.add_constraint(model, denmark, MOI.Interval(0, 3))
+        MOI.add_constraint(model, france, MOI.Interval(0, 3))
+        MOI.add_constraint(model, germany, MOI.Interval(0, 3))
+        MOI.add_constraint(model, luxembourg, MOI.Interval(0, 3))
+        MOI.add_constraint(model, netherlands, MOI.Interval(0, 3))
+
+        # cpo_java_add(model, cpo_java_neq(model, belgium, france))
+        # cpo_java_add(model, cpo_java_neq(model, belgium, germany))
+        # cpo_java_add(model, cpo_java_neq(model, belgium, netherlands))
+        # cpo_java_add(model, cpo_java_neq(model, belgium, luxembourg))
+        # cpo_java_add(model, cpo_java_neq(model, denmark, germany))
+        # cpo_java_add(model, cpo_java_neq(model, france, germany))
+        # cpo_java_add(model, cpo_java_neq(model, france, luxembourg))
+        # cpo_java_add(model, cpo_java_neq(model, germany, luxembourg))
+        # cpo_java_add(model, cpo_java_neq(model, germany, netherlands))
+        #
+        # status = cpo_java_solve(model)
+        # @test status
+        #
+        # @test cpo_java_getvalue(model, belgium) == cpo_java_getvalue(model, belgium)
+        # @test cpo_java_getvalue(model, denmark) == cpo_java_getvalue(model, denmark)
+        # @test cpo_java_getvalue(model, france) == cpo_java_getvalue(model, france)
+        # @test cpo_java_getvalue(model, germany) == cpo_java_getvalue(model, germany)
+        # @test cpo_java_getvalue(model, luxembourg) == cpo_java_getvalue(model, luxembourg)
+        # @test cpo_java_getvalue(model, netherlands) == cpo_java_getvalue(model, netherlands)
+        #
+        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, france)
+        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, germany)
+        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, netherlands)
+        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, luxembourg)
+        # @test cpo_java_getvalue(model, denmark) != cpo_java_getvalue(model, germany)
+        # @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, germany)
+        # @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, luxembourg)
+        # @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, luxembourg)
+        # @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, netherlands)
+    end
+end
+
 @testset "Unit Tests" begin
-    MOIT.basic_constraint_tests(BRIDGED_OPTIMIZER, CONFIG; exclude = [
-        (MOI.VectorOfVariables, MOI.SecondOrderCone),
-        (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone),
-        (MOI.VectorOfVariables, MOI.GeometricMeanCone),
-        (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone),
-        (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone),
-        (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone),
-        (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone),
-        (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone),
-        (MOI.VectorQuadraticFunction{Float64}, MOI.GeometricMeanCone),
-        (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.LessThan{Float64}}),
-        (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE, MOI.GreaterThan{Float64}}),
+    MOIT.basic_constraint_tests(BRIDGED_OPTIMIZER, CONFIG, exclude=[
+        (MOI.SingleVariable, MOI.Integer) # Integer becomes ZeroOne at some point in the tests!?
     ])
-#     # TODO(odow): bugs deleting SOC variables. See also the
-#     # `delete_soc_variables` test.
-#     MOIT.basic_constraint_tests(
-#         BRIDGED_OPTIMIZER,
-#         CONFIG;
-#         include = [
-#             (MOI.VectorOfVariables, MOI.SecondOrderCone),
-#             (MOI.VectorOfVariables, MOI.RotatedSecondOrderCone),
-#             (MOI.VectorOfVariables, MOI.GeometricMeanCone),
-#             (MOI.VectorAffineFunction{Float64}, MOI.SecondOrderCone),
-#             (MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone),
-#             (MOI.VectorAffineFunction{Float64}, MOI.GeometricMeanCone),
-#             (MOI.VectorQuadraticFunction{Float64}, MOI.SecondOrderCone),
-#             (MOI.VectorQuadraticFunction{Float64}, MOI.RotatedSecondOrderCone),
-#             (MOI.VectorQuadraticFunction{Float64}, MOI.GeometricMeanCone),
-#             (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.LessThan{Float64}}),
-#             (MOI.VectorAffineFunction{Float64}, MOI.IndicatorSet{MOI.ACTIVATE_ON_ONE,MOI.GreaterThan{Float64}}),
-#         ],
-#         delete = false
-#     )
-#
-#     MOIT.unittest(BRIDGED_OPTIMIZER, CONFIG, [
-#         # TODO(odow): bug! We can't delete a vector of variables  if one is in
-#         # a second order cone.
-#         "delete_soc_variables",
-#
-#         # CPLEX returns INFEASIBLE_OR_UNBOUNDED without extra parameters.
-#         # See below for the test.
-#         "solve_unbounded_model",
-#     ])
-#     MOIT.solve_unbounded_model(CERTIFICATE_OPTIMIZER, CONFIG)
-#
-#     MOIT.modificationtest(BRIDGED_OPTIMIZER, CONFIG)
-# end
-#
-# @testset "Linear tests" begin
-#     MOIT.contlineartest(BRIDGED_OPTIMIZER, CONFIG, [
-#         # These tests require extra parameters to be set.
-#         "linear8a", "linear8b", "linear8c",
-#
-#         # TODO(odow): This test requests the infeasibility certificate of a
-#         # variable bound.
-#         "linear12"
-#     ])
-#
-#     MOIT.linear8atest(CERTIFICATE_OPTIMIZER, CONFIG)
-#     MOIT.linear8btest(CERTIFICATE_OPTIMIZER, CONFIG)
-#     MOIT.linear8ctest(CERTIFICATE_OPTIMIZER, CONFIG)
-#
-#     MOIT.linear12test(OPTIMIZER, MOIT.TestConfig(infeas_certificates=false))
-# end
-#
-# @testset "Integer Linear tests" begin
-#     # interval somehow needed for indicator tests
-#     interval_optimizer = MOIB.LazyBridgeOptimizer(OPTIMIZER)
-#     MOIB.add_bridge(interval_optimizer, MOIB.Constraint.SplitIntervalBridge{Float64})
-#     MOIT.intlineartest(BRIDGED_OPTIMIZER, CONFIG)
-#     MOIT.intlineartest(interval_optimizer, CONFIG)
-# end
-#
+    # MOIT.solve_unbounded_model(CERTIFICATE_OPTIMIZER, CONFIG) # Relies on dual result.
+    MOIT.modificationtest(BRIDGED_OPTIMIZER, CONFIG, [
+        # Either reliance on dual results or on modifications not (yet?) allowed.
+        "delete_variables_in_a_batch",
+        "delete_variable_with_single_variable_obj",
+        "solve_coef_scalaraffine_lessthan",
+        "solve_coef_scalar_objective",
+        "solve_const_scalar_objective",
+        "solve_const_vectoraffine_nonpos",
+        "solve_func_scalaraffine_lessthan",
+        "solve_set_scalaraffine_lessthan",
+        "solve_set_singlevariable_lessthan",
+        "solve_multirow_vectoraffine_nonpos",
+        "solve_transform_singlevariable_lessthan"
+    ])
+end
+
+# No continuous models (not supported).
+
+@testset "Integer Linear tests" begin
+    # interval somehow needed for indicator tests
+    # interval_optimizer = MOIB.LazyBridgeOptimizer(OPTIMIZER)
+    # MOIB.add_bridge(interval_optimizer, MOIB.Constraint.SplitIntervalBridge{Float64})
+    # MOIT.intlineartest(BRIDGED_OPTIMIZER, CONFIG, ["indicator1", "indicator2", "indicator3", "indicator4", "int2" #= SOS =#, "semiconttest", "semiinttest"])
+    # MOIT.intlineartest(interval_optimizer, CONFIG)
+end
+
 # @testset "Quadratic tests" begin
 #     # TODO(odow): duals for quadratic problems.
 #     quad_config = MOIT.TestConfig(duals = false, atol = 1e-3, rtol = 1e-3)
@@ -195,7 +204,7 @@ const BRIDGED_CERTIFICATE_OPTIMIZER =
 #     @testset "set_upper_bound_twice" begin
 #         MOIT.set_upper_bound_twice(OPTIMIZER, Float64)
 #     end
-end
+# end
 
 # @testset "Continuous -> Integer -> Continuous" begin
 #     atol = 1e-5

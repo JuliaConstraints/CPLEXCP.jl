@@ -292,11 +292,15 @@ function _make_numvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Float64=
 end
 
 function _make_intvar(model::Optimizer, set::MOI.AbstractScalarSet; lb::Int32=-IloMinInt, ub::Int32=IloMaxInt)
-    return _make_var(model, cpo_java_intvar(model.inner, Int32(lb), Int32(ub)), set)
+    vindex, cindex = _make_var(model, cpo_java_intvar(model.inner, Int32(lb), Int32(ub)), set)
+    vindex.type = INTEGER
+    return vindex, cindex
 end
 
 function _make_boolvar(model::Optimizer, set::MOI.AbstractScalarSet)
-    return _make_var(model, cpo_java_boolvar(model.inner), set)
+    vindex, cindex = _make_var(model, cpo_java_boolvar(model.inner), set)
+    vindex.type = BINARY
+    return vindex, cindex
 end
 
 function supports_add_constrained_variables(::Optimizer, ::Type{F}) where {F <: Union{
@@ -664,6 +668,7 @@ function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariabl
 end
 
 function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
+    println(">> $c")
     MOI.throw_if_not_valid(model, c)
     return MOI.SingleVariable(MOI.VariableIndex(c.value))
 end
@@ -787,12 +792,13 @@ function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.SingleVariable,
     MOI.throw_if_not_valid(model, c)
     info = _info(model, MOI.VariableIndex(c.value))
     @assert info.type == CONTINUOUS || info.type == INTEGER
-    @assert info.binary !== nothing
 
     if S == MOI.ZeroOne
+        @assert info.binary !== nothing
         cpo_java_remove(model.inner, info.binary[3])
         info.binary = nothing
     else
+        @assert info.integer !== nothing
         cpo_java_remove(model.inner, info.integer[3])
         info.integer = nothing
     end
