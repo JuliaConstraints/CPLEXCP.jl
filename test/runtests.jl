@@ -1,6 +1,7 @@
 using CPLEXCP
 using JavaCall
 using MathOptInterface
+using ConstraintProgrammingExtensions
 
 using Test
 
