@@ -1,3 +1,6 @@
+# Assumption: Julia and JVM (in which CPLEX CP is run) have the same bitness. 
+# This implies that Int == Int32 and that jint is 32-bit long for 32-bit platforms.
+
 ## Type definitions
 # These correspond to Java types (which are directly returned by the functions
 # in this binder). In particular, the inheritance defined in Java is not brought

@@ -179,7 +179,7 @@ function MOI.supports_constraint(::Optimizer, ::Type{MOI.SingleVariable}, ::Type
     MOI.LessThan{Float64},
     MOI.GreaterThan{Float64},
     MOI.Interval{Float64},
-    MOI.EqualTo{Int}, # TODO: Int (platform-dependent) or Int64?
+    MOI.EqualTo{Int},
     MOI.LessThan{Int},
     MOI.GreaterThan{Int},
     MOI.Interval{Int},
