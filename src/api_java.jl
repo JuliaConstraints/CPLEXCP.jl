@@ -2897,3 +2897,23 @@ function cpo_java_setintparameter(cp::JavaCPOModel, name::String, value::Int32)
     param = jfield(IloIntParam, name, IloIntParam)
     return jcall(cp.cp, "setParameter", Nothing, (IloIntParam, jint), param, value)
 end
+
+function cpo_java_isparamint(::JavaCPOModel, name::String)
+    try
+        # Try to get a member with the given name in `IntParam`.
+        jfield(IloIntParam, name, IloIntParam)
+        return true
+    catch
+        return false
+    end
+end
+
+function cpo_java_isparamdouble(::JavaCPOModel, name::String)
+    try
+        # Try to get a member with the given name in `DoubleParam`.
+        jfield(IloDoubleParam, name, IloDoubleParam)
+        return true
+    catch
+        return false
+    end
+end

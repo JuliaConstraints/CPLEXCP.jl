@@ -131,9 +131,6 @@ end
 function MOI.empty!(model::Optimizer)
     model.inner = cpo_java_model()
     model.name = ""
-    # if model.silent
-    #     MOI.set(model, MOI.RawParameter("CPXPARAM_ScreenOutput"), 0)
-    # end
     empty!(model.variable_info)
     empty!(model.constraint_info)
 
@@ -226,7 +223,7 @@ MOI.supports(::Optimizer, ::MOI.Silent) = true
 MOI.supports(::Optimizer, ::MOI.NumberOfThreads) = true
 MOI.supports(::Optimizer, ::MOI.TimeLimitSec) = true
 MOI.supports(::Optimizer, ::MOI.ObjectiveSense) = true
-MOI.supports(::Optimizer, ::MOI.RawParameter) = true # TODO
+MOI.supports(::Optimizer, ::MOI.RawParameter) = true
 
 # It is possible to use the default copy behaviour, including with names.
 MOI.Utilities.supports_default_copy_to(::Optimizer, ::Bool) = true
@@ -1230,6 +1227,30 @@ function MOI.set(model::Optimizer, ::MOI.TimeLimitSec, x::Union{Number, Nothing}
     _throw_if_optimize_in_progress(model, attr)
     value = (x === nothing) ? IloInfinity : Float64(x)
     cpo_java_setdoubleparameter(model.inner, "TimeLimit", value)
+    return
+end
+
+function MOI.get(model::Optimizer, param::MOI.RawParameter)
+    _throw_if_optimize_in_progress(model, attr)
+
+    if cpo_java_isparamint(model.inner, param.name)
+        return cpo_java_getintparameter(model.inner, param.name)
+    elseif cpo_java_isparamint(model.inner, param.name)
+        return cpo_java_getdoubleparameter(model.inner, param.name)
+    else
+        error("Unknown parameter: $(param.name)")
+    end
+end
+
+function MOI.set(model::Optimizer, param::MOI.RawParameter, x::Int)
+    _throw_if_optimize_in_progress(model, attr)
+    cpo_java_setintparameter(model.inner, param.name, x)
+    return
+end
+
+function MOI.set(model::Optimizer, param::MOI.RawParameter, x::Float64)
+    _throw_if_optimize_in_progress(model, attr)
+    cpo_java_setdoubleparameter(model.inner, param.name, x)
     return
 end
 
