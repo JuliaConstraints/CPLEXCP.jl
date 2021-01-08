@@ -12,11 +12,12 @@
 _type_to_variabletype(T::Type{<:Real}) = ((T == Float64) ? CONTINUOUS : INTEGER)
 _variabletype_to_type(vt::VariableType) = ((vt == CONTINUOUS) ? Float64 : Int)
 
-@enum(
-    CallbackState,
-    CB_NONE
-    # Others at some point.
-)
+# TODO.
+# @enum(
+#     CallbackState,
+#     CB_NONE
+#     # Others at some point.
+# )
 
 mutable struct VariableInfo
     index::MOI.VariableIndex
@@ -223,7 +224,7 @@ MOI.supports(::Optimizer, ::MOI.ConstraintName, ::Type{<:MOI.ConstraintIndex}) =
 MOI.supports(::Optimizer, ::MOI.Name) = true
 MOI.supports(::Optimizer, ::MOI.Silent) = true
 MOI.supports(::Optimizer, ::MOI.NumberOfThreads) = true
-MOI.supports(::Optimizer, ::MOI.TimeLimitSec) = true # TODO
+MOI.supports(::Optimizer, ::MOI.TimeLimitSec) = true
 MOI.supports(::Optimizer, ::MOI.ObjectiveSense) = true
 MOI.supports(::Optimizer, ::MOI.RawParameter) = true # TODO
 
@@ -1217,6 +1218,18 @@ end
 function MOI.set(model::Optimizer, ::MOI.NumberOfThreads, x::Int)
     _throw_if_optimize_in_progress(model, attr)
     cpo_java_setintparameter(model.inner, "Workers", x)
+    return
+end
+
+function MOI.get(model::Optimizer, ::MOI.TimeLimitSec)
+    _throw_if_optimize_in_progress(model, attr)
+    return cpo_java_getdoubleparam(model.inner, "TimeLimit")
+end
+
+function MOI.set(model::Optimizer, ::MOI.TimeLimitSec, x::Union{Number, Nothing})
+    _throw_if_optimize_in_progress(model, attr)
+    value = (x === nothing) ? IloInfinity : Float64(x)
+    cpo_java_setdoubleparameter(model.inner, "TimeLimit", value)
     return
 end
 
