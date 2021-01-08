@@ -980,7 +980,7 @@ end
 ## ScalarAffineFunction-in-Set
 ## ScalarQuadraticFunction-in-Set
 
-function _info(model::Optimizer, key::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
+function _info(::Optimizer, key::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
     throw(MOI.InvalidIndex(key))
 end
 
@@ -1170,19 +1170,17 @@ function MOI.get(model::Optimizer, attr::MOI.ObjectiveBound)
     return cpo_java_getobjbound(model.inner)
 end
 
-# TODO
-# function MOI.get(model::Optimizer, attr::MOI.SolveTime)
-#     _throw_if_optimize_in_progress(model, attr)
-#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.DoubleInfo.html#SolveTime
-# end
+function MOI.get(model::Optimizer, attr::MOI.SolveTime)
+    _throw_if_optimize_in_progress(model, attr)
+    return cpo_java_getdoubleparameter(model.inner, "SolveTime")
+end
 
 # No SimplexIterations or BarrierIterations.
 
-# TODO
-# function MOI.get(model::Optimizer, attr::MOI.NodeCount)
-#     _throw_if_optimize_in_progress(model, attr)
-#     # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntInfo.html#NumberOfBranches
-# end
+function MOI.get(model::Optimizer, attr::MOI.NodeCount)
+    _throw_if_optimize_in_progress(model, attr)
+    return cpo_java_getintparameter(model.inner, "NumberOfBranches")
+end
 
 function MOI.get(model::Optimizer, attr::MOI.RelativeGap)
     _throw_if_optimize_in_progress(model, attr)
