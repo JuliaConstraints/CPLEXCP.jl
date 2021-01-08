@@ -18,21 +18,22 @@ function write_depsfile(path)
 end
 
 function get_jar_file()
-    # Find the path to the CPLEX CP Optimizer executable.
+    # List of supported versions. The latest version must be last.
+    cpxvers = ["129", "1290", "1210", "12100", "201", "2010", "20100"]
+
+    # Iterate through a series of places where CPLEX could be found: 
+    # - either in the path (directly the callable library or the CPLEX executable) 
     cplex_path = try
         @static if Sys.isapple() || Sys.isunix()
             dirname(strip(read(`which cpoptimizer`, String)))
         elseif Sys.iswindows()
             dirname(strip(read(`where cpoptimizer`, String)))
+        else
+            nothing
         end
     catch
         nothing
     end
-
-    # Iterate through a series of places where CPLEX could be found: either in
-    # the path (directly the callable library or the CPLEX executable) or from
-    # an environment variable.
-    cpxvers = ["129", "1290", "1210", "12100" ]
 
     if cplex_path !== nothing
         lib_path = abspath(cplex_path * "../../lib/ILOG.CP.jar")
@@ -41,20 +42,20 @@ function get_jar_file()
         end
     end
 
+    # - or from an environment variable.
     base_env = "CPLEX_STUDIO_DIR"
-    for v in reverse(cpxvers)
-        for env in [base_env, base_env * v]
-            if !haskey(ENV, env)
-                continue
-            end
+    for env in [base_env, [base_env * v for v in reverse(cpxvers)]...]
+        if !haskey(ENV, env)
+            continue
+        end
 
-            lib_path = abspath(ENV[env] * "/cpoptimizer/lib/ILOG.CP.jar")
-            if isfile(lib_path)
-                return lib_path
-            end
+        lib_path = abspath(ENV[env] * "/cpoptimizer/lib/ILOG.CP.jar")
+        if isfile(lib_path)
+            return lib_path
         end
     end
 
+    # Nothing could be found.
     error(
         "Unable to locate CPLEX installation. Note this must be downloaded " *
         "separately. See the CPLEXCP.jl README for further instructions."

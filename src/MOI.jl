@@ -1242,7 +1242,7 @@ function MOI.get(model::Optimizer, ::MOI.RawSolver)
     return model.inner
 end
 
-# # TODO: initial values (also for constraints?). Use these values in optimize!?
+# # TODO: initial values (also for constraints?). Use these values in `optimize!`?
 # function MOI.set(model::Optimizer, ::MOI.VariablePrimalStart, x::MOI.VariableIndex, value::Union{Nothing, Float64})
 #     info = _info(model, x)
 #     info.start = value
@@ -1322,7 +1322,6 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraintIndices{F, S}) where {F
 end
 
 # No SOS1/SOS2.
-# TODO: SOCP.
 
 function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
     constraints = Set{Tuple{DataType, DataType}}()
