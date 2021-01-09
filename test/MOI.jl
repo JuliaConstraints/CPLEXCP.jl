@@ -60,14 +60,6 @@ const BRIDGED_CERTIFICATE_OPTIMIZER =
         @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
         @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
         @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), netherlands)
-        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, germany)
-        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, netherlands)
-        # @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, luxembourg)
-        # @test cpo_java_getvalue(model, denmark) != cpo_java_getvalue(model, germany)
-        # @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, germany)
-        # @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, luxembourg)
-        # @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, luxembourg)
-        # @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, netherlands)
     end
 end
 
