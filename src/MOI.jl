@@ -1054,7 +1054,11 @@ function _info(model::Optimizer, key::MOI.ConstraintIndex)
     throw(MOI.InvalidIndex(key))
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+            S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.EqualTo{T}, MOI.Interval{T}}, 
+            T <: Real, 
+            F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
+        }
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
@@ -1101,7 +1105,11 @@ end
 
 # No vector of constraints, there is no more efficient way to do it.
 
-function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}, S}
+function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+            T <: Real, 
+            F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}, 
+            S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.EqualTo{T}, MOI.Interval{T}}
+        }
     cpo_java_remove(model.inner, _info(model, c).constraint)
     delete!(model.constraint_info, c)
     return
@@ -1127,6 +1135,19 @@ end
 function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{T}, s::CP.DifferentFrom{T}) where {T <: Integer}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
