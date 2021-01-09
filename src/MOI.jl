@@ -13,11 +13,11 @@ _type_to_variabletype(T::Type{<:Real}) = ((T == Float64) ? CONTINUOUS : INTEGER)
 _variabletype_to_type(vt::VariableType) = ((vt == CONTINUOUS) ? Float64 : Int)
 
 # TODO.
-# @enum(
-#     CallbackState,
-#     CB_NONE
-#     # Others at some point.
-# )
+@enum(
+    CallbackState,
+    CB_NONE
+    # Others at some point.
+)
 
 mutable struct VariableInfo
     index::MOI.VariableIndex
@@ -1055,8 +1055,8 @@ function _info(model::Optimizer, key::MOI.ConstraintIndex)
 end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-            S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.EqualTo{T}, MOI.Interval{T}}, 
             T <: Real, 
+            S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.EqualTo{T}, MOI.Interval{T}}, 
             F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
         }
     info = get(model.constraint_info, c, nothing)
