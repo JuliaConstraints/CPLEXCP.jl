@@ -63,8 +63,9 @@ function get_jar_file()
 end
 
 function try_local_installation()
-    write_depsfile(get_jar_file())
-    @info("Using CPLEX found in location `$(l)`")
+    location = get_jar_file()
+    write_depsfile(location)
+    @info("Using CPLEX found in location `$(location)`")
 end
 
 try_local_installation()
