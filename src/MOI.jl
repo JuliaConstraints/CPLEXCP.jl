@@ -425,7 +425,7 @@ end
 
 ## Expression parsing (not part of MOI API)
 
-function _parse(model::Optimizer, expr)
+function _parse(::Optimizer, expr)
     error("_parse not yet implemented for type: $(typeof(expr))")
 end
 
@@ -1125,7 +1125,7 @@ function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
     return info !== nothing && typeof(info.set) == S
 end
 
-function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{T}, s::CP.DifferentFrom{T}) where {T <: Integer}
+function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{Int}, s::CP.DifferentFrom{Int})
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
     cpo_java_add(model.inner, constr)
@@ -1134,20 +1134,17 @@ function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{T}, s:
 end
 
 # CP.AllDifferent
-function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
-        T <: Union{Int, Float64}, 
-        S <: MOI.ScalarAffineFunction{T}, 
-        F <: CP.AllDifferent
-    }
+# TODO: bridge MOI.VectorAffineFunction as function.
+function MOI.supports_constraint(::Optimizer, ::Type{MOI.VectorOfVariables}, ::Type{CP.AllDifferent})
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {T <: Real, F <: CP.AllDifferent, S <: MOI.ScalarAffineFunction{T}}
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariables, CP.AllDifferent})
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::CP.AllDifferent) where {T <: Real, F <: MOI.ScalarAffineFunction{T}}
+function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.AllDifferent)
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
     cpo_java_add(model.inner, constr)
