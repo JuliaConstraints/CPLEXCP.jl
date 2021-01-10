@@ -59,13 +59,14 @@ end
 mutable struct ConstraintInfo
     index::MOI.ConstraintIndex
     constraint::Constraint
-    f::MOI.AbstractScalarFunction
+    f::Union{MOI.AbstractScalarFunction, MOI.AbstractVectorFunction}
     set::MOI.AbstractSet
     name::String
 end
 
 function ConstraintInfo(index::MOI.ConstraintIndex, constraint::Constraint, 
-                        f::MOI.AbstractScalarFunction, set::MOI.AbstractSet)
+                        f::Union{MOI.AbstractScalarFunction, MOI.AbstractVectorFunction}, 
+                        set::MOI.AbstractSet)
     return ConstraintInfo(index, constraint, f, set, "")
 end
 
@@ -429,13 +430,17 @@ function _parse(::Optimizer, expr)
     error("_parse not yet implemented for type: $(typeof(expr))")
 end
 
+function _parse(model::Optimizer, f::MOI.VariableIndex)
+    return _info(model, f).variable
+end
+
 function _parse(model::Optimizer, f::MOI.SingleVariable)
     # A Concert Variable is already an expression.
     return _info(model, f.variable).variable
 end
 
-function _parse(model::Optimizer, f::MOI.VariableIndex)
-    return _info(model, f).variable
+function _parse(model::Optimizer, f::MOI.VectorOfVariables)
+    return IntExpr[_parse(model, v) for v in f.variables]
 end
 
 function _parse(model::Optimizer, terms::Vector{MOI.ScalarAffineTerm{T}}) where {T <: Integer}
@@ -491,7 +496,7 @@ function _parse(model::Optimizer, f::MOI.ScalarQuadraticFunction{T}) where {T <:
     return e
 end
 
-function _parse(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.SecondOrderCone)
+function _parse(model::Optimizer, f::MOI.VectorOfVariables, ::MOI.SecondOrderCone)
     # SOC is the cone: t ≥ ||x||₂ ≥ 0. In quadratic form, this is
     # t² - Σᵢ xᵢ² ≥ 0 and t ≥ 0.
     # This function returns the expression t² - Σᵢ xᵢ².
@@ -1141,12 +1146,12 @@ end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariables, CP.AllDifferent})
     info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
+    return info !== nothing && typeof(info.set) == CP.AllDifferent
 end
 
 function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.AllDifferent)
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
+    constr = cpo_java_alldiff(model.inner, _parse(model, f))
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
@@ -1498,7 +1503,7 @@ function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.S
 
     # Then, add the quadratic constraint.
     cindex = MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}(length(model.constraint_info) + 1)
-    expr = _parse(f, s)
+    expr = _parse(model, f, s)
     constr = cpo_java_gt(model, expr, 0)
     model.constraint_info[cindex] = ConstraintInfo(cindex, constr, f, s)
     return cindex

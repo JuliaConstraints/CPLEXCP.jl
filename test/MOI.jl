@@ -98,7 +98,7 @@ end
         @test MOI.get(model, MOI.VariablePrimal(), x2) == 2
     end
     
-    @testset "AllDifferent" begin
+    @testset "AllDifferent: VectorOfVariables" begin
         model = OPTIMIZER
         MOI.empty!(model)
 
