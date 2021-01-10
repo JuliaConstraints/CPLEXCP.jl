@@ -230,7 +230,7 @@ function MOI.copy_to(dest::Optimizer, src::MOI.ModelLike; kwargs...)
     return MOI.Utilities.automatic_copy_to(dest, src; kwargs...)
 end
 
-function MOI.get(model::Optimizer, ::MOI.ListOfVariableAttributesSet)
+function MOI.get(::Optimizer, ::MOI.ListOfVariableAttributesSet)
     return MOI.AbstractVariableAttribute[MOI.VariableName()]
 end
 
@@ -1109,14 +1109,18 @@ end
 
 # CP.DifferentFrom
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
-        T <: Union{Int, Float64}, 
-        S <: MOI.ScalarAffineFunction{T}, 
-        F <: CP.DifferentFrom{T}
+        T <: Int,
+        F <: MOI.ScalarAffineFunction{T},
+        S <: CP.DifferentFrom{T}
     }
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {T <: Real, F <: CP.DifferentFrom{T}, S <: MOI.ScalarAffineFunction{T}}
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: MOI.ScalarAffineFunction{T},
+        S <: CP.DifferentFrom{T}
+    }
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end

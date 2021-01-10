@@ -70,8 +70,8 @@ end
 
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
         @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Interval{Int})
-        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction, MOI.EqualTo{Int})
-        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction, CP.DifferentFrom{Int})
+        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int})
+        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, CP.DifferentFrom{Int})
 
         x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
         x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
