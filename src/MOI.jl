@@ -200,7 +200,7 @@ function MOI.supports_constraint(::Optimizer, ::Type{MOI.SingleVariable}, ::Type
 end
 
 function MOI.supports_constraint(::Optimizer, 
-                                 ::Type{Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}, 
+                                 ::Union{Type{MOI.ScalarAffineFunction{T}}, Type{MOI.ScalarQuadraticFunction{T}}}, 
                                  ::Type{F}) where {
         T <: Union{Int, Float64},
         F <: Union{
