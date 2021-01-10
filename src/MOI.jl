@@ -185,50 +185,31 @@ function MOI.supports(::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: Union
     return true
 end
 
-function MOI.supports_constraint(::Optimizer, 
-                                 ::Type{MOI.SingleVariable}, 
-                                 ::Type{F}) where {F <: Union{
-    MOI.EqualTo{Float64},
-    MOI.LessThan{Float64},
-    MOI.GreaterThan{Float64},
-    MOI.Interval{Float64},
-    MOI.EqualTo{Int},
-    MOI.LessThan{Int},
-    MOI.GreaterThan{Int},
-    MOI.Interval{Int},
-    MOI.ZeroOne,
-    MOI.Integer
-}}
+function MOI.supports_constraint(::Optimizer, ::Type{MOI.SingleVariable}, ::Type{F}) where {
+        T <: Union{Int, Float64},
+        F <: Union{
+            MOI.EqualTo{T},
+            MOI.LessThan{T},
+            MOI.GreaterThan{T},
+            MOI.Interval{T},
+            MOI.ZeroOne,
+            MOI.Integer
+        }
+    }
     return true
 end
 
 function MOI.supports_constraint(::Optimizer, 
-                                 ::Type{MOI.ScalarAffineFunction{Float64}}, 
-                                 ::Type{F}) where {F <: Union{
-    MOI.EqualTo{Float64},
-    MOI.LessThan{Float64},
-    MOI.GreaterThan{Float64},
-    MOI.Interval{Float64},
-    MOI.EqualTo{Int},
-    MOI.LessThan{Int},
-    MOI.GreaterThan{Int},
-    MOI.Interval{Int}
-}}
-    return true
-end
-
-function MOI.supports_constraint(::Optimizer, 
-                                 ::Type{MOI.ScalarQuadraticFunction{Float64}}, 
-                                 ::Type{F}) where {F <: Union{
-    MOI.EqualTo{Float64},
-    MOI.LessThan{Float64},
-    MOI.GreaterThan{Float64},
-    MOI.Interval{Float64},
-    MOI.EqualTo{Int},
-    MOI.LessThan{Int},
-    MOI.GreaterThan{Int},
-    MOI.Interval{Int}
-}}
+                                 ::Type{Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}, 
+                                 ::Type{F}) where {
+        T <: Union{Int, Float64},
+        F <: Union{
+            MOI.EqualTo{T},
+            MOI.LessThan{T},
+            MOI.GreaterThan{T},
+            MOI.Interval{T}
+        }
+    }
     return true
 end
 
@@ -1126,10 +1107,18 @@ end
 
 ## Constraint programming
 
-function MOI.supports_constraint(::Optimizer, ::Type{MOI.ScalarAffineFunction{T}}, ::Type{F}) where {T <: Union{Int, Float64}, F <: Union{
-    CP.DifferentFrom{T}
-}}
+# CP.DifferentFrom
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Union{Int, Float64}, 
+        S <: MOI.ScalarAffineFunction{T}, 
+        F <: CP.DifferentFrom{T}
+    }
     return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {T <: Real, F <: CP.DifferentFrom{T}, S <: MOI.ScalarAffineFunction{T}}
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
 end
 
 function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{T}, s::CP.DifferentFrom{T}) where {T <: Integer}
@@ -1140,12 +1129,21 @@ function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{T}, s:
     return index
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {S, T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+# CP.AllDifferent
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Union{Int, Float64}, 
+        S <: MOI.ScalarAffineFunction{T}, 
+        F <: CP.AllDifferent
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {T <: Real, F <: CP.AllDifferent, S <: MOI.ScalarAffineFunction{T}}
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function MOI.add_constraint(model::Optimizer, f::F, s::CP.AllDifferent) where {T <: Real, F <: MOI.ScalarAffineFunction{T}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
     cpo_java_add(model.inner, constr)
