@@ -14,53 +14,53 @@ MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
 const BRIDGED_CERTIFICATE_OPTIMIZER =
     MOI.Bridges.full_bridge_optimizer(CERTIFICATE_OPTIMIZER, Float64)
 
-@testset "Integration tests" begin
-    # Same tests as for the Java API.
-    @testset "Color" begin
-        model = OPTIMIZER
-        MOI.empty!(model)
+# @testset "Integration tests" begin
+#     # Same tests as for the Java API.
+#     @testset "Color" begin
+#         model = OPTIMIZER
+#         MOI.empty!(model)
 
-        belgium, _ = MOI.add_constrained_variable(model, MOI.Integer())
-        denmark, _ = MOI.add_constrained_variable(model, MOI.Integer())
-        france, _ = MOI.add_constrained_variable(model, MOI.Integer())
-        germany, _ = MOI.add_constrained_variable(model, MOI.Integer())
-        luxembourg, _ = MOI.add_constrained_variable(model, MOI.Integer())
-        netherlands, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         belgium, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         denmark, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         france, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         germany, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         luxembourg, _ = MOI.add_constrained_variable(model, MOI.Integer())
+#         netherlands, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-        MOI.add_constraint(model, belgium, MOI.Interval(0, 3))
-        MOI.add_constraint(model, denmark, MOI.Interval(0, 3))
-        MOI.add_constraint(model, france, MOI.Interval(0, 3))
-        MOI.add_constraint(model, germany, MOI.Interval(0, 3))
-        MOI.add_constraint(model, luxembourg, MOI.Interval(0, 3))
-        MOI.add_constraint(model, netherlands, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, belgium, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, denmark, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, france, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, germany, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, luxembourg, MOI.Interval(0, 3))
+#         MOI.add_constraint(model, netherlands, MOI.Interval(0, 3))
 
-        countries(c1, c2) = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [c1, c2]), 0)
-        MOI.add_constraint(model, countries(belgium, france), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(belgium, germany), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(belgium, netherlands), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(belgium, luxembourg), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(denmark, germany), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(france, germany), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(france, luxembourg), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(germany, luxembourg), CP.DifferentFrom(0))
-        MOI.add_constraint(model, countries(germany, netherlands), CP.DifferentFrom(0))
+#         countries(c1, c2) = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1, -1], [c1, c2]), 0)
+#         MOI.add_constraint(model, countries(belgium, france), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(belgium, germany), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(belgium, netherlands), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(belgium, luxembourg), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(denmark, germany), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(france, germany), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(france, luxembourg), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(germany, luxembourg), CP.DifferentFrom(0))
+#         MOI.add_constraint(model, countries(germany, netherlands), CP.DifferentFrom(0))
 
-        MOI.optimize!(model)
-        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
-        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+#         MOI.optimize!(model)
+#         @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+#         @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
 
-        @test MOI.get(model, MOI.ResultCount()) >= 1
-        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), france)
-        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), germany)
-        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), netherlands)
-        @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
-        @test MOI.get(model, MOI.VariablePrimal(), denmark) != MOI.get(model, MOI.VariablePrimal(), germany)
-        @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), germany)
-        @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
-        @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
-        @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), netherlands)
-    end
-end
+#         @test MOI.get(model, MOI.ResultCount()) >= 1
+#         @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), france)
+#         @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), germany)
+#         @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), netherlands)
+#         @test MOI.get(model, MOI.VariablePrimal(), belgium) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+#         @test MOI.get(model, MOI.VariablePrimal(), denmark) != MOI.get(model, MOI.VariablePrimal(), germany)
+#         @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), germany)
+#         @test MOI.get(model, MOI.VariablePrimal(), france) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+#         @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), luxembourg)
+#         @test MOI.get(model, MOI.VariablePrimal(), germany) != MOI.get(model, MOI.VariablePrimal(), netherlands)
+#     end
+# end
 
 @testset "Unit tests" begin
     # TODO: move these tests to CP.Test, like MOIT.
@@ -114,6 +114,40 @@ end
         c2 = MOI.add_constraint(model, x2, MOI.Interval(1, 2))
         
         c3 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2]), CP.AllDifferent(2))
+        c4 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1], [x1]), 0), MOI.EqualTo(1))
+
+        @test MOI.is_valid(model, x1)
+        @test MOI.is_valid(model, x2)
+        @test MOI.is_valid(model, c1)
+        @test MOI.is_valid(model, c2)
+        @test MOI.is_valid(model, c3)
+        @test MOI.is_valid(model, c4)
+
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+        @test MOI.get(model, MOI.ResultCount()) >= 1
+        @test MOI.get(model, MOI.VariablePrimal(), x1) == 1
+        @test MOI.get(model, MOI.VariablePrimal(), x2) == 2
+    end
+    
+    @testset "AllDifferent: VectorAffineFunction" begin
+        model = OPTIMIZER
+        MOI.empty!(model)
+
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+        @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Interval{Int})
+        @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int})
+        @test MOI.supports_constraint(model, MOI.VectorAffineFunction{Int}, CP.AllDifferent)
+
+        x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
+        x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
+
+        c1 = MOI.add_constraint(model, x1, MOI.Interval(1, 2))
+        c2 = MOI.add_constraint(model, x2, MOI.Interval(1, 2))
+        
+        c3 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([1, 1], [x1, x2])), [0, 0]), CP.AllDifferent(2))
         c4 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1], [x1]), 0), MOI.EqualTo(1))
 
         @test MOI.is_valid(model, x1)

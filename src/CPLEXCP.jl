@@ -159,6 +159,7 @@ export cpo_java_init, JavaCPOModel,
 
 # Finally, the code.
 include("api_java.jl")
-include("MOI.jl")
+include("MOI/wrapper.jl")
+include("MOI/parse.jl")
 
 end # module
