@@ -1080,6 +1080,34 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MO
     return index
 end
 
+# CP.Domain
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+        S <: CP.Domain{T}
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+        S <: CP.Domain{T}
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Domain{T}) where {T <: Int}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    @show s.values
+    @show collect(Int32(v) for v in s.values)
+    constr = cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
 ## Optimize methods
 
 function MOI.optimize!(model::Optimizer)
