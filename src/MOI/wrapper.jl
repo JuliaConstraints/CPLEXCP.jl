@@ -1177,6 +1177,42 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MO
     return index
 end
 
+# CP.Strictly
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        Sense <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}},
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+        S <: CP.Strictly{T, Sense}
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        Sense <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}},
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+        S <: CP.Strictly{T, Sense}
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.LessThan{T}}) where {T <: Int}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_lt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.upper))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.GreaterThan{T}}) where {T <: Int}
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_gt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.lower))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
 ## Optimize methods
 
 function MOI.optimize!(model::Optimizer)
