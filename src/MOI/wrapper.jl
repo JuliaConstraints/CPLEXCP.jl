@@ -1088,7 +1088,7 @@ end
 # CP.DifferentFrom
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
         T <: Int,
-        F <: MOI.ScalarAffineFunction{T},
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
         S <: CP.DifferentFrom{T}
     }
     return true
@@ -1096,16 +1096,49 @@ end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
         T <: Int,
-        F <: MOI.ScalarAffineFunction{T},
+        F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
         S <: CP.DifferentFrom{T}
     }
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
 
-function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{Int}, s::CP.DifferentFrom{Int})
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.DifferentFrom{T}) where {T <: Int}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+# CP.Count
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.Count{T}
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.Count{T}
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Count{T}) where {T <: Int}
+    @assert MOI.output_dimension(f) >= 2
+
+    f_parsed = _parse(model, f)
+    count_assign = f_parsed[1]
+    count_values = f_parsed[2:end]
+
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    expr = cpo_java_count(model.inner, count_values, Int32(s.value))
+    constr = cpo_java_eq(model.inner, count_assign, expr)
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
