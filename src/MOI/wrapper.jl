@@ -1028,32 +1028,6 @@ end
 
 ## Constraint programming
 
-# CP.DifferentFrom
-function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
-        T <: Int,
-        F <: MOI.ScalarAffineFunction{T},
-        S <: CP.DifferentFrom{T}
-    }
-    return true
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-        T <: Int,
-        F <: MOI.ScalarAffineFunction{T},
-        S <: CP.DifferentFrom{T}
-    }
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
-function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{Int}, s::CP.DifferentFrom{Int})
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
-end
-
 # CP.AllDifferent
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
         T <: Int,
@@ -1103,6 +1077,35 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.S
     @show s.values
     @show collect(Int32(v) for v in s.values)
     constr = cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+# CP.Membership
+# TODO: not available, make a bridge for this.
+
+# CP.DifferentFrom
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: MOI.ScalarAffineFunction{T},
+        S <: CP.DifferentFrom{T}
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: MOI.ScalarAffineFunction{T},
+        S <: CP.DifferentFrom{T}
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::MOI.ScalarAffineFunction{Int}, s::CP.DifferentFrom{Int})
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
