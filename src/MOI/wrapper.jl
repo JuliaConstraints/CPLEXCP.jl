@@ -1144,6 +1144,39 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MO
     return index
 end
 
+# CP.Count
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.CountDistinct
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.CountDistinct
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.CountDistinct) where {T <: Int}
+    @assert MOI.output_dimension(f) >= 2
+
+    f_parsed = _parse(model, f)
+    count_assign = f_parsed[1]
+    count_values = f_parsed[2:end]
+
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    expr = cpo_java_countdifferent(model.inner, count_values)
+    constr = cpo_java_eq(model.inner, count_assign, expr)
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
 ## Optimize methods
 
 function MOI.optimize!(model::Optimizer)
