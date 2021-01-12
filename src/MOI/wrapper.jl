@@ -1074,8 +1074,6 @@ end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Domain{T}) where {T <: Int}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    @show s.values
-    @show collect(Int32(v) for v in s.values)
     constr = cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
@@ -1208,6 +1206,42 @@ end
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.GreaterThan{T}}) where {T <: Int}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_gt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.lower))
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+# CP.Element
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.Element{T}
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+        S <: CP.Element{T}
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Element{T}) where {T <: Int}
+    @assert MOI.output_dimension(f) == 2
+    # CP.Element allows for several retrievals from the same array at the same time, but they 
+    # would have to be encoded as several constraints, which is not supported in 
+    # ConstraintInfo.
+
+    f_parsed = _parse(model, f)
+    element_assign = f_parsed[2]
+    element_index = f_parsed[1]
+
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    expr = cpo_java_element(model.inner, convert(Vector{Int32}, s.values), element_index)
+    constr = cpo_java_eq(model.inner, element_assign, expr)
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
