@@ -1291,6 +1291,10 @@ function MOI.add_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s:
     return index
 end
 
+# CP.CapacitatedBinPacking
+# TODO: bridgde it by bounding the load variables.
+# https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.html#pack(ilog.concert.IloIntExpr[],%20ilog.concert.IloIntExpr[],%20int[],%20ilog.concert.IloIntExpr)
+
 ## Optimize methods
 
 function MOI.optimize!(model::Optimizer)
