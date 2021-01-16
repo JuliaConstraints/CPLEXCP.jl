@@ -62,9 +62,11 @@ function _parse(model::Optimizer, f::MOI.VectorAffineFunction{T}) where {T <: Re
     cp = model.inner
     es = [cpo_java_constant(cp, f.constants[idx]) for idx in 1:MOI.output_dimension(f)]
     for i in 1:MOI.output_dimension(f)
-        idx = f.terms[i].output_index
-        term = f.terms[i].scalar_term
-        es[idx] = cpo_java_sum(cp, [es[idx], cpo_java_prod(cp, IntExpr[cpo_java_constant(cp, term.coefficient)], IntExpr[_parse(model, term.variable_index)])])
+        if i <= length(f.terms)
+            idx = f.terms[i].output_index
+            term = f.terms[i].scalar_term
+            es[idx] = cpo_java_sum(cp, [es[idx], cpo_java_prod(cp, IntExpr[cpo_java_constant(cp, term.coefficient)], IntExpr[_parse(model, term.variable_index)])])
+        end
     end
     return es
 end

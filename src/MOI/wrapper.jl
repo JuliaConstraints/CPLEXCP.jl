@@ -1212,6 +1212,9 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.S
 end
 
 # CP.Element
+# CP.Element allows for several retrievals from the same array at the same time, but they 
+# would have to be encoded as several constraints, which is not supported in 
+# ConstraintInfo.
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
         T <: Int,
         F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
@@ -1231,17 +1234,58 @@ end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Element{T}) where {T <: Int}
     @assert MOI.output_dimension(f) == 2
-    # CP.Element allows for several retrievals from the same array at the same time, but they 
-    # would have to be encoded as several constraints, which is not supported in 
-    # ConstraintInfo.
 
+    # Split the dimensions in the right parts.
     f_parsed = _parse(model, f)
     element_assign = f_parsed[2]
     element_index = f_parsed[1]
 
+    # Build the constraint.
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     expr = cpo_java_element(model.inner, convert(Vector{Int32}, s.values), element_index)
     constr = cpo_java_eq(model.inner, element_assign, expr)
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
+
+# CP.Sort and CP.SortPermutation are not natively supported by CPLEX.
+# TODO: bridges.
+
+# CP.BinPacking
+# Unlike other CP solvers, the item weights are fixed (i.e. constant expressions, not variables).
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+        T <: Int,
+        F <: MOI.VectorAffineFunction{T},
+        S <: CP.BinPacking
+    }
+    return true
+end
+
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
+        T <: Int,
+        F <: MOI.VectorAffineFunction{T},
+        S <: CP.BinPacking
+    }
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+function MOI.add_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.BinPacking) where {T <: Int}
+    f = MOI.Utilities.canonical(f)
+
+    @assert MOI.output_dimension(f) == s.n_bins + 2 * s.n_items
+    @assert length(f.terms) == s.n_bins + s.n_items # The item sizes must be fixed for CPLEX.
+
+    # Split the dimensions in the right parts.
+    f_parsed = _parse(model, f)
+    pack_load = f_parsed[1:s.n_bins]
+    pack_assigned = f_parsed[(s.n_bins + 1) : (s.n_bins + s.n_items)]
+    pack_size = f.constants[(s.n_bins + s.n_items + 1) : (s.n_bins + 2 * s.n_items)]
+
+    # Build the constraint.
+    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+    constr = cpo_java_pack(model.inner, pack_load, pack_assigned, convert(Vector{Int32}, pack_size))
     cpo_java_add(model.inner, constr)
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
