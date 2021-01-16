@@ -502,8 +502,8 @@ end
 
     @test MOI.get(model, MOI.ResultCount()) >= 1
     @test MOI.get(model, MOI.VariablePrimal(), x1) == 4
-    @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
-    @test MOI.get(model, MOI.VariablePrimal(), x3) == 1
+    @test MOI.get(model, MOI.VariablePrimal(), x2) == 0
+    @test MOI.get(model, MOI.VariablePrimal(), x3) == 0
 end
 
 # @testset "BinPacking: ScalarAffineFunction with variable sizes" begin
