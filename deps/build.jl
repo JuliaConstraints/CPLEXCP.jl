@@ -68,4 +68,10 @@ function try_local_installation()
     @info("Using CPLEX found in location `$(location)`")
 end
 
-try_local_installation()
+if get(ENV, "JULIA_REGISTRYCI_AUTOMERGE", "") == "true"
+    # We need to be able to install and load this package without error for
+    # Julia's registry AutoMerge to work. Just write a fake path.
+    write_depsfile("nothing")
+else
+    try_local_installation()
+end
