@@ -22,9 +22,9 @@ end
 # Initialise the package by setting the right parameters for Java. This assumes
 # no other code uses JavaCall...
 function __init__()
-    cpo_java_init()
-
-    # TODO: conflict refiner statuses and others too?
+    if get(ENV, "JULIA_REGISTRYCI_AUTOMERGE", "") != "true"
+        cpo_java_init()
+    end
 end
 
 # Export the Java API.
