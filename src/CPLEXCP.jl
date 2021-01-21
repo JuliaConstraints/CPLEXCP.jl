@@ -159,7 +159,13 @@ export cpo_java_init, JavaCPOModel,
 
 # Finally, the code.
 include("api_java.jl")
-include("MOI/wrapper.jl")
 include("MOI/parse.jl")
+include("MOI/wrapper.jl")
+include("MOI/wrapper_variables.jl")
+include("MOI/wrapper_objective.jl")
+include("MOI/wrapper_constraints_singlevar.jl")
+include("MOI/wrapper_constraints_names.jl")
+include("MOI/wrapper_constraints_mo.jl")
+include("MOI/wrapper_constraints_cp.jl")
 
 end # module
