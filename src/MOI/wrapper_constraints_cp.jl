@@ -1,3 +1,17 @@
+# Generic part
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {F, S}
+    info = get(model.constraint_info, c, nothing)
+    return info !== nothing && typeof(info.set) == S
+end
+
+# function MOI.add_constraint(model::Optimizer, f, s)
+#     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
+#     constr = _build_constraint(model, f, s)
+#     cpo_java_add(model.inner, constr)
+#     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+#     return index
+# end
+
 # CP.AllDifferent
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     T <: Int,
@@ -7,16 +21,7 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.AllDifferent
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.AllDifferent) where {T}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.AllDifferent) where {T}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_alldiff(model.inner, _parse(model, f))
     cpo_java_add(model.inner, constr)
@@ -31,15 +36,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     S <: CP.Domain{T}
 }
     return true
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
-    S <: CP.Domain{T}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
 end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Domain{T}) where {T <: Int}
@@ -62,15 +58,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
-    S <: CP.DifferentFrom{T}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.DifferentFrom{T}) where {T <: Int}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
@@ -86,15 +73,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     S <: CP.Count{T}
 }
     return true
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.Count{T}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
 end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Count{T}) where {T <: Int}
@@ -119,15 +97,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     S <: CP.CountDistinct
 }
     return true
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.CountDistinct
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
 end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.CountDistinct) where {T <: Int}
@@ -155,16 +124,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    Sense <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}},
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
-    S <: CP.Strictly{T, Sense}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.LessThan{T}}) where {T <: Int}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_lt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.upper))
@@ -188,15 +147,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     S <: CP.Element{T}
 }
     return true
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.Element{T}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
 end
 
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Element{T}) where {T <: Int}
@@ -227,15 +177,6 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.BinPacking{T}
-}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
 function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.BinPacking{T}) where {T <: Int}
     f = MOI.Utilities.canonical(f)
 
@@ -257,3 +198,5 @@ end
 # CP.CapacitatedBinPacking
 # TODO: bridgde it by bounding the load variables.
 # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.html#pack(ilog.concert.IloIntExpr[],%20ilog.concert.IloIntExpr[],%20int[],%20ilog.concert.IloIntExpr)
+
+# CP.
