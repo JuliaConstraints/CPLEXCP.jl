@@ -221,7 +221,7 @@ end
 # Unlike other CP solvers, the item weights are fixed (i.e. constant expressions, not variables).
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     T <: Int,
-    F <: MOI.VectorAffineFunction{T},
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S <: CP.BinPacking{T}
 }
     return true
@@ -229,14 +229,14 @@ end
 
 function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
     T <: Int,
-    F <: MOI.VectorAffineFunction{T},
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S <: CP.BinPacking{T}
 }
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
 
-function MOI.add_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.BinPacking{T}) where {T <: Int}
+function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.BinPacking{T}) where {T <: Int}
     f = MOI.Utilities.canonical(f)
 
     @assert MOI.output_dimension(f) == s.n_bins + s.n_items

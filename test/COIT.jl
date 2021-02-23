@@ -473,7 +473,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 5
 end
 
-@testset "BinPacking: ScalarAffineFunction with fixed sizes" begin
+@testset "BinPacking: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -489,6 +489,39 @@ end
     
     c1 = MOI.add_constraint(model, 
                             MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2, 3], MOI.ScalarAffineTerm.([1, 1, 1], [x1, x2, x3])), [0, 0, 0]), 
+                            CP.BinPacking(1, 2, [w1, w2]))
+
+    @test MOI.is_valid(model, x1)
+    @test MOI.is_valid(model, x2)
+    @test MOI.is_valid(model, x3)
+    @test MOI.is_valid(model, c1)
+
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+    @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+
+    @test MOI.get(model, MOI.ResultCount()) >= 1
+    @test MOI.get(model, MOI.VariablePrimal(), x1) == 4
+    @test MOI.get(model, MOI.VariablePrimal(), x2) == 0
+    @test MOI.get(model, MOI.VariablePrimal(), x3) == 0
+end
+
+@testset "BinPacking: VectorOfVariables" begin
+    model = OPTIMIZER
+    MOI.empty!(model)
+
+    @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int})
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, CP.BinPacking{Int})
+
+    x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    x3, _ = MOI.add_constrained_variable(model, MOI.Integer())
+    w1 = 2
+    w2 = 2
+    
+    c1 = MOI.add_constraint(model,
+                            MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3]), 
                             CP.BinPacking(1, 2, [w1, w2]))
 
     @test MOI.is_valid(model, x1)
