@@ -167,8 +167,8 @@ end
 function MOI.supports_constraint(o::Optimizer, f::Type{F}, ::Type{S}) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: ReificationSet{S2}
-    S2 <: MOI.AbstractSet
+    S2 <: MOI.AbstractSet,
+    S <: CP.ReificationSet{S2}
 }
     return MOI.supports_constraint(o, f, S2)
 end
