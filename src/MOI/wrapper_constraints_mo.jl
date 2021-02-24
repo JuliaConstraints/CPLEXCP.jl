@@ -55,10 +55,6 @@ end
 
 # TODO: function MOI.set(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, S}, s::S) where {S}
 
-function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{F, S}) where {S, F}
-    return _info(model, c).f
-end
-
 ## VectorOfVariables-in-SOS{I|II}
 # Not available.
 
@@ -102,8 +98,4 @@ function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariabl
     end
 
     return
-end
-
-function MOI.get(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone})
-    return _info(model, c).set
 end

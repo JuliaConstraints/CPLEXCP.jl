@@ -22,3 +22,11 @@ function MOI.add_constraint(model::Optimizer, f::F, s::S) where {F <: MOI.Abstra
     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
     return index
 end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintFunction, c::MOI.ConstraintIndex{F, S}) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
+    return _info(model, c).f
+end
+
+function MOI.get(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{F, S}) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
+    return _info(model, c).set
+end
