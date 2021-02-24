@@ -190,6 +190,7 @@ function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.Rei
     end
 
     # Ensure that the indicator is a binary variable.
+    # TODO: allow this constraint to be deleted at the same time as the reified constraint.
     cpo_java_add(model.inner, cpo_java_range(model.inner, 0, reify_indicator, 1))
 
     # Build the constraint.
@@ -203,12 +204,13 @@ function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::
     f_parsed = _parse(model, f)
     reify_indicator = f_parsed[1]
     reify_set_variables_raw = if MOI.output_dimension(f) == 2
-        MOI.ScalarAffineFunction([f.terms[2].scalar_term], f.constants[2])
+        collect(MOIU.eachscalar(f))[2]
     else
         MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end])
     end
 
     # Ensure that the indicator is a binary variable.
+    # TODO: allow this constraint to be deleted at the same time as the reified constraint.
     cpo_java_add(model.inner, cpo_java_range(model.inner, 0, reify_indicator, 1))
 
     # Build the constraint.

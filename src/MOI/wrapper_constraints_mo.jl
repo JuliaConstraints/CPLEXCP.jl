@@ -13,6 +13,10 @@ function _build_constraint(model::Optimizer, f::F, s::MOI.EqualTo{T}) where {T <
     return cpo_java_eq(model.inner, _parse(model, f), s.value)
 end
 
+function _build_constraint(model::Optimizer, f::F, s::MOI.EqualTo{T}) where {T <: Integer, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    return cpo_java_eq(model.inner, _parse(model, f), Int32(s.value))
+end
+
 function _build_constraint(model::Optimizer, f::F, s::MOI.Interval{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     if s.lower == Inf
         return _build_constraint(model, f, MOI.LessThan(s.upper))
