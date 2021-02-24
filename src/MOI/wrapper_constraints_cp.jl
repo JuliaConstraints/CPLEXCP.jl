@@ -1,16 +1,16 @@
 # Generic part
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {F, S}
+function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
     info = get(model.constraint_info, c, nothing)
     return info !== nothing && typeof(info.set) == S
 end
 
-# function MOI.add_constraint(model::Optimizer, f, s)
-#     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-#     constr = _build_constraint(model, f, s)
-#     cpo_java_add(model.inner, constr)
-#     model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-#     return index
-# end
+function MOI.add_constraint(model::Optimizer, f::F, s::S) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
+    index = MOI.ConstraintIndex{F, S}(length(model.constraint_info) + 1)
+    constr = _build_constraint(model, f, s)
+    cpo_java_add(model.inner, constr)
+    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
+    return index
+end
 
 # CP.AllDifferent
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
@@ -22,11 +22,7 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
 end
 
 function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.AllDifferent) where {T}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_alldiff(model.inner, _parse(model, f))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_alldiff(model.inner, _parse(model, f))
 end
 
 # CP.Domain
@@ -38,12 +34,8 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Domain{T}) where {T <: Int}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Domain{T}) where {T <: Int}
+    return cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
 end
 
 # CP.Membership
@@ -58,12 +50,8 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.DifferentFrom{T}) where {T <: Int}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.DifferentFrom{T}) where {T <: Int}
+    return cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
 end
 
 # CP.Count
@@ -75,19 +63,15 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Count{T}) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Count{T}) where {T <: Int}
     @assert MOI.output_dimension(f) >= 2
 
     f_parsed = _parse(model, f)
     count_assign = f_parsed[1]
     count_values = f_parsed[2:end]
 
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     expr = cpo_java_count(model.inner, count_values, Int32(s.value))
-    constr = cpo_java_eq(model.inner, count_assign, expr)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_eq(model.inner, count_assign, expr)
 end
 
 # CP.Count
@@ -99,19 +83,15 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.CountDistinct) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.CountDistinct) where {T <: Int}
     @assert MOI.output_dimension(f) >= 2
 
     f_parsed = _parse(model, f)
     count_assign = f_parsed[1]
     count_values = f_parsed[2:end]
 
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     expr = cpo_java_countdifferent(model.inner, count_values)
-    constr = cpo_java_eq(model.inner, count_assign, expr)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_eq(model.inner, count_assign, expr)
 end
 
 # CP.Strictly
@@ -124,20 +104,12 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.LessThan{T}}) where {T <: Int}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_lt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.upper))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.LessThan{T}}) where {T <: Int}
+    return cpo_java_lt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.upper))
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.GreaterThan{T}}) where {T <: Int}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_gt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.lower))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.GreaterThan{T}}) where {T <: Int}
+    return cpo_java_gt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.lower))
 end
 
 # CP.Element
@@ -149,19 +121,15 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Element{T}) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Element{T}) where {T <: Int}
     # Split the dimensions in the right parts.
     f_parsed = _parse(model, f)
     element_assign = f_parsed[2]
     element_index = f_parsed[1]
 
     # Build the constraint.
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     expr = cpo_java_element(model.inner, convert(Vector{Int32}, s.values), element_index)
-    constr = cpo_java_eq(model.inner, element_assign, expr)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_eq(model.inner, element_assign, expr)
 end
 
 # CP.Sort and CP.SortPermutation are not natively supported by CPLEX.
@@ -177,7 +145,7 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.BinPacking{T}) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.BinPacking{T}) where {T <: Int}
     f = MOI.Utilities.canonical(f)
 
     @assert MOI.output_dimension(f) == s.n_bins + s.n_items
@@ -188,11 +156,7 @@ function MOI.add_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MO
     pack_assigned = f_parsed[(s.n_bins + 1) : (s.n_bins + s.n_items)]
 
     # Build the constraint.
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_pack(model.inner, pack_load, pack_assigned, convert(Vector{Int32}, s.weights))
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_pack(model.inner, pack_load, pack_assigned, convert(Vector{Int32}, s.weights))
 end
 
 # CP.CapacitatedBinPacking
