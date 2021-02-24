@@ -163,4 +163,36 @@ end
 # TODO: bridgde it by bounding the load variables.
 # https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.html#pack(ilog.concert.IloIntExpr[],%20ilog.concert.IloIntExpr[],%20int[],%20ilog.concert.IloIntExpr)
 
-# CP.
+# CP.ReificationSet
+function MOI.supports_constraint(o::Optimizer, f::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: ReificationSet{S2}
+    S2 <: MOI.AbstractSet
+}
+    return MOI.supports_constraint(o, f, S2)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.ReificationSet{S2}) where S2 <: MOI.AbstractSet
+    # Split the dimensions in the right parts.
+    f_parsed = _parse(model, f)
+    reify_indicator = f_parsed[1]
+    reify_set_variables_raw = MOI.VectorOfVariables(f.variables[2:end])
+
+    # Build the constraint.
+    indicator = cpo_java_eq(model.inner, reify_indicator, Int32(true))
+    set = _build_constraint(model, reify_set_variables_raw, s.set)
+    return cpo_java_equiv(model.inner, indicator, set)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.ReificationSet{S2}) where {T <: Int, S2 <: MOI.AbstractSet}
+    # Split the dimensions in the right parts.
+    f_parsed = _parse(model, f)
+    reify_indicator = f_parsed[1]
+    reify_set_variables_raw = MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end])
+
+    # Build the constraint.
+    indicator = cpo_java_eq(model.inner, reify_indicator, Int32(true))
+    set = _build_constraint(model, reify_set_variables_raw, s.set)
+    return cpo_java_equiv(model.inner, indicator, set)
+end
