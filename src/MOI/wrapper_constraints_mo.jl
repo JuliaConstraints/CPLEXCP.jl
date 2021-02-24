@@ -1,26 +1,6 @@
 ## ScalarAffineFunction-in-Set
 ## ScalarQuadraticFunction-in-Set
 
-function _info(::Optimizer, key::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
-    throw(MOI.InvalidIndex(key))
-end
-
-function _info(model::Optimizer, key::MOI.ConstraintIndex)
-    if haskey(model.constraint_info, key)
-        return model.constraint_info[key]
-    end
-    throw(MOI.InvalidIndex(key))
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {
-            T <: Real, 
-            S <: Union{MOI.GreaterThan{T}, MOI.LessThan{T}, MOI.EqualTo{T}, MOI.Interval{T}}, 
-            F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}
-        }
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
 function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
     constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
@@ -106,11 +86,6 @@ function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.S
     constr = cpo_java_gt(model, expr, 0)
     model.constraint_info[cindex] = ConstraintInfo(cindex, constr, f, s)
     return cindex
-end
-
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone})
-    info = get(model.constraint_info, c.value, nothing)
-    return info !== nothing && typeof(info.set) == MOI.SecondOrderCone
 end
 
 function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone})

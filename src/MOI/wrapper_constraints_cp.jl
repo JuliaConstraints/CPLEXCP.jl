@@ -1,17 +1,3 @@
-# Generic part
-function MOI.is_valid(model::Optimizer, c::MOI.ConstraintIndex{F, S}) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
-    info = get(model.constraint_info, c, nothing)
-    return info !== nothing && typeof(info.set) == S
-end
-
-function MOI.add_constraint(model::Optimizer, f::F, s::S) where {F <: MOI.AbstractFunction, S <: MOI.AbstractSet}
-    index = MOI.ConstraintIndex{F, S}(length(model.constraint_info) + 1)
-    constr = _build_constraint(model, f, s)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
-end
-
 # CP.AllDifferent
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     T <: Int,
