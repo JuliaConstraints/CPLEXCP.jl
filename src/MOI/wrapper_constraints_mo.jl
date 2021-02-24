@@ -2,43 +2,27 @@
 ## ScalarQuadraticFunction-in-Set
 
 function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_ge(model.inner, _parse(model, f), s.lower)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_ge(model.inner, _parse(model, f), s.lower)
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.LessThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_le(model.inner, _parse(model, f), s.upper)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::F, s::MOI.LessThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    return cpo_java_le(model.inner, _parse(model, f), s.upper)
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.EqualTo{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_eq(model.inner, _parse(model, f), s.value)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+function _build_constraint(model::Optimizer, f::F, s::MOI.EqualTo{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+    return cpo_java_eq(model.inner, _parse(model, f), s.value)
 end
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.Interval{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function _build_constraint(model::Optimizer, f::F, s::MOI.Interval{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     if s.lower == Inf
-        return MOI.add_constraint(model, f, MOI.LessThan(s.upper))
+        return _build_constraint(model, f, MOI.LessThan(s.upper))
     elseif s.upper == Inf
-        return MOI.add_constraint(model, f, MOI.GreaterThan(s.lower))
+        return _build_constraint(model, f, MOI.GreaterThan(s.lower))
     elseif s.lower == s.upper
-        return MOI.add_constraint(model, f, MOI.EqualTo(s.lower))
+        return _build_constraint(model, f, MOI.EqualTo(s.lower))
     end
 
-    index = MOI.ConstraintIndex{typeof(f), typeof(s)}(length(model.constraint_info) + 1)
-    constr = cpo_java_range(model.inner, s.lower, _parse(model, f), s.upper)
-    cpo_java_add(model.inner, constr)
-    model.constraint_info[index] = ConstraintInfo(index, constr, f, s)
-    return index
+    return cpo_java_range(model.inner, s.lower, _parse(model, f), s.upper)
 end
 
 # No vector of constraints, there is no more efficient way to do it.
@@ -56,11 +40,11 @@ end
 # TODO: function MOI.set(model::Optimizer, ::MOI.ConstraintSet, c::MOI.ConstraintIndex{MOI.ScalarAffineFunction{Float64}, S}, s::S) where {S}
 
 ## VectorOfVariables-in-SOS{I|II}
-# Not available.
+# Not available. Bridge it?
 
 ## VectorOfVariables-in-SecondOrderCone
 
-function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.SecondOrderCone)
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.SecondOrderCone)
     if length(f.variables) != s.dimension
         error("Dimension of $(s) does not match number of terms in $(f)")
     end
@@ -77,11 +61,8 @@ function MOI.add_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::MOI.S
     end
 
     # Then, add the quadratic constraint.
-    cindex = MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone}(length(model.constraint_info) + 1)
     expr = _parse(model, f, s)
-    constr = cpo_java_gt(model, expr, 0)
-    model.constraint_info[cindex] = ConstraintInfo(cindex, constr, f, s)
-    return cindex
+    return cpo_java_gt(model, expr, 0)
 end
 
 function MOI.delete(model::Optimizer, c::MOI.ConstraintIndex{MOI.VectorOfVariables, MOI.SecondOrderCone})
