@@ -151,19 +151,46 @@ end
 
 # CP.ReificationSet
 function MOI.supports_constraint(o::Optimizer, f::Type{F}, ::Type{S}) where {
-    T <: Int,
-    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    F <: MOI.VectorOfVariables,
     S2 <: MOI.AbstractSet,
     S <: CP.ReificationSet{S2}
 }
-    return MOI.supports_constraint(o, f, S2)
+    # TODO: the output value should depend on the number of values in the function (either 2 or more).
+    # return if MOI.output_dimension(f) == 2
+    #     MOI.supports_constraint(o, MOI.SingleVariable(f.variables[2]), S2)
+    # else
+    #     MOI.supports_constraint(o, MOI.VectorOfVariables(f.variables[2:end]), S2)
+    # end
+    return MOI.supports_constraint(o, MOI.SingleVariable, S2) || MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
+end
+
+function MOI.supports_constraint(o::Optimizer, f::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: MOI.VectorAffineFunction{T},
+    S2 <: MOI.AbstractSet,
+    S <: CP.ReificationSet{S2}
+}
+    # TODO: the output value should depend on the number of values in the function (either 2 or more).
+    # return if MOI.output_dimension(f) == 2
+    #     MOI.supports_constraint(o, MOI.ScalarAffineFunction(f.terms[2], f.constants[2]), S2)
+    # else
+    #     MOI.supports_constraint(o, MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end]), S2)
+    # end
+    return MOI.supports_constraint(o, MOI.ScalarAffineFunction{T}, S2) || MOI.supports_constraint(o, MOI.VectorAffineFunction{T}, S2)
 end
 
 function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.ReificationSet{S2}) where S2 <: MOI.AbstractSet
     # Split the dimensions in the right parts.
     f_parsed = _parse(model, f)
     reify_indicator = f_parsed[1]
-    reify_set_variables_raw = MOI.VectorOfVariables(f.variables[2:end])
+    reify_set_variables_raw = if MOI.output_dimension(f) == 2
+        MOI.SingleVariable(f.variables[2])
+    else
+        MOI.VectorOfVariables(f.variables[2:end])
+    end
+
+    # Ensure that the indicator is a binary variable.
+    cpo_java_add(model.inner, cpo_java_range(model.inner, 0, reify_indicator, 1))
 
     # Build the constraint.
     indicator = cpo_java_eq(model.inner, reify_indicator, Int32(true))
@@ -175,7 +202,14 @@ function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::
     # Split the dimensions in the right parts.
     f_parsed = _parse(model, f)
     reify_indicator = f_parsed[1]
-    reify_set_variables_raw = MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end])
+    reify_set_variables_raw = if MOI.output_dimension(f) == 2
+        MOI.ScalarAffineFunction([f.terms[2].scalar_term], f.constants[2])
+    else
+        MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end])
+    end
+
+    # Ensure that the indicator is a binary variable.
+    cpo_java_add(model.inner, cpo_java_range(model.inner, 0, reify_indicator, 1))
 
     # Build the constraint.
     indicator = cpo_java_eq(model.inner, reify_indicator, Int32(true))

@@ -286,3 +286,28 @@ end
 # TODO: MOI.set? Remove the constraint and rebuild it?
 # TODO: make variable integer/binary?
 # TODO: constraint names here? They don't get passed to the solver.
+
+# Implementations of _build_constraint that are mostly useful for reification.
+function MOI.add_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.GreaterThan{T}) where {T <: Real}
+    return cpo_java_ge(model.inner, _parse(model, f), s.lower)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.LessThan{T}) where {T <: Real}
+    return cpo_java_le(model.inner, _parse(model, f), s.upper)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.EqualTo{T}) where {T <: Real}
+    return cpo_java_eq(model.inner, _parse(model, f), s.value)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.Interval{T}) where {T <: Real}
+    if s.lower == Inf
+        return _build_constraint(model, f, MOI.LessThan(s.upper))
+    elseif s.upper == Inf
+        return _build_constraint(model, f, MOI.GreaterThan(s.lower))
+    elseif s.lower == s.upper
+        return _build_constraint(model, f, MOI.EqualTo(s.lower))
+    end
+
+    return cpo_java_range(model.inner, s.lower, _parse(model, f), s.upper)
+end

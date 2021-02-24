@@ -5,18 +5,19 @@ import MathOptInterface
 import ConstraintProgrammingExtensions
 
 const MOI = MathOptInterface
-const CleverDicts = MOI.Utilities.CleverDicts
+const MOIU = MOI.Utilities
+const CleverDicts = MOIU.CleverDicts
 const CP = ConstraintProgrammingExtensions
 
 # Check if the package has been built correctly.
 if isfile(joinpath(dirname(@__FILE__), "..", "deps", "deps.jl"))
     include("../deps/deps.jl")
 else
-    error("CPLEXCP not properly installed. Please run Pkg.build(\"CPLEXCP\") or ]build CPLEXCP")
+    error("CPLEXCP not properly installed. Please run `Pkg.build(\"CPLEXCP\")` or `]build CPLEXCP`")
 end
 
 if !@isdefined(libcplexcpojava)
-    error("CPLEXCP not properly built. There probably was a problem when running Pkg.build(\"CPLEXCP\") or ]build CPLEXCP")
+    error("CPLEXCP not properly built. There probably was a problem when running `Pkg.build(\"CPLEXCP\")` or `]build CPLEXCP`")
 end
 
 # Initialise the package by setting the right parameters for Java. This assumes
