@@ -1738,6 +1738,10 @@ function cpo_java_lexicographic(cp::JavaCPOModel, exprs_a::IntExprArray, exprs_b
     return jcall(cp.cp, "lexicographic", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}), exprs_a, exprs_b)
 end
 
+function cpo_java_strictlexicographic(cp::JavaCPOModel, exprs_a::IntExprArray, exprs_b::IntExprArray)
+    return jcall(cp.cp, "strictLexicographic", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntExpr}), exprs_a, exprs_b)
+end
+
 function cpo_java_lt(cp::JavaCPOModel, expr_a::IntExpr, expr_b::IntExpr)
     return jcall(cp.cp, "lt", IloConstraint, (IloIntExpr, IloIntExpr), expr_a, expr_b)
 end

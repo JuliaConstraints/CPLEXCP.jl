@@ -247,7 +247,45 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
-function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Inverse) where {T}
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Inverse) where {T <: Int}
     f_parsed = _parse(model, f)
-    return cpo_java_inverse(model.inner, f_parsed[1:s.dimension], f_parsed[(1 + s.dimension) : (2 * s.dimension)])
+    inverse_first = f_parsed[1:s.dimension]
+    inverse_second = f_parsed[(1 + s.dimension) : (2 * s.dimension)]
+
+    return cpo_java_inverse(model.inner, inverse_first, inverse_second)
+end
+
+# CP.LexicographicallyLessThan
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: CP.LexicographicallyLessThan
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.LexicographicallyLessThan)
+    # The Java API does not support single variables as argument, only expressions.
+    return _build_constraint(model, MOI.VectorAffineFunction{Int}(f), s)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.LexicographicallyLessThan) where {T <: Int}
+    f_parsed = _parse(model, f)
+    lex_first = f_parsed[1:s.dimension]
+    lex_second = f_parsed[(s.dimension + 1) : (2 * s.dimension)]
+
+    return cpo_java_lexicographic(model.inner, lex_first, lex_second)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.Strictly{CP.LexicographicallyLessThan})
+    # The Java API does not support single variables as argument, only expressions.
+    return _build_constraint(model, MOI.VectorAffineFunction{Int}(f), s)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.Strictly{CP.LexicographicallyLessThan}) where {T <: Int}
+    f_parsed = _parse(model, f)
+    lex_first = f_parsed[1:s.dimension]
+    lex_second = f_parsed[(s.dimension + 1) : (2 * s.dimension)]
+
+    return cpo_java_strictlexicographic(model.inner, lex_first, lex_second)
 end
