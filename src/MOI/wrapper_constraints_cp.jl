@@ -24,6 +24,19 @@ function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.Sc
     return cpo_java_allowedassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
 end
 
+# CP.AntiDomain
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    S <: CP.AntiDomain{T}
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.AntiDomain{T}) where {T <: Int}
+    return cpo_java_forbiddenassignments(model.inner, _parse(model, f), collect(Int32(v) for v in s.values))
+end
+
 # CP.Membership
 # TODO: not available, make a bridge for this.
 
