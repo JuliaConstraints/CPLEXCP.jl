@@ -1,7 +1,7 @@
 ## ScalarAffineFunction-in-Set
 ## ScalarQuadraticFunction-in-Set
 
-function MOI.add_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
+function _build_constraint(model::Optimizer, f::F, s::MOI.GreaterThan{T}) where {T <: Real, F <: Union{MOI.ScalarAffineFunction{T}, MOI.ScalarQuadraticFunction{T}}}
     return cpo_java_ge(model.inner, _parse(model, f), s.lower)
 end
 

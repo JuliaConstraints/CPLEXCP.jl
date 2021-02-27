@@ -1,5 +1,11 @@
 module CPLEXCP
 
+# TODO: 
+# - bridge for Circuit: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.5.1/ilog.odms.studio.help/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_circuit.html
+# Help for debugging, with `model` an MOI model: 
+#   cpo_java_exportmodel(model.inner, "somewhere/model.cpo")
+#   -> cpoptimizer, r to read this file, opt to solve, etc.
+
 using JavaCall
 import MathOptInterface
 import ConstraintProgrammingExtensions

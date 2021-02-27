@@ -288,6 +288,7 @@ end
 # TODO: constraint names here? They don't get passed to the solver.
 
 # Implementations of _build_constraint that are mostly useful for reification.
+# MOI.add_constraint rather works on the variable bounds than new constraints in this case.
 function _build_constraint(model::Optimizer, f::MOI.SingleVariable, s::MOI.GreaterThan{T}) where {T <: Real}
     return cpo_java_ge(model.inner, _parse(model, f), s.lower)
 end

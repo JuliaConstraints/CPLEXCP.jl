@@ -1342,8 +1342,8 @@ function cpo_java_alldiff(cp::JavaCPOModel, exprs::IntExprArray)
     return jcall(cp.cp, "allDiff", IloConstraint, (Vector{IloIntExpr},), exprs)
 end
 
-function cpo_java_allmindistance(cp::JavaCPOModel, vars::Vector{IloIntVar})
-    return jcall(cp.cp, "allMinDistance", IloConstraint, (Vector{IloIntVar},), vars)
+function cpo_java_allmindistance(cp::JavaCPOModel, vars::Vector{IloIntExpr}, k::Int32)
+    return jcall(cp.cp, "allMinDistance", IloConstraint, (Vector{IloIntExpr}, jint), vars, k)
 end
 
 function cpo_java_allowedassignments(cp::JavaCPOModel, expr::IntExpr, values::Vector{Int32})

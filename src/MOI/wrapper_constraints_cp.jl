@@ -218,3 +218,22 @@ function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::
     set = _build_constraint(model, reify_set_variables_raw, s.set)
     return cpo_java_equiv(model.inner, indicator, set)
 end
+
+# CP.MinimumDistance
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: CP.MinimumDistance{T}
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.MinimumDistance{T}) where {T <: Int}
+    # The Java API does not support single variables as argument, only expressions.
+    return _build_constraint(model, MOI.VectorAffineFunction{T}(f), s)
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.MinimumDistance{T}) where {T <: Int}
+    f_parsed = _parse(model, f)
+    return cpo_java_allmindistance(model.inner, f_parsed, Int32(s.k))
+end
