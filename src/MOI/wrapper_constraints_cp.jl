@@ -237,3 +237,17 @@ function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::
     f_parsed = _parse(model, f)
     return cpo_java_allmindistance(model.inner, f_parsed, Int32(s.k))
 end
+
+# CP.Inverse
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: CP.Inverse
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Inverse) where {T}
+    f_parsed = _parse(model, f)
+    return cpo_java_inverse(model.inner, f_parsed[1:s.dimension], f_parsed[(1 + s.dimension) : (2 * s.dimension)])
+end
