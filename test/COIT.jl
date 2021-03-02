@@ -431,7 +431,7 @@ end
 
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
     @test MOI.supports_constraint(model, MOI.SingleVariable, CP.Domain{Int})
-    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, CP.Strictly{Int, MOI.LessThan{Int}})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, CP.Strictly{MOI.LessThan{Int}, Int})
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -461,7 +461,7 @@ end
 
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
     @test MOI.supports_constraint(model, MOI.SingleVariable, CP.Domain{Int})
-    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, CP.Strictly{Int, MOI.GreaterThan{Int}})
+    @test MOI.supports_constraint(model, MOI.ScalarAffineFunction{Int}, CP.Strictly{MOI.GreaterThan{Int}, Int})
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())

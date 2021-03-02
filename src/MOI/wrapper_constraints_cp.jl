@@ -98,16 +98,16 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     T <: Int,
     Sense <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}},
     F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
-    S <: CP.Strictly{T, Sense}
+    S <: CP.Strictly{Sense, T}
 }
     return true
 end
 
-function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.LessThan{T}}) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{MOI.LessThan{T}, T}) where {T <: Int}
     return cpo_java_lt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.upper))
 end
 
-function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{T, MOI.GreaterThan{T}}) where {T <: Int}
+function _build_constraint(model::Optimizer, f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}}, s::CP.Strictly{MOI.GreaterThan{T}, T}) where {T <: Int}
     return cpo_java_gt(model.inner, _parse(model, f), cpo_java_constant(model.inner, s.set.lower))
 end
 
