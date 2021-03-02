@@ -1574,12 +1574,12 @@ function cpo_java_first(cp::JavaCPOModel, var_seq::IloIntervalSequenceVar, var_i
     return jcall(cp.cp, "first", IloConstraint, (IloIntervalSequenceVar, IloIntervalVar), var_seq, var_interval)
 end
 
-function cpo_java_forbiddenassignments(cp::JavaCPOModel, exprs::Vector{IloIntVar}, values::Vector{Int32})
-    return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (Vector{IloIntVar}, Vector{jint}), exprs, values)
+function cpo_java_forbiddenassignments(cp::JavaCPOModel, expr::IntExpr, values::Vector{Int32})
+    return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (IloIntExpr, Vector{jint}), expr, values)
 end
 
-function cpo_java_forbiddenassignments(cp::JavaCPOModel, vars::Vector{IloIntVar}, values::Vector{IloIntTupleSet})
-    return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (Vector{IloIntVar}, Vector{IloIntTupleSet}), vars, values)
+function cpo_java_forbiddenassignments(cp::JavaCPOModel, exprs::Vector{IntExpr}, values::Vector{IloIntTupleSet})
+    return jcall(cp.cp, "forbiddenAssignments", IloConstraint, (Vector{IloIntExpr}, Vector{IloIntTupleSet}), exprs, values)
 end
 
 function cpo_java_forbidend(cp::JavaCPOModel, a::IloIntervalVar, f::IloNumToNumStepFunction)
