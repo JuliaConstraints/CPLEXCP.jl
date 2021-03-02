@@ -272,7 +272,7 @@ end
 function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.LexicographicallyLessThan
+    S <: Union{CP.LexicographicallyLessThan, CP.Strictly{CP.LexicographicallyLessThan}}
 }
     return true
 end
