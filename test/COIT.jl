@@ -790,8 +790,8 @@ end
     @test MOI.get(model, MOI.ResultCount()) >= 1
     @test MOI.get(model, MOI.VariablePrimal(), x1) == 2
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
-    @test MOI.get(model, MOI.VariablePrimal(), x3) == 1
-    @test MOI.get(model, MOI.VariablePrimal(), x4) == 2
+    @test MOI.get(model, MOI.VariablePrimal(), x3) == 2
+    @test MOI.get(model, MOI.VariablePrimal(), x4) == 1
 end
 
 @testset "Inverse: VectorAffineFunction" begin
@@ -807,7 +807,7 @@ end
     x3, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x4, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, x1, MOI.Interval(1, 2))
+    c1 = MOI.add_constraint(model, x1, MOI.EqualTo(2))
     c2 = MOI.add_constraint(model, x2, MOI.Interval(1, 2))
     
     c3 = MOI.add_constraint(model, 
@@ -829,8 +829,8 @@ end
     @test MOI.get(model, MOI.ResultCount()) >= 1
     @test MOI.get(model, MOI.VariablePrimal(), x1) == 2
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
-    @test MOI.get(model, MOI.VariablePrimal(), x3) == 1
-    @test MOI.get(model, MOI.VariablePrimal(), x4) == 2
+    @test MOI.get(model, MOI.VariablePrimal(), x3) == 2
+    @test MOI.get(model, MOI.VariablePrimal(), x4) == 1
 end
 
 @testset "LexicographicallyLessThan: VectorOfVariables" begin

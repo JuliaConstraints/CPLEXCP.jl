@@ -262,9 +262,13 @@ end
 
 function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.Inverse) where {T <: Int}
     f_parsed = _parse(model, f)
+
+    # Map indices between Julia (starts at 1) and CPLEX (starts at 0).
+    f_parsed = [cpo_java_diff(model.inner, f_p, Int32(1)) for f_p in f_parsed]
+
     inverse_first = f_parsed[1:s.dimension]
     inverse_second = f_parsed[(1 + s.dimension) : (2 * s.dimension)]
-
+    
     return cpo_java_inverse(model.inner, inverse_first, inverse_second)
 end
 

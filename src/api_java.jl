@@ -1244,7 +1244,7 @@ function cpo_java_diff(cp::JavaCPOModel, e1::Real, e2::NumExpr)
 end
 
 function cpo_java_diff(cp::JavaCPOModel, e1::NumExpr, e2::Real)
-    return jcall(cp.cp, "diff", IloNumExpr, (jdouble, jdouble), e1, e2)
+    return jcall(cp.cp, "diff", IloNumExpr, (IloNumExpr, jdouble), e1, e2)
 end
 
 function cpo_java_diff(cp::JavaCPOModel, e1::NumExpr, e2::NumExpr)
