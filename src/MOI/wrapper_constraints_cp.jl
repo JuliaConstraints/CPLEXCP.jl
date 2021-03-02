@@ -297,8 +297,8 @@ end
 
 function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::CP.Strictly{CP.LexicographicallyLessThan}) where {T <: Int}
     f_parsed = _parse(model, f)
-    lex_first = f_parsed[1:s.dimension]
-    lex_second = f_parsed[(s.dimension + 1) : (2 * s.dimension)]
+    lex_first = f_parsed[1:s.set.dimension]
+    lex_second = f_parsed[(s.set.dimension + 1) : (2 * s.set.dimension)]
 
     return cpo_java_strictlexicographic(model.inner, lex_first, lex_second)
 end

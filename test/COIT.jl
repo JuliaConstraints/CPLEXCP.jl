@@ -851,7 +851,7 @@ end
     c3 = MOI.add_constraint(model, x3, MOI.EqualTo(2))
     c4 = MOI.add_constraint(model, x4, MOI.EqualTo(2))
     
-    c5 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3, x4]), CP.LexicographicallyLessThan())
+    c5 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3, x4]), CP.LexicographicallyLessThan(2))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -892,9 +892,9 @@ end
     c3 = MOI.add_constraint(model, x3, MOI.EqualTo(2))
     c4 = MOI.add_constraint(model, x4, MOI.EqualTo(2))
     
-    c3 = MOI.add_constraint(model, 
+    c5 = MOI.add_constraint(model, 
                             MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2, 3, 4], MOI.ScalarAffineTerm.([1, 1, 1, 1], [x1, x2, x3, x4])), [0, 0, 0, 0]), 
-                            CP.LexicographicallyLessThan())
+                            CP.LexicographicallyLessThan(2))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -935,7 +935,7 @@ end
     c3 = MOI.add_constraint(model, x3, MOI.EqualTo(2))
     c4 = MOI.add_constraint(model, x4, MOI.EqualTo(2))
     
-    c5 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3, x4]), CP.Strictly{CP.LexicographicallyLessThan}())
+    c5 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3, x4]), CP.Strictly(CP.LexicographicallyLessThan(2)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -976,9 +976,9 @@ end
     c3 = MOI.add_constraint(model, x3, MOI.EqualTo(2))
     c4 = MOI.add_constraint(model, x4, MOI.EqualTo(2))
     
-    c3 = MOI.add_constraint(model, 
+    c5 = MOI.add_constraint(model, 
                             MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2, 3, 4], MOI.ScalarAffineTerm.([1, 1, 1, 1], [x1, x2, x3, x4])), [0, 0, 0, 0]), 
-                            CP.Strictly{CP.LexicographicallyLessThan}())
+                            CP.Strictly(CP.LexicographicallyLessThan(2)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
