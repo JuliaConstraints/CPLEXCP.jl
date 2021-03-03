@@ -1,7 +1,15 @@
 @testset "Java API" begin
     @testset "Unit tests" begin
         @testset "Type hierarchy" begin
-            for T in [IloConstraint, IloAlternative, IloIsomorphism, IloNoOverlap, IloRange, IloSpan, IloSynchronize]
+            for T in [
+                IloConstraint,
+                IloAlternative,
+                IloIsomorphism,
+                IloNoOverlap,
+                IloRange,
+                IloSpan,
+                IloSynchronize,
+            ]
                 @test T <: Constraint
                 @test Vector{T} <: ConstraintArray
                 @test T <: Addable
@@ -64,13 +72,15 @@
             @test typeof(cpo_java_intervalvar(model)) == IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, "var")) == IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, 5)) == IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, 5, "var")) == IloIntervalVar
+            @test typeof(cpo_java_intervalvar(model, 5, "var")) ==
+                  IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, 5, 10)) == IloIntervalVar
 
             # Sequence-of-intervals variables
             i1 = cpo_java_intervalvar(model)
             i2 = cpo_java_intervalvar(model)
-            @test typeof(cpo_java_intervalsequencevar(model, [i1, i2])) == IloIntervalSequenceVar
+            @test typeof(cpo_java_intervalsequencevar(model, [i1, i2])) ==
+                  IloIntervalSequenceVar
         end
     end
 
@@ -99,55 +109,96 @@
             status = cpo_java_solve(model)
             @test status
 
-            @test cpo_java_getvalue(model, belgium) == cpo_java_getvalue(model, belgium)
-            @test cpo_java_getvalue(model, denmark) == cpo_java_getvalue(model, denmark)
-            @test cpo_java_getvalue(model, france) == cpo_java_getvalue(model, france)
-            @test cpo_java_getvalue(model, germany) == cpo_java_getvalue(model, germany)
-            @test cpo_java_getvalue(model, luxembourg) == cpo_java_getvalue(model, luxembourg)
-            @test cpo_java_getvalue(model, netherlands) == cpo_java_getvalue(model, netherlands)
+            @test cpo_java_getvalue(model, belgium) ==
+                  cpo_java_getvalue(model, belgium)
+            @test cpo_java_getvalue(model, denmark) ==
+                  cpo_java_getvalue(model, denmark)
+            @test cpo_java_getvalue(model, france) ==
+                  cpo_java_getvalue(model, france)
+            @test cpo_java_getvalue(model, germany) ==
+                  cpo_java_getvalue(model, germany)
+            @test cpo_java_getvalue(model, luxembourg) ==
+                  cpo_java_getvalue(model, luxembourg)
+            @test cpo_java_getvalue(model, netherlands) ==
+                  cpo_java_getvalue(model, netherlands)
 
-            @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, france)
-            @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, germany)
-            @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, netherlands)
-            @test cpo_java_getvalue(model, belgium) != cpo_java_getvalue(model, luxembourg)
-            @test cpo_java_getvalue(model, denmark) != cpo_java_getvalue(model, germany)
-            @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, germany)
-            @test cpo_java_getvalue(model, france) != cpo_java_getvalue(model, luxembourg)
-            @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, luxembourg)
-            @test cpo_java_getvalue(model, germany) != cpo_java_getvalue(model, netherlands)
+            @test cpo_java_getvalue(model, belgium) !=
+                  cpo_java_getvalue(model, france)
+            @test cpo_java_getvalue(model, belgium) !=
+                  cpo_java_getvalue(model, germany)
+            @test cpo_java_getvalue(model, belgium) !=
+                  cpo_java_getvalue(model, netherlands)
+            @test cpo_java_getvalue(model, belgium) !=
+                  cpo_java_getvalue(model, luxembourg)
+            @test cpo_java_getvalue(model, denmark) !=
+                  cpo_java_getvalue(model, germany)
+            @test cpo_java_getvalue(model, france) !=
+                  cpo_java_getvalue(model, germany)
+            @test cpo_java_getvalue(model, france) !=
+                  cpo_java_getvalue(model, luxembourg)
+            @test cpo_java_getvalue(model, germany) !=
+                  cpo_java_getvalue(model, luxembourg)
+            @test cpo_java_getvalue(model, germany) !=
+                  cpo_java_getvalue(model, netherlands)
         end
 
         @testset "Alloc" begin
             # Model data.
             ncell = 25
             nfreq = 256
-            nchannel = [8, 6, 6, 1, 4, 4, 8, 8, 8, 8, 4, 9, 8, 4, 4, 10, 8, 9, 8, 4, 5, 4, 8, 1, 1]
+            nchannel = [
+                8,
+                6,
+                6,
+                1,
+                4,
+                4,
+                8,
+                8,
+                8,
+                8,
+                4,
+                9,
+                8,
+                4,
+                4,
+                10,
+                8,
+                9,
+                8,
+                4,
+                5,
+                4,
+                8,
+                1,
+                1,
+            ]
             dist = [
-                16  1   1   0   0   0   0   0   1   1   1   1   1   2   2   1   1   0   0   0   2   2   1   1   1;
-                1   16  2   0   0   0   0   0   2   2   1   1   1   2   2   1   1   0   0   0   0   0   0   0   0;
-                1   2   16  0   0   0   0   0   2   2   1   1   1   2   2   1   1   0   0   0   0   0   0   0   0;
-                0   0   0   16  2   2   0   0   0   0   0   0   0   0   0   0   0   1   1   1   0   0   0   1   1;
-                0   0   0   2   16  2   0   0   0   0   0   0   0   0   0   0   0   1   1   1   0   0   0   1   1;
-                0   0   0   2   2   16  0   0   0   0   0   0   0   0   0   0   0   1   1   1   0   0   0   1   1;
-                0   0   0   0   0   0   16  2   0   0   1   1   1   0   0   1   1   1   1   2   0   0   0   1   1;
-                0   0   0   0   0   0   2   16  0   0   1   1   1   0   0   1   1   1   1   2   0   0   0   1   1;
-                1   2   2   0   0   0   0   0   16  2   2   2   2   2   2   1   1   1   1   1   1   1   0   1   1;
-                1   2   2   0   0   0   0   0   2   16  2   2   2   2   2   1   1   1   1   1   1   1   0   1   1;
-                1   1   1   0   0   0   1   1   2   2   16  2   2   2   2   2   2   1   1   2   1   1   0   1   1;
-                1   1   1   0   0   0   1   1   2   2   2   16  2   2   2   2   2   1   1   2   1   1   0   1   1;
-                1   1   1   0   0   0   1   1   2   2   2   2   16  2   2   2   2   1   1   2   1   1   0   1   1;
-                2   2   2   0   0   0   0   0   2   2   2   2   2   16  2   1   1   1   1   1   1   1   1   1   1;
-                2   2   2   0   0   0   0   0   2   2   2   2   2   2   16  1   1   1   1   1   1   1   1   1   1;
-                1   1   1   0   0   0   1   1   1   1   2   2   2   1   1   16  2   2   2   1   2   2   1   2   2;
-                1   1   1   0   0   0   1   1   1   1   2   2   2   1   1   2   16  2   2   1   2   2   1   2   2;
-                0   0   0   1   1   1   1   1   1   1   1   1   1   1   1   2   2   16  2   2   1   1   0   2   2;
-                0   0   0   1   1   1   1   1   1   1   1   1   1   1   1   2   2   2   16  2   1   1   0   2   2;
-                0   0   0   1   1   1   2   2   1   1   2   2   2   1   1   1   1   2   2   16  1   1   0   1   1;
-                2   0   0   0   0   0   0   0   1   1   1   1   1   1   1   2   2   1   1   1   16  2   1   2   2;
-                2   0   0   0   0   0   0   0   1   1   1   1   1   1   1   2   2   1   1   1   2   16  1   2   2;
-                1   0   0   0   0   0   0   0   0   0   0   0   0   1   1   1   1   0   0   0   1   1   16  1   1;
-                1   0   0   1   1   1   1   1   1   1   1   1   1   1   1   2   2   2   2   1   2   2   1   16  2;
-                1   0   0   1   1   1   1   1   1   1   1   1   1   1   1   2   2   2   2   1   2   2   1   2   16
+                16 1 1 0 0 0 0 0 1 1 1 1 1 2 2 1 1 0 0 0 2 2 1 1 1
+                1 16 2 0 0 0 0 0 2 2 1 1 1 2 2 1 1 0 0 0 0 0 0 0 0
+                1 2 16 0 0 0 0 0 2 2 1 1 1 2 2 1 1 0 0 0 0 0 0 0 0
+                0 0 0 16 2 2 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 1
+                0 0 0 2 16 2 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 1
+                0 0 0 2 2 16 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 1 1
+                0 0 0 0 0 0 16 2 0 0 1 1 1 0 0 1 1 1 1 2 0 0 0 1 1
+                0 0 0 0 0 0 2 16 0 0 1 1 1 0 0 1 1 1 1 2 0 0 0 1 1
+                1 2 2 0 0 0 0 0 16 2 2 2 2 2 2 1 1 1 1 1 1 1 0 1 1
+                1 2 2 0 0 0 0 0 2 16 2 2 2 2 2 1 1 1 1 1 1 1 0 1 1
+                1 1 1 0 0 0 1 1 2 2 16 2 2 2 2 2 2 1 1 2 1 1 0 1 1
+                1 1 1 0 0 0 1 1 2 2 2 16 2 2 2 2 2 1 1 2 1 1 0 1 1
+                1 1 1 0 0 0 1 1 2 2 2 2 16 2 2 2 2 1 1 2 1 1 0 1 1
+                2 2 2 0 0 0 0 0 2 2 2 2 2 16 2 1 1 1 1 1 1 1 1 1 1
+                2 2 2 0 0 0 0 0 2 2 2 2 2 2 16 1 1 1 1 1 1 1 1 1 1
+                1 1 1 0 0 0 1 1 1 1 2 2 2 1 1 16 2 2 2 1 2 2 1 2 2
+                1 1 1 0 0 0 1 1 1 1 2 2 2 1 1 2 16 2 2 1 2 2 1 2 2
+                0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 16 2 2 1 1 0 2 2
+                0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 16 2 1 1 0 2 2
+                0 0 0 1 1 1 2 2 1 1 2 2 2 1 1 1 1 2 2 16 1 1 0 1 1
+                2 0 0 0 0 0 0 0 1 1 1 1 1 1 1 2 2 1 1 1 16 2 1 2 2
+                2 0 0 0 0 0 0 0 1 1 1 1 1 1 1 2 2 1 1 1 2 16 1 2 2
+                1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 0 0 0 1 1 16 1 1
+                1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 1 2 2 1 16 2
+                1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 1 2 2 1 2 16
             ]
 
             function transmitter_idx(cell::Integer, channel::Integer)
@@ -166,13 +217,17 @@
 
             # Build the model.
             model = cpo_java_model()
-            ntransmitter = transmitter_idx(ncell, 1);
-            freq = cpo_java_intvararray(model, ntransmitter, 1, nfreq, "freq");
+            ntransmitter = transmitter_idx(ncell, 1)
+            freq = cpo_java_intvararray(model, ntransmitter, 1, nfreq, "freq")
 
             for cell in 1:ncell
                 for channel1 in 1:nchannel[cell]
                     for channel2 in (channel1 + 1):nchannel[cell]
-                        diff = cpo_java_diff(model, freq[transmitter_idx(cell, channel1)], freq[transmitter_idx(cell, channel2)])
+                        diff = cpo_java_diff(
+                            model,
+                            freq[transmitter_idx(cell, channel1)],
+                            freq[transmitter_idx(cell, channel2)],
+                        )
                         cstr = cpo_java_ge(model, cpo_java_abs(model, diff), 16)
                         cpo_java_add(model, cstr)
                     end
@@ -184,8 +239,16 @@
                     if dist[cell1, cell2] > 0
                         for channel1 in 1:nchannel[cell1]
                             for channel2 in 1:nchannel[cell2]
-                                diff = cpo_java_diff(model, freq[transmitter_idx(cell1, channel1)], freq[transmitter_idx(cell2, channel2)])
-                                cstr = cpo_java_ge(model, cpo_java_abs(model, diff), dist[cell1, cell2])
+                                diff = cpo_java_diff(
+                                    model,
+                                    freq[transmitter_idx(cell1, channel1)],
+                                    freq[transmitter_idx(cell2, channel2)],
+                                )
+                                cstr = cpo_java_ge(
+                                    model,
+                                    cpo_java_abs(model, diff),
+                                    dist[cell1, cell2],
+                                )
                                 cpo_java_add(model, cstr)
                             end
                         end
@@ -234,7 +297,11 @@
             for i in 0:(n - 1)
                 for j in 0:(n - 1)
                     if i != j
-                        cpo_java_inttupleset_addtuple(model, gha, [i, j, game(i, j, n)])
+                        cpo_java_inttupleset_addtuple(
+                            model,
+                            gha,
+                            [i, j, game(i, j, n)],
+                        )
                     end
                 end
             end
@@ -242,7 +309,10 @@
             for i in 0:(nweeks - 1)
                 for j in 0:(ngamesperweek - 1)
                     vars = [home[i, j], away[i, j], games[i, j]]
-                    cpo_java_add(model, cpo_java_allowedassignments(model, vars, gha))
+                    cpo_java_add(
+                        model,
+                        cpo_java_allowedassignments(model, vars, gha),
+                    )
                 end
             end
 
@@ -274,10 +344,20 @@
             end
             allgames_vec = [allgames[i] for i in 0:(ngames - 1)]
             allslots_vec = [allslots[i] for i in 0:(ngames - 1)]
-            cpo_java_add(model, cpo_java_inverse(model, allgames_vec, allslots_vec))
+            cpo_java_add(
+                model,
+                cpo_java_inverse(model, allgames_vec, allslots_vec),
+            )
 
             for i in 0:(ngames - 1)
-                cpo_java_add(model, cpo_java_eq(model, weekofgame[i], cpo_java_div(model, allslots[i], ngamesperweek)))
+                cpo_java_add(
+                    model,
+                    cpo_java_eq(
+                        model,
+                        weekofgame[i],
+                        cpo_java_div(model, allslots[i], ngamesperweek),
+                    ),
+                )
             end
 
             # Two half schedules.  Cannot play the same pair twice in the same half.
@@ -294,11 +374,26 @@
                     g1 = game(i, j, n)
                     g2 = game(j, i, n)
 
-                    c = cpo_java_equiv(model, cpo_java_ge(model, weekofgame[g1], mid), cpo_java_lt(model, weekofgame[g2], mid))
+                    c = cpo_java_equiv(
+                        model,
+                        cpo_java_ge(model, weekofgame[g1], mid),
+                        cpo_java_lt(model, weekofgame[g2], mid),
+                    )
                     cpo_java_add(model, c)
 
                     if (overlap != 0)
-                        c = cpo_java_ge(model, cpo_java_abs(model, cpo_java_diff(model, weekofgame[g1], weekofgame[g2])), overlap)
+                        c = cpo_java_ge(
+                            model,
+                            cpo_java_abs(
+                                model,
+                                cpo_java_diff(
+                                    model,
+                                    weekofgame[g1],
+                                    weekofgame[g2],
+                                ),
+                            ),
+                            overlap,
+                        )
                         cpo_java_add(model, c)
                     end
                 end
@@ -310,11 +405,19 @@
                 for j in 0:(nweeks - 1)
                     playhome[i, j] = cpo_java_boolvar(model)
                     home_vec = [home[j, k] for k in 0:(ngamesperweek - 1)]
-                    cpo_java_add(model, cpo_java_eq(model, playhome[i, j], cpo_java_count(model, home_vec, i)))
+                    cpo_java_add(
+                        model,
+                        cpo_java_eq(
+                            model,
+                            playhome[i, j],
+                            cpo_java_count(model, home_vec, i),
+                        ),
+                    )
                 end
 
                 for j in 0:(nweeks - 3 - 1)
-                    windowsum = cpo_java_sum(model, [playhome[i, k] for k in j:(j + 2)])
+                    windowsum =
+                        cpo_java_sum(model, [playhome[i, k] for k in j:(j + 2)])
                     cpo_java_add(model, cpo_java_ge(model, windowsum, 1))
                     cpo_java_add(model, cpo_java_le(model, windowsum, 2))
                 end
@@ -322,7 +425,14 @@
 
             # If we start the season home, we finish away and vice versa.
             for i in 0:(n - 1)
-                cpo_java_add(model, cpo_java_neq(model, playhome[i, 0], playhome[i, nweeks - 1]))
+                cpo_java_add(
+                    model,
+                    cpo_java_neq(
+                        model,
+                        playhome[i, 0],
+                        playhome[i, nweeks - 1],
+                    ),
+                )
             end
 
             # Objective is skipped, not useful for tests. Finds a solution in 0.5s on a powerful machine,
@@ -330,8 +440,14 @@
 
             # Each team plays home the same number of times as away
             for i in 0:(n - 1)
-                playhomesum = cpo_java_sum(model, [playhome[i, j] for j in 0:(nweeks - 1)])
-                cpo_java_add(model, cpo_java_eq(model, playhomesum, Int(nweeks / 2)))
+                playhomesum = cpo_java_sum(
+                    model,
+                    [playhome[i, j] for j in 0:(nweeks - 1)],
+                )
+                cpo_java_add(
+                    model,
+                    cpo_java_eq(model, playhomesum, Int(nweeks / 2)),
+                )
             end
 
             # Teams are interchangeable. Fix first week. Also breaks reflection symmetry of the whole schedule.
@@ -343,7 +459,10 @@
             # Order of games in each week is arbitrary. Break symmetry by forcing an order.
             for i in 0:(nweeks - 1)
                 for j in 1:(ngamesperweek - 1)
-                    cpo_java_add(model, cpo_java_gt(model, games[i, j], games[i, j - 1]))
+                    cpo_java_add(
+                        model,
+                        cpo_java_gt(model, games[i, j], games[i, j - 1]),
+                    )
                 end
             end
 
@@ -357,14 +476,16 @@
             nstores = 8
             capacity = [3, 1, 2, 4, 1]
             fixedcost = [480, 200, 320, 340, 300]
-            cost = [24 74 31 51 84
-                    57 54 86 61 68
-                    57 67 29 91 71
-                    54 54 65 82 94
-                    98 81 16 61 27
-                    13 92 34 94 87
-                    54 72 41 12 78
-                    54 64 65 89 89]
+            cost = [
+                24 74 31 51 84
+                57 54 86 61 68
+                57 67 29 91 71
+                54 54 65 82 94
+                98 81 16 61 27
+                13 92 34 94 87
+                54 72 41 12 78
+                54 64 65 89 89
+            ]
 
             # Build the model.
             model = cpo_java_model()
@@ -372,16 +493,36 @@
             open = cpo_java_boolvararray(model, nlocations)
 
             for i in 1:nstores
-                cpo_java_add(model, cpo_java_eq(model, cpo_java_element(model, open, supplier[i]), 1))
+                cpo_java_add(
+                    model,
+                    cpo_java_eq(
+                        model,
+                        cpo_java_element(model, open, supplier[i]),
+                        1,
+                    ),
+                )
             end
 
             for j in 1:nlocations
-                cpo_java_add(model, cpo_java_le(model, cpo_java_count(model, supplier, j), capacity[j]))
+                cpo_java_add(
+                    model,
+                    cpo_java_le(
+                        model,
+                        cpo_java_count(model, supplier, j),
+                        capacity[j],
+                    ),
+                )
             end
 
             obj = cpo_java_scalprod(model, fixedcost, open)
             for i in 1:nstores
-                obj = cpo_java_sum(model, IntExpr[obj, cpo_java_element(model, cost[i, :], supplier[i])])
+                obj = cpo_java_sum(
+                    model,
+                    IntExpr[
+                        obj,
+                        cpo_java_element(model, cost[i, :], supplier[i]),
+                    ],
+                )
             end
             cpo_java_add(model, cpo_java_minimize(model, obj))
 

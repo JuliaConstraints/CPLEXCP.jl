@@ -4,7 +4,8 @@
 function _update_objective(model::Optimizer)
     # If the sense is feasibility and there is an internal Concert objective, remove it.
     # Otherwise, this is an optimisation problem.
-    if model.objective_sense == MOI.FEASIBILITY_SENSE && model.objective_cp !== nothing
+    if model.objective_sense == MOI.FEASIBILITY_SENSE &&
+       model.objective_cp !== nothing
         cpo_java_remove(model.inner, model.objective_cp)
         model.objective_cp = nothing
     end
@@ -21,9 +22,14 @@ function _update_objective(model::Optimizer)
         cpo_java_maximize(model.inner, model.objective_function_cp)
     end
     cpo_java_add(model.inner, obj)
+    return
 end
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ObjectiveSense,
+    sense::MOI.OptimizationSense,
+)
     model.objective_sense = sense
     _update_objective(model)
     return
@@ -33,25 +39,38 @@ function MOI.get(model::Optimizer, ::MOI.ObjectiveSense)
     return model.objective_sense
 end
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: MOI.SingleVariable}
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+    f::F,
+) where {F <: MOI.SingleVariable}
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
-        convert(MOI.ScalarAffineFunction{Float64}, f)
+        convert(MOI.ScalarAffineFunction{Float64}, f),
     )
     model.objective_type = MOI.SINGLE_VARIABLE
     return
 end
 
-function MOI.get(model::Optimizer, ::MOI.ObjectiveFunction{F}) where {F <: MOI.AbstractScalarFunction}
+function MOI.get(
+    model::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+) where {F <: MOI.AbstractScalarFunction}
     if typeof(model.objective_function) <: F
         return model.objective_function
     else
-        error("Unable to get objective function. Current objective: $(model.objective_function).")
+        error(
+            "Unable to get objective function. Current objective: $(model.objective_function).",
+        )
     end
 end
 
-function MOI.set(model::Optimizer, ::MOI.ObjectiveFunction{F}, f::F) where {F <: MOI.AbstractScalarFunction}
+function MOI.set(
+    model::Optimizer,
+    ::MOI.ObjectiveFunction{F},
+    f::F,
+) where {F <: MOI.AbstractScalarFunction}
     model.objective_function = f
     model.objective_function_cp = _parse(model, f)
     _update_objective(model)

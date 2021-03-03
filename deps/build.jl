@@ -14,7 +14,9 @@ end
 function write_depsfile(path)
     open(depsfile, "w") do f
         println(f, "const libcplexcpojava = \"$(escape_string(path))\"")
+        return
     end
+    return
 end
 
 function get_jar_file()
@@ -56,9 +58,9 @@ function get_jar_file()
     end
 
     # Nothing could be found.
-    error(
+    return error(
         "Unable to locate CPLEX installation. Note this must be downloaded " *
-        "separately. See the CPLEXCP.jl README for further instructions."
+        "separately. See the CPLEXCP.jl README for further instructions.",
     )
 end
 

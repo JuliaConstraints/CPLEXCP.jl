@@ -1,9 +1,9 @@
-const MOI  = MathOptInterface
+const MOI = MathOptInterface
 const MOIT = MOI.Test
 const MOIB = MOI.Bridges
-const CP   = ConstraintProgrammingExtensions
+const CP = ConstraintProgrammingExtensions
 
-const CONFIG = MOIT.TestConfig(duals = false)
+const CONFIG = MOIT.TestConfig(duals=false)
 
 const OPTIMIZER = CPLEXCP.Optimizer()
 MOI.set(OPTIMIZER, MOI.Silent(), true)
