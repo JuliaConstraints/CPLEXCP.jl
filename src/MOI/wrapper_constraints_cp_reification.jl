@@ -123,3 +123,82 @@ function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI
     
     return cpo_java_equiv(model.inner, _build_constraint(model, equivalence_first, s.set1), _build_constraint(model, equivalence_second, s.set2))
 end
+
+# CP.IfThenElseSet
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S1 <: MOI.AbstractSet, 
+    S2 <: MOI.AbstractSet,
+    S3 <: MOI.AbstractSet,
+    S <: CP.IfThenElseSet{S1, S2, S3}
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.IfThenElseSet{S1, S2, S3}) where {
+        S1 <: MOI.AbstractSet, 
+        S2 <: MOI.AbstractSet, 
+        S3 <: MOI.AbstractSet
+    }
+    equivalence_first_vector = MOIU.eachscalar(f)[1:MOI.dimension(s.condition)]
+    equivalence_second_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.condition)) : (MOI.dimension(s.condition) + MOI.dimension(s.true_constraint))]
+    equivalence_third_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.condition) + MOI.dimension(s.true_constraint)) : (MOI.dimension(s.condition) + MOI.dimension(s.true_constraint) + MOI.dimension(s.false_constraint))]
+
+    equivalence_first = if MOI.output_dimension(equivalence_first_vector) == 1
+        MOI.SingleVariable(equivalence_first_vector.variables[1])
+    else
+        equivalence_first_vector
+    end
+    
+    equivalence_second = if MOI.output_dimension(equivalence_second_vector) == 1
+        MOI.SingleVariable(equivalence_second_vector.variables[1])
+    else
+        equivalence_second_vector
+    end
+    
+    equivalence_third = if MOI.output_dimension(equivalence_third_vector) == 1
+        MOI.SingleVariable(equivalence_third_vector.variables[1])
+    else
+        equivalence_third_vector
+    end
+    
+    return cpo_java_ifthenelse(model.inner, 
+                               _build_constraint(model, equivalence_first, s.condition), 
+                               _build_constraint(model, equivalence_second, s.true_constraint), 
+                               _build_constraint(model, equivalence_third, s.false_constraint))
+end
+
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.IfThenElseSet{S1, S2, S3}) where {
+        T <: Int, 
+        S1 <: MOI.AbstractSet, 
+        S2 <: MOI.AbstractSet, 
+        S3 <: MOI.AbstractSet
+    }
+    equivalence_first_vector = MOIU.eachscalar(f)[1:MOI.dimension(s.condition)]
+    equivalence_second_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.condition)) : (MOI.dimension(s.condition) + MOI.dimension(s.true_constraint))]
+    equivalence_third_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.condition) + MOI.dimension(s.true_constraint)) : (MOI.dimension(s.condition) + MOI.dimension(s.true_constraint) + MOI.dimension(s.false_constraint))]
+
+    equivalence_first = if MOI.output_dimension(equivalence_first_vector) == 1
+        collect(MOIU.eachscalar(equivalence_first_vector))[1]
+    else
+        equivalence_first_vector
+    end
+    
+    equivalence_second = if MOI.output_dimension(equivalence_second_vector) == 1
+        collect(MOIU.eachscalar(equivalence_second_vector))[1]
+    else
+        equivalence_second_vector
+    end
+    
+    equivalence_third = if MOI.output_dimension(equivalence_third_vector) == 1
+        collect(MOIU.eachscalar(equivalence_third_vector))[1]
+    else
+        equivalence_third_vector
+    end
+    
+    return cpo_java_ifthenelse(model.inner, 
+                               _build_constraint(model, equivalence_first, s.condition), 
+                               _build_constraint(model, equivalence_second, s.true_constraint), 
+                               _build_constraint(model, equivalence_third, s.false_constraint))
+end
