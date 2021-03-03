@@ -10,7 +10,7 @@ function _parse(model::Optimizer, f::MOI.VariableIndex)
 end
 
 function _parse(model::Optimizer, f::MOI.SingleVariable)
-    # A Concert Variable is already an expression.
+    # A Concert Variable is already an expression for CPLEX.
     return _info(model, f.variable).variable
 end
 
