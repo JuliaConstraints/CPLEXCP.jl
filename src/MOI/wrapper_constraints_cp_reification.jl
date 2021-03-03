@@ -79,15 +79,47 @@ function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
     return true
 end
 
+function _build_constraint(model::Optimizer, f::MOI.VectorOfVariables, s::CP.EquivalenceSet{S1, S2}) where {
+        S1 <: MOI.AbstractSet, 
+        S2 <: MOI.AbstractSet
+    }
+    equivalence_first_vector = MOIU.eachscalar(f)[1:MOI.dimension(s.set1)]
+    equivalence_second_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.set1)) : (MOI.dimension(s.set1) + MOI.dimension(s.set2))]
+
+    equivalence_first = if MOI.output_dimension(equivalence_first_vector) == 1
+        MOI.SingleVariable(equivalence_first_vector.variables[1])
+    else
+        equivalence_first_vector
+    end
+    
+    equivalence_second = if MOI.output_dimension(equivalence_second_vector) == 1
+        MOI.SingleVariable(equivalence_second_vector.variables[1])
+    else
+        equivalence_second_vector
+    end
+    
+    return cpo_java_equiv(model.inner, _build_constraint(model, equivalence_first, s.set1), _build_constraint(model, equivalence_second, s.set2))
+end
+
 function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.EquivalenceSet{S1, S2}) where {
         T <: Int, 
         S1 <: MOI.AbstractSet, 
         S2 <: MOI.AbstractSet
     }
-    f_parsed = _parse(model, f)
+    equivalence_first_vector = MOIU.eachscalar(f)[1:MOI.dimension(s.set1)]
+    equivalence_second_vector = MOIU.eachscalar(f)[(1 + MOI.dimension(s.set1)) : (MOI.dimension(s.set1) + MOI.dimension(s.set2))]
 
-    equivalence_first = f_parsed[1:MOI.dimension(s.set1)]
-    equivalence_second = f_parsed[(1 + MOI.dimension(s.set1)) : (MOI.dimension(s.set1) + MOI.dimension(s.set2))]
+    equivalence_first = if MOI.output_dimension(equivalence_first_vector) == 1
+        collect(MOIU.eachscalar(equivalence_first_vector))[1]
+    else
+        equivalence_first_vector
+    end
+    
+    equivalence_second = if MOI.output_dimension(equivalence_second_vector) == 1
+        collect(MOIU.eachscalar(equivalence_second_vector))[1]
+    else
+        equivalence_second_vector
+    end
     
     return cpo_java_equiv(model.inner, _build_constraint(model, equivalence_first, s.set1), _build_constraint(model, equivalence_second, s.set2))
 end
