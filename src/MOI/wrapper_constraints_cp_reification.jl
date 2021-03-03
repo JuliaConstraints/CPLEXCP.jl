@@ -68,3 +68,26 @@ function _build_constraint(model::Optimizer, f::MOI.VectorAffineFunction{T}, s::
     return cpo_java_equiv(model.inner, indicator, set)
 end
 
+# CP.EquivalenceSet
+function MOI.supports_constraint(::Optimizer, ::Type{F}, ::Type{S}) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S1 <: MOI.AbstractSet, 
+    S2 <: MOI.AbstractSet,
+    S <: CP.EquivalenceSet{S1, S2}
+}
+    return true
+end
+
+function _build_constraint(model::Optimizer, f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}}, s::CP.EquivalenceSet{S1, S2}) where {
+        T <: Int, 
+        S1 <: MOI.AbstractSet, 
+        S2 <: MOI.AbstractSet
+    }
+    f_parsed = _parse(model, f)
+
+    equivalence_first = f_parsed[1:MOI.dimension(s.set1)]
+    equivalence_second = f_parsed[(1 + MOI.dimension(s.set1)) : (MOI.dimension(s.set1) + MOI.dimension(s.set2))]
+    
+    return cpo_java_equiv(model.inner, _build_constraint(model, equivalence_first, s.set1), _build_constraint(model, equivalence_second, s.set2))
+end
