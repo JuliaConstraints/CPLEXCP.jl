@@ -1,4 +1,6 @@
 @testset "COIT" begin
+    include("helpers.jl")
+
     @testset "Mathematical-programming sets" begin
         # TODO.
     end

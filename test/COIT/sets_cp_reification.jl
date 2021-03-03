@@ -9,8 +9,8 @@
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x2), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2]), CP.ReificationSet(MOI.EqualTo(2)))
+    c1 = MOI.add_constraint(model, x2, MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vaf([x1, x2]), CP.ReificationSet(MOI.EqualTo(2)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -37,8 +37,8 @@ end
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1], [x2]), 0), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([1, 1], [x1, x2])), [0, 0]), CP.ReificationSet(MOI.EqualTo(2)))
+    c1 = MOI.add_constraint(model, _saf(x2), MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vaf([x1, x2]), CP.ReificationSet(MOI.EqualTo(2)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -65,8 +65,8 @@ end
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x1), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2]), CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)))
+    c1 = MOI.add_constraint(model, x1, MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vaf([x1, x2]), CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -93,8 +93,8 @@ end
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1], [x1]), 0), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2], MOI.ScalarAffineTerm.([1, 1], [x1, x2])), [0, 0]), CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)))
+    c1 = MOI.add_constraint(model, _saf(x1), MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vaf([x1, x2]), CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -122,8 +122,8 @@ end
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x3, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.SingleVariable(x1), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorOfVariables(MOI.VariableIndex[x1, x2, x3]), CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)))
+    c1 = MOI.add_constraint(model, x1, MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vov([x1, x2, x3]), CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
@@ -152,8 +152,8 @@ end
     x2, _ = MOI.add_constrained_variable(model, MOI.Integer())
     x3, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
-    c1 = MOI.add_constraint(model, MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([1], [x1]), 0), MOI.EqualTo(1))
-    c2 = MOI.add_constraint(model, MOI.VectorAffineFunction(MOI.VectorAffineTerm.([1, 2, 3], MOI.ScalarAffineTerm.([1, 1, 1], [x1, x2, x3])), [0, 0, 0]), CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)))
+    c1 = MOI.add_constraint(model, _saf(x1), MOI.EqualTo(1))
+    c2 = MOI.add_constraint(model, _vaf([x1, x2, x3]), CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)))
 
     @test MOI.is_valid(model, x1)
     @test MOI.is_valid(model, x2)
