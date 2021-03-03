@@ -64,7 +64,7 @@ const BRIDGED_CERTIFICATE_OPTIMIZER =
 
 @testset "Unit tests" begin
     # TODO: move these tests to CP.Test, like MOIT.
-    include("COIT.jl")
+    include("COIT/COIT.jl")
 end
 
 # @testset "Unit Tests" begin
