@@ -176,8 +176,6 @@ include("MOI/wrapper_constraints_singlevar.jl")
 include("MOI/wrapper_constraints_names.jl")
 include("MOI/wrapper_constraints_mo.jl")
 include("MOI/wrapper_constraints_cp.jl")
+include("MOI/wrapper_constraints_cp_reification.jl")
 
 end # module
-
-
-# Restore indentation. Migrate to CP 0.0.3.
