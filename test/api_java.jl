@@ -89,12 +89,12 @@
 
         @testset "Color" begin
             model = cpo_java_model()
-            belgium = cpo_java_intvar(model, 0, 3)
-            denmark = cpo_java_intvar(model, 0, 3)
-            france = cpo_java_intvar(model, 0, 3)
-            germany = cpo_java_intvar(model, 0, 3)
-            luxembourg = cpo_java_intvar(model, 0, 3)
-            netherlands = cpo_java_intvar(model, 0, 3)
+            belgium = cpo_java_intvar(model, Int32(0), Int32(3))
+            denmark = cpo_java_intvar(model, Int32(0), Int32(3))
+            france = cpo_java_intvar(model, Int32(0), Int32(3))
+            germany = cpo_java_intvar(model, Int32(0), Int32(3))
+            luxembourg = cpo_java_intvar(model, Int32(0), Int32(3))
+            netherlands = cpo_java_intvar(model, Int32(0), Int32(3))
 
             cpo_java_add(model, cpo_java_neq(model, belgium, france))
             cpo_java_add(model, cpo_java_neq(model, belgium, germany))
@@ -144,9 +144,9 @@
 
         @testset "Alloc" begin
             # Model data.
-            ncell = 25
-            nfreq = 256
-            nchannel = [
+            ncell = Int32(25)
+            nfreq = Int32(256)
+            nchannel = Int32[
                 8,
                 6,
                 6,
@@ -173,7 +173,7 @@
                 1,
                 1,
             ]
-            dist = [
+            dist = Int32[
                 16 1 1 0 0 0 0 0 1 1 1 1 1 2 2 1 1 0 0 0 2 2 1 1 1
                 1 16 2 0 0 0 0 0 2 2 1 1 1 2 2 1 1 0 0 0 0 0 0 0 0
                 1 2 16 0 0 0 0 0 2 2 1 1 1 2 2 1 1 0 0 0 0 0 0 0 0
@@ -201,7 +201,7 @@
                 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 1 2 2 1 2 16
             ]
 
-            function transmitter_idx(cell::Integer, channel::Integer)
+            function transmitter_idx(cell::Integer, channel::Integer)::Int32
                 idx = 0
                 c = 1
                 while c < cell
@@ -218,7 +218,7 @@
             # Build the model.
             model = cpo_java_model()
             ntransmitter = transmitter_idx(ncell, 1)
-            freq = cpo_java_intvararray(model, ntransmitter, 1, nfreq, "freq")
+            freq = cpo_java_intvararray(model, ntransmitter, Int32(1), nfreq, "freq")
 
             for cell in 1:ncell
                 for channel1 in 1:nchannel[cell]
@@ -265,12 +265,12 @@
 
         @testset "Sports" begin
             # Model data.
-            n = 10
-            nweeks = 2 * (n - 1)
-            ngamesperweek = Int(n / 2)
+            n = Int32(10)
+            nweeks = Int32(2 * (n - 1))
+            ngamesperweek = Int32(n / 2)
             ngames = n * (n - 1)
 
-            function game(h::Int, a::Int, n::Int)
+            function game(h::Int32, a::Int32, n::Int32)
                 if a > h
                     return h * (n - 1) + a - 1
                 else
@@ -286,21 +286,21 @@
 
             for i in 0:(nweeks - 1)
                 for j in 0:(ngamesperweek - 1)
-                    home[i, j] = cpo_java_intvar(model, 0, n - 1)
-                    away[i, j] = cpo_java_intvar(model, 0, n - 1)
-                    games[i, j] = cpo_java_intvar(model, 0, ngames - 1)
+                    home[i, j] = cpo_java_intvar(model, Int32(0), Int32(n - 1))
+                    away[i, j] = cpo_java_intvar(model, Int32(0), Int32(n - 1))
+                    games[i, j] = cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
                 end
             end
 
             # For each play slot, set up correspondance between game id, home team, and away team
-            gha = cpo_java_inttable(model, 3)
-            for i in 0:(n - 1)
-                for j in 0:(n - 1)
+            gha = cpo_java_inttable(model, Int32(3))
+            for i in Int32(0):Int32(n - 1)
+                for j in Int32(0):Int32(n - 1)
                     if i != j
                         cpo_java_inttupleset_addtuple(
                             model,
                             gha,
-                            [i, j, game(i, j, n)],
+                            Int32[i, j, game(i, j, n)],
                         )
                     end
                 end
@@ -333,8 +333,8 @@
             allslots = Dict{Int, IloIntVar}() # ngames
 
             for i in 0:(ngames - 1)
-                weekofgame[i] = cpo_java_intvar(model, 0, nweeks - 1)
-                allslots[i] = cpo_java_intvar(model, 0, ngames - 1)
+                weekofgame[i] = cpo_java_intvar(model, Int32(0), Int32(nweeks - 1))
+                allslots[i] = cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
             end
 
             for i in 0:(nweeks - 1)
@@ -363,14 +363,14 @@
             # Two half schedules.  Cannot play the same pair twice in the same half.
             # Plus, impose a minimum number of weeks between two games involving
             # the same teams (up to six weeks)
-            mid = Int(nweeks / 2)
-            overlap = 0
+            mid = Int32(nweeks / 2)
+            overlap = Int32(0)
             if n >= 6
-                overlap = min(Int(n / 2), 6)
+                overlap = min(Int32(n / 2), Int32(6))
             end
 
-            for i in 0:(n - 1)
-                for j in (i + 1):(n - 1)
+            for i in Int32(0):Int32(n - 1)
+                for j in Int32(i + 1):Int32(n - 1)
                     g1 = game(i, j, n)
                     g2 = game(j, i, n)
 
@@ -401,8 +401,8 @@
 
             # Can't have three homes or three aways in a row.
             playhome = Dict{Tuple{Int, Int}, IloIntVar}() # n, nweeks
-            for i in 0:(n - 1)
-                for j in 0:(nweeks - 1)
+            for i in Int32(0):Int32(n - 1)
+                for j in Int32(0):Int32(nweeks - 1)
                     playhome[i, j] = cpo_java_boolvar(model)
                     home_vec = [home[j, k] for k in 0:(ngamesperweek - 1)]
                     cpo_java_add(
@@ -474,9 +474,9 @@
             # Model data.
             nlocations = 5
             nstores = 8
-            capacity = [3, 1, 2, 4, 1]
-            fixedcost = [480, 200, 320, 340, 300]
-            cost = [
+            capacity = Int32[3, 1, 2, 4, 1]
+            fixedcost = Int32[480, 200, 320, 340, 300]
+            cost = Int32[
                 24 74 31 51 84
                 57 54 86 61 68
                 57 67 29 91 71
@@ -489,8 +489,8 @@
 
             # Build the model.
             model = cpo_java_model()
-            supplier = cpo_java_intvararray(model, nstores, 0, nlocations - 1)
-            open = cpo_java_boolvararray(model, nlocations)
+            supplier = cpo_java_intvararray(model, Int32(nstores), Int32(0), Int32(nlocations - 1))
+            open = cpo_java_boolvararray(model, Int32(nlocations))
 
             for i in 1:nstores
                 cpo_java_add(
@@ -503,7 +503,7 @@
                 )
             end
 
-            for j in 1:nlocations
+            for j in Int32(1):Int32(nlocations)
                 cpo_java_add(
                     model,
                     cpo_java_le(
@@ -515,7 +515,7 @@
             end
 
             obj = cpo_java_scalprod(model, fixedcost, open)
-            for i in 1:nstores
+            for i in Int32(1):Int32(nstores)
                 obj = cpo_java_sum(
                     model,
                     IntExpr[
