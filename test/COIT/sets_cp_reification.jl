@@ -16,7 +16,7 @@
     c1 = MOI.add_constraint(model, x2, MOI.EqualTo(1))
     c2 = MOI.add_constraint(
         model,
-        _vaf([x1, x2]),
+        _vov([x1, x2]),
         CP.ReificationSet(MOI.EqualTo(2)),
     )
 
