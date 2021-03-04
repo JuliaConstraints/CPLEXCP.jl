@@ -97,6 +97,40 @@ function _build_constraint(
     )
 end
 
+# CP.EquivalenceNotSet
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{F},
+    ::Type{S},
+) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S1 <: MOI.AbstractSet,
+    S2 <: MOI.AbstractSet,
+    S <: CP.EquivalenceNotSet{S1, S2},
+}
+    return true
+end
+
+function _build_constraint(
+    model::Optimizer,
+    f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    s::CP.EquivalenceNotSet{S1, S2},
+) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
+    dim_first = MOI.dimension(s.set1)
+    dim_second = MOI.dimension(s.set2)
+    dim_end = dim_first + dim_second
+
+    first = _slice(f, 1:dim_first)
+    second = _slice(f, (1 + dim_first):dim_end)
+
+    return cpo_java_neq(
+        model.inner,
+        _build_constraint(model, first, s.set1),
+        _build_constraint(model, second, s.set2),
+    )
+end
+
 # CP.IfThenElseSet
 function MOI.supports_constraint(
     ::Optimizer,
