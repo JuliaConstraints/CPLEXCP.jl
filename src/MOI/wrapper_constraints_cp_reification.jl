@@ -139,3 +139,41 @@ function _build_constraint(
         _build_constraint(model, third, s.false_constraint),
     )
 end
+
+# CP.ImplySet
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{F},
+    ::Type{S},
+) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S1 <: MOI.AbstractSet,
+    S2 <: MOI.AbstractSet,
+    S <: CP.ImplySet{S1, S2},
+}
+    return true
+end
+
+function _build_constraint(
+    model::Optimizer,
+    f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    s::CP.ImplySet{S1, S2},
+) where {
+    T <: Int,
+    S1 <: MOI.AbstractSet,
+    S2 <: MOI.AbstractSet,
+}
+    dim_first = MOI.dimension(s.antecedent)
+    dim_second = MOI.dimension(s.consequent)
+    dim_end = dim_first + dim_second
+
+    first = _slice(f, 1:dim_first)
+    second = _slice(f, (1 + dim_first):dim_end)
+
+    return cpo_java_imply(
+        model.inner,
+        _build_constraint(model, first, s.antecedent),
+        _build_constraint(model, second, s.consequent),
+    )
+end
