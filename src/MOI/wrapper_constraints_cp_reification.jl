@@ -211,3 +211,45 @@ function _build_constraint(
         _build_constraint(model, second, s.consequent),
     )
 end
+
+# CP.TrueSet
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{F},
+    ::Type{S},
+) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: CP.TrueSet,
+}
+    return true
+end
+
+function _build_constraint(
+    model::Optimizer,
+    f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    s::CP.TrueSet,
+) where {T <: Int}
+    return cpo_java_trueconstraint(model.inner)
+end
+
+# CP.FalseSet
+function MOI.supports_constraint(
+    ::Optimizer,
+    ::Type{F},
+    ::Type{S},
+) where {
+    T <: Int,
+    F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    S <: CP.FalseSet,
+}
+    return true
+end
+
+function _build_constraint(
+    model::Optimizer,
+    f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    s::CP.FalseSet,
+) where {T <: Int}
+    return cpo_java_falseconstraint(model.inner)
+end
