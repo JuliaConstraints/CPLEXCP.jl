@@ -1,4 +1,4 @@
-@testset "ReificationSet: SingleVariable" begin
+@testset "Reified: SingleVariable" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -7,7 +7,7 @@
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        CP.ReificationSet{MOI.EqualTo{Int}},
+        CP.Reified{MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -17,7 +17,7 @@
     c2 = MOI.add_constraint(
         model,
         _vov([x1, x2]),
-        CP.ReificationSet(MOI.EqualTo(2)),
+        CP.Reified(MOI.EqualTo(2)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -34,7 +34,7 @@
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "ReificationSet: ScalarAffineFunction" begin
+@testset "Reified: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -47,7 +47,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Int},
-        CP.ReificationSet{MOI.EqualTo{Int}},
+        CP.Reified{MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -57,7 +57,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vaf([x1, x2]),
-        CP.ReificationSet(MOI.EqualTo(2)),
+        CP.Reified(MOI.EqualTo(2)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -74,7 +74,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "EquivalenceSet: SingleVariable" begin
+@testset "Equivalence: SingleVariable" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -83,7 +83,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        CP.EquivalenceSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.Equivalence{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -93,7 +93,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vov([x1, x2]),
-        CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.Equivalence(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -110,7 +110,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "EquivalenceSet: ScalarAffineFunction" begin
+@testset "Equivalence: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -123,7 +123,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Int},
-        CP.EquivalenceSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.Equivalence{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -133,7 +133,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vaf([x1, x2]),
-        CP.EquivalenceSet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.Equivalence(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -150,7 +150,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "EquivalenceNotSet: SingleVariable" begin
+@testset "EquivalenceNot: SingleVariable" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -159,7 +159,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        CP.EquivalenceNotSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.EquivalenceNot{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -169,7 +169,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vov([x1, x2]),
-        CP.EquivalenceNotSet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.EquivalenceNot(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -186,7 +186,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) != 1
 end
 
-@testset "EquivalenceNotSet: ScalarAffineFunction" begin
+@testset "EquivalenceNot: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -199,7 +199,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Int},
-        CP.EquivalenceNotSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.EquivalenceNot{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -209,7 +209,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vaf([x1, x2]),
-        CP.EquivalenceNotSet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.EquivalenceNot(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -226,7 +226,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) != 1
 end
 
-@testset "IfThenElseSet: SingleVariable" begin
+@testset "IfThenElse: SingleVariable" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -235,7 +235,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        CP.IfThenElseSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.IfThenElse{MOI.EqualTo{Int}, MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -246,7 +246,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vov([x1, x2, x3]),
-        CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)),
+        CP.IfThenElse(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -264,7 +264,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "IfThenElseSet: ScalarAffineFunction" begin
+@testset "IfThenElse: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -277,7 +277,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Int},
-        CP.IfThenElseSet{MOI.EqualTo{Int}, MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.IfThenElse{MOI.EqualTo{Int}, MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -288,7 +288,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vaf([x1, x2, x3]),
-        CP.IfThenElseSet(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)),
+        CP.IfThenElse(MOI.EqualTo(1), MOI.EqualTo(1), MOI.EqualTo(0)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -306,7 +306,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "ImplySet: SingleVariable" begin
+@testset "Imply: SingleVariable" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -315,7 +315,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
-        CP.ImplySet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.Imply{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -325,7 +325,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vov([x1, x2]),
-        CP.ImplySet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.Imply(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -342,7 +342,7 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "ImplySet: ScalarAffineFunction" begin
+@testset "Imply: ScalarAffineFunction" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
@@ -355,7 +355,7 @@ end
     @test MOI.supports_constraint(
         model,
         MOI.VectorAffineFunction{Int},
-        CP.ImplySet{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
+        CP.Imply{MOI.EqualTo{Int}, MOI.EqualTo{Int}},
     )
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
@@ -365,7 +365,7 @@ end
     c2 = MOI.add_constraint(
         model,
         _vaf([x1, x2]),
-        CP.ImplySet(MOI.EqualTo(1), MOI.EqualTo(1)),
+        CP.Imply(MOI.EqualTo(1), MOI.EqualTo(1)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -382,20 +382,20 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x2) == 1
 end
 
-@testset "TrueSet" begin
+@testset "True" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Int})
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, CP.TrueSet)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, CP.True)
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
     c1 = MOI.add_constraint(
         model,
         _vov([x1, x1]),
-        CP.IfThenElseSet(CP.TrueSet(), MOI.EqualTo(1), MOI.EqualTo(0)),
+        CP.IfThenElse(CP.True(), MOI.EqualTo(1), MOI.EqualTo(0)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -409,20 +409,20 @@ end
     @test MOI.get(model, MOI.VariablePrimal(), x1) == 1
 end
 
-@testset "FalseSet" begin
+@testset "False" begin
     model = OPTIMIZER
     MOI.empty!(model)
 
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.Integer)
     @test MOI.supports_constraint(model, MOI.SingleVariable, MOI.EqualTo{Int})
-    @test MOI.supports_constraint(model, MOI.VectorOfVariables, CP.FalseSet)
+    @test MOI.supports_constraint(model, MOI.VectorOfVariables, CP.False)
 
     x1, _ = MOI.add_constrained_variable(model, MOI.Integer())
 
     c1 = MOI.add_constraint(
         model,
         _vov([x1, x1]),
-        CP.IfThenElseSet(CP.FalseSet(), MOI.EqualTo(1), MOI.EqualTo(0)),
+        CP.IfThenElse(CP.False(), MOI.EqualTo(1), MOI.EqualTo(0)),
     )
 
     @test MOI.is_valid(model, x1)
@@ -434,6 +434,4 @@ end
 
     @test MOI.get(model, MOI.ResultCount()) >= 1
     @test MOI.get(model, MOI.VariablePrimal(), x1) == 0
-
-    CPLEXCP.cpo_java_dumpmodel(model.inner, "C:/Users/Thibaut/tmp.cpo")
 end

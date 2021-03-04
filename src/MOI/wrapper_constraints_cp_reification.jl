@@ -1,4 +1,4 @@
-# CP.ReificationSet
+# CP.Reified
 function MOI.supports_constraint(
     o::Optimizer,
     f::Type{F},
@@ -6,7 +6,7 @@ function MOI.supports_constraint(
 ) where {
     F <: MOI.VectorOfVariables,
     S2 <: MOI.AbstractSet,
-    S <: CP.ReificationSet{S2},
+    S <: CP.Reified{S2},
 }
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
     # return if MOI.output_dimension(f) == 2
@@ -26,7 +26,7 @@ function MOI.supports_constraint(
     T <: Int,
     F <: MOI.VectorAffineFunction{T},
     S2 <: MOI.AbstractSet,
-    S <: CP.ReificationSet{S2},
+    S <: CP.Reified{S2},
 }
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
     # return if MOI.output_dimension(f) == 2
@@ -41,7 +41,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.ReificationSet{S2},
+    s::CP.Reified{S2},
 ) where {S2 <: MOI.AbstractSet, T <: Int}
     # Split the dimensions in the right parts. Only parse the first component, 
     # as the rest will be handled by the reified constraint.
@@ -63,7 +63,7 @@ function _build_constraint(
     return cpo_java_equiv(model.inner, indicator, set)
 end
 
-# CP.EquivalenceSet
+# CP.Equivalence
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -73,7 +73,7 @@ function MOI.supports_constraint(
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
-    S <: CP.EquivalenceSet{S1, S2},
+    S <: CP.Equivalence{S1, S2},
 }
     return true
 end
@@ -81,7 +81,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.EquivalenceSet{S1, S2},
+    s::CP.Equivalence{S1, S2},
 ) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
     dim_first = MOI.dimension(s.set1)
     dim_second = MOI.dimension(s.set2)
@@ -97,7 +97,7 @@ function _build_constraint(
     )
 end
 
-# CP.EquivalenceNotSet
+# CP.EquivalenceNot
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -107,7 +107,7 @@ function MOI.supports_constraint(
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
-    S <: CP.EquivalenceNotSet{S1, S2},
+    S <: CP.EquivalenceNot{S1, S2},
 }
     return true
 end
@@ -115,7 +115,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.EquivalenceNotSet{S1, S2},
+    s::CP.EquivalenceNot{S1, S2},
 ) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
     dim_first = MOI.dimension(s.set1)
     dim_second = MOI.dimension(s.set2)
@@ -131,7 +131,7 @@ function _build_constraint(
     )
 end
 
-# CP.IfThenElseSet
+# CP.IfThenElse
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -142,7 +142,7 @@ function MOI.supports_constraint(
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
     S3 <: MOI.AbstractSet,
-    S <: CP.IfThenElseSet{S1, S2, S3},
+    S <: CP.IfThenElse{S1, S2, S3},
 }
     return true
 end
@@ -150,7 +150,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.IfThenElseSet{S1, S2, S3},
+    s::CP.IfThenElse{S1, S2, S3},
 ) where {
     T <: Int,
     S1 <: MOI.AbstractSet,
@@ -174,7 +174,7 @@ function _build_constraint(
     )
 end
 
-# CP.ImplySet
+# CP.Imply
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -184,7 +184,7 @@ function MOI.supports_constraint(
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
-    S <: CP.ImplySet{S1, S2},
+    S <: CP.Imply{S1, S2},
 }
     return true
 end
@@ -192,7 +192,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.ImplySet{S1, S2},
+    s::CP.Imply{S1, S2},
 ) where {
     T <: Int,
     S1 <: MOI.AbstractSet,
@@ -212,7 +212,7 @@ function _build_constraint(
     )
 end
 
-# CP.TrueSet
+# CP.True
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -220,7 +220,7 @@ function MOI.supports_constraint(
 ) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.TrueSet,
+    S <: CP.True,
 }
     return true
 end
@@ -228,12 +228,12 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.TrueSet,
+    s::CP.True,
 ) where {T <: Int}
     return cpo_java_trueconstraint(model.inner)
 end
 
-# CP.FalseSet
+# CP.False
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -241,7 +241,7 @@ function MOI.supports_constraint(
 ) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.FalseSet,
+    S <: CP.False,
 }
     return true
 end
@@ -249,7 +249,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.FalseSet,
+    s::CP.False,
 ) where {T <: Int}
     return cpo_java_falseconstraint(model.inner)
 end
