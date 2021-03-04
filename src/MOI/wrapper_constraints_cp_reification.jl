@@ -42,7 +42,7 @@ function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     s::CP.ReificationSet{S2},
-) where {S2 <: MOI.AbstractSet}
+) where {S2 <: MOI.AbstractSet, T <: Int}
     # Split the dimensions in the right parts. Only parse the first component, 
     # as the rest will be handled by the reified constraint.
     dim_set = MOI.dimension(s.set)
@@ -83,8 +83,8 @@ function _build_constraint(
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     s::CP.EquivalenceSet{S1, S2},
 ) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
-    dim_first = MOI.dimension(s.condition)
-    dim_second = MOI.dimension(s.true_constraint)
+    dim_first = MOI.dimension(s.set1)
+    dim_second = MOI.dimension(s.set2)
     dim_end = dim_first + dim_second
 
     first = _slice(f, 1:dim_first)
