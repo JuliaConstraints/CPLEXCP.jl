@@ -12,7 +12,7 @@ function _slice(f::MOI.VectorAffineFunction{T}, slice) where {T}
     f_sliced = MOIU.eachscalar(f)[slice]
 
     if MOI.output_dimension(f_sliced) == 1
-        return MOIU.eachscalar(f)[1]
+        return MOIU.eachscalar(f)[slice[1]]
     else
         return f_sliced
     end
