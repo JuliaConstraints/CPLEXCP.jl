@@ -44,18 +44,18 @@
             model = cpo_java_model()
 
             # Integer variables
-            @test typeof(cpo_java_intvar(model, 5, 10)) == IloIntVar
-            @test typeof(cpo_java_intvar(model, 10, 5)) == IloIntVar # No check on CPLEXCP side
-            @test typeof(cpo_java_intvar(model, 5, 10, "var")) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10))) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32(10), Int32(5))) == IloIntVar # No check on CPLEXCP side
+            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10), "var")) == IloIntVar
 
-            @test typeof(cpo_java_intvar(model, [5, 10])) == IloIntVar
-            @test typeof(cpo_java_intvar(model, [5, 10], "var")) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32[5, 10])) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32[5, 10], "var")) == IloIntVar
 
-            l = cpo_java_intvararray(model, 20, 5, 10)
+            l = cpo_java_intvararray(model, Int32(20), Int32(5), Int32(10))
             @test typeof(l) == Vector{IloIntVar}
             @test eltype(l) == IloIntVar
             @test length(l) == 20
-            l = cpo_java_intvararray(model, 20, [5, 10])
+            l = cpo_java_intvararray(model, Int32(20), Int32[5, 10])
             @test typeof(l) == Vector{IloIntVar}
             @test eltype(l) == IloIntVar
             @test length(l) == 20
@@ -63,7 +63,7 @@
             # Numerical variables
             @test typeof(cpo_java_numvar(model, 5.0, 10.0)) == IloNumVar
 
-            l = cpo_java_numvararray(model, 20, 5.0, 10.0)
+            l = cpo_java_numvararray(model, Int32(20), 5.0, 10.0)
             @test typeof(l) == Vector{IloNumVar}
             @test eltype(l) == IloNumVar
             @test length(l) == 20
@@ -71,10 +71,10 @@
             # Interval variables
             @test typeof(cpo_java_intervalvar(model)) == IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, "var")) == IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, 5)) == IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, 5, "var")) ==
+            @test typeof(cpo_java_intervalvar(model, Int32(5))) == IloIntervalVar
+            @test typeof(cpo_java_intervalvar(model, Int32(5), "var")) ==
                   IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, 5, 10)) == IloIntervalVar
+            @test typeof(cpo_java_intervalvar(model, Int32(5), Int32(10))) == IloIntervalVar
 
             # Sequence-of-intervals variables
             i1 = cpo_java_intervalvar(model)
