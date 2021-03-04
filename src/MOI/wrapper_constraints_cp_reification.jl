@@ -48,7 +48,7 @@ function _build_constraint(
     dim_set = MOI.dimension(s.set)
     f_parsed = _parse(model, f)
     reify_indicator = f_parsed[1]
-    reify_set_variables = _slice(f, 1:(dim_set + 1))
+    reify_set_variables = _slice(f, 2:(dim_set + 1))
 
     # Ensure that the indicator is a binary variable.
     # TODO: allow this constraint to be deleted at the same time as the reified constraint.
