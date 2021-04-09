@@ -76,11 +76,6 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 #     end
 # end
 
-@testset "Unit tests" begin
-    # TODO: move these tests to CP.Test, like MOIT.
-    include("COIT/COIT.jl")
-end
-
 # @testset "Unit Tests" begin
 #     MOIT.basic_constraint_tests(BRIDGED_OPTIMIZER, CONFIG, exclude=[
 #         (MOI.SingleVariable, MOI.Integer) # Integer becomes ZeroOne at some point in the tests!?
