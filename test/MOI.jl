@@ -1,8 +1,3 @@
-const MOI = MathOptInterface
-const MOIT = MOI.Test
-const MOIB = MOI.Bridges
-const CP = ConstraintProgrammingExtensions
-
 const CONFIG = MOIT.TestConfig(duals=false)
 
 const OPTIMIZER = CPLEXCP.Optimizer()
@@ -13,6 +8,25 @@ const CERTIFICATE_OPTIMIZER = CPLEXCP.Optimizer()
 MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
 const BRIDGED_CERTIFICATE_OPTIMIZER =
     MOI.Bridges.full_bridge_optimizer(CERTIFICATE_OPTIMIZER, Float64)
+
+COIT.alldifferenttest(OPTIMIZER, CONFIG)
+COIT.antidomaintest(OPTIMIZER, CONFIG)
+COIT.binpackingtest(OPTIMIZER, CONFIG)
+COIT.counttest(OPTIMIZER, CONFIG)
+COIT.countdistincttest(OPTIMIZER, CONFIG)
+COIT.differentfromtest(OPTIMIZER, CONFIG)
+COIT.domaintest(OPTIMIZER, CONFIG)
+COIT.elementtest(OPTIMIZER, CONFIG)
+COIT.equivalencetest(OPTIMIZER, CONFIG)
+COIT.equivalencenottest(OPTIMIZER, CONFIG)
+COIT.ifthenelsetest(OPTIMIZER, CONFIG)
+COIT.implytest(OPTIMIZER, CONFIG)
+COIT.inversetest(OPTIMIZER, CONFIG)
+COIT.lexicographicallytest(OPTIMIZER, CONFIG)
+COIT.minimumdistancetest(OPTIMIZER, CONFIG)
+COIT.reifiedtest(OPTIMIZER, CONFIG)
+COIT.strictlytest(OPTIMIZER, CONFIG)
+COIT.truefalsetest(OPTIMIZER, CONFIG)
 
 # @testset "Integration tests" begin
 #     # Same tests as for the Java API.
