@@ -26,6 +26,7 @@ COIT.lexicographicallytest(OPTIMIZER, CONFIG)
 COIT.minimumdistancetest(OPTIMIZER, CONFIG)
 COIT.reifiedtest(OPTIMIZER, CONFIG)
 COIT.strictlytest(OPTIMIZER, CONFIG)
+COIT.strictlylexicographicallytest(OPTIMIZER, CONFIG)
 COIT.truefalsetest(OPTIMIZER, CONFIG)
 
 # @testset "Integration tests" begin
