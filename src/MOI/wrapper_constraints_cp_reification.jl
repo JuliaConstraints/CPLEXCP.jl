@@ -3,11 +3,7 @@ function MOI.supports_constraint(
     o::Optimizer,
     f::Type{F},
     ::Type{S},
-) where {
-    F <: MOI.VectorOfVariables,
-    S2 <: MOI.AbstractSet,
-    S <: CP.Reified{S2},
-}
+) where {F <: MOI.VectorOfVariables, S2 <: MOI.AbstractSet, S <: CP.Reified{S2}}
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
     # return if MOI.output_dimension(f) == 2
     #     MOI.supports_constraint(o, MOI.SingleVariable(f.variables[2]), S2)
@@ -193,11 +189,7 @@ function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     s::CP.Imply{S1, S2},
-) where {
-    T <: Int,
-    S1 <: MOI.AbstractSet,
-    S2 <: MOI.AbstractSet,
-}
+) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
     dim_first = MOI.dimension(s.antecedent)
     dim_second = MOI.dimension(s.consequent)
     dim_end = dim_first + dim_second
