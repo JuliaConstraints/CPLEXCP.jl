@@ -44,12 +44,16 @@
             model = cpo_java_model()
 
             # Integer variables
-            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10))) == IloIntVar
-            @test typeof(cpo_java_intvar(model, Int32(10), Int32(5))) == IloIntVar # No check on CPLEXCP side
-            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10), "var")) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10))) ==
+                  IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32(10), Int32(5))) ==
+                  IloIntVar # No check on CPLEXCP side
+            @test typeof(cpo_java_intvar(model, Int32(5), Int32(10), "var")) ==
+                  IloIntVar
 
             @test typeof(cpo_java_intvar(model, Int32[5, 10])) == IloIntVar
-            @test typeof(cpo_java_intvar(model, Int32[5, 10], "var")) == IloIntVar
+            @test typeof(cpo_java_intvar(model, Int32[5, 10], "var")) ==
+                  IloIntVar
 
             l = cpo_java_intvararray(model, Int32(20), Int32(5), Int32(10))
             @test typeof(l) == Vector{IloIntVar}
@@ -71,10 +75,12 @@
             # Interval variables
             @test typeof(cpo_java_intervalvar(model)) == IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, "var")) == IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, Int32(5))) == IloIntervalVar
+            @test typeof(cpo_java_intervalvar(model, Int32(5))) ==
+                  IloIntervalVar
             @test typeof(cpo_java_intervalvar(model, Int32(5), "var")) ==
                   IloIntervalVar
-            @test typeof(cpo_java_intervalvar(model, Int32(5), Int32(10))) == IloIntervalVar
+            @test typeof(cpo_java_intervalvar(model, Int32(5), Int32(10))) ==
+                  IloIntervalVar
 
             # Sequence-of-intervals variables
             i1 = cpo_java_intervalvar(model)
@@ -218,7 +224,13 @@
             # Build the model.
             model = cpo_java_model()
             ntransmitter = transmitter_idx(ncell, 1)
-            freq = cpo_java_intvararray(model, ntransmitter, Int32(1), nfreq, "freq")
+            freq = cpo_java_intvararray(
+                model,
+                ntransmitter,
+                Int32(1),
+                nfreq,
+                "freq",
+            )
 
             for cell in 1:ncell
                 for channel1 in 1:nchannel[cell]
@@ -288,7 +300,8 @@
                 for j in 0:(ngamesperweek - 1)
                     home[i, j] = cpo_java_intvar(model, Int32(0), Int32(n - 1))
                     away[i, j] = cpo_java_intvar(model, Int32(0), Int32(n - 1))
-                    games[i, j] = cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
+                    games[i, j] =
+                        cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
                 end
             end
 
@@ -333,8 +346,10 @@
             allslots = Dict{Int, IloIntVar}() # ngames
 
             for i in 0:(ngames - 1)
-                weekofgame[i] = cpo_java_intvar(model, Int32(0), Int32(nweeks - 1))
-                allslots[i] = cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
+                weekofgame[i] =
+                    cpo_java_intvar(model, Int32(0), Int32(nweeks - 1))
+                allslots[i] =
+                    cpo_java_intvar(model, Int32(0), Int32(ngames - 1))
             end
 
             for i in 0:(nweeks - 1)
@@ -489,7 +504,12 @@
 
             # Build the model.
             model = cpo_java_model()
-            supplier = cpo_java_intvararray(model, Int32(nstores), Int32(0), Int32(nlocations - 1))
+            supplier = cpo_java_intvararray(
+                model,
+                Int32(nstores),
+                Int32(0),
+                Int32(nlocations - 1),
+            )
             open = cpo_java_boolvararray(model, Int32(nlocations))
 
             for i in 1:nstores
