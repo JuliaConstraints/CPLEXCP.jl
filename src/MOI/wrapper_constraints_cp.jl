@@ -101,7 +101,7 @@ function MOI.supports_constraint(
 ) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.Count{T},
+    S <: CP.Count{MOI.EqualTo{T}},
 }
     return true
 end
@@ -109,7 +109,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.Count{T},
+    s::CP.Count{MOI.EqualTo{T}},
 ) where {T <: Int}
     @assert MOI.output_dimension(f) >= 2
 
@@ -117,11 +117,11 @@ function _build_constraint(
     count_assign = f_parsed[1]
     count_values = f_parsed[2:end]
 
-    expr = cpo_java_count(model.inner, count_values, Int32(s.value))
+    expr = cpo_java_count(model.inner, count_values, Int32(s.set.value))
     return cpo_java_eq(model.inner, count_assign, expr)
 end
 
-# CP.Count
+# CP.CountDistinct
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
