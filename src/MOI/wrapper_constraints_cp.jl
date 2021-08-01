@@ -14,7 +14,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.AllDifferent,
+    ::CP.AllDifferent,
 ) where {T}
     return cpo_java_alldiff(model.inner, _parse(model, f))
 end
