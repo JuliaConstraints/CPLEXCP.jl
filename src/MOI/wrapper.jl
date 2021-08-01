@@ -163,8 +163,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     end
 end
 
-# TODO: ?
-# Base.show(io::IO, model::Optimizer) = show(io, model.inner)
+Base.show(io::IO, model::Optimizer) = show(io, model.inner)
 
 function MOI.empty!(model::Optimizer)
     model.inner = cpo_java_model()
