@@ -1,10 +1,66 @@
+# MOI.IndicatorSet
+function MOI.supports_constraint(
+    o::Optimizer,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{S},
+) where {A, S2 <: MOI.AbstractSet, S <: MOI.IndicatorSet{A, S2}}
+    # No information about the dimension of the function, only works if 1 + dim(S2).
+    return MOI.supports_constraint(o, MOI.SingleVariable, S2) ||
+           MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
+end
+
+function MOI.supports_constraint(
+    o::Optimizer,
+    ::Type{MOI.VectorAffineFunction{T}},
+    ::Type{S},
+) where {
+    T <: Int,
+    A,
+    S2 <: MOI.AbstractSet,
+    S <: MOI.IndicatorSet{A, S2},
+}
+    # No information about the dimension of the function, only works if 1 + dim(S2).
+    return MOI.supports_constraint(o, MOI.ScalarAffineFunction{T}, S2) ||
+           MOI.supports_constraint(o, MOI.VectorAffineFunction{T}, S2)
+end
+
+function _build_constraint(
+    model::Optimizer,
+    f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
+    s::MOI.IndicatorSet{A, S2},
+) where {A, S2 <: MOI.AbstractSet, T <: Int}
+    # Split the dimensions in the right parts. Only parse the first component, 
+    # as the rest will be handled by the reified constraint.
+    dim_set = MOI.dimension(s.set)
+    f_parsed = _parse(model, f)
+    reify_indicator = f_parsed[1]
+    reify_set_variables = _slice(f, 2:(dim_set + 1))
+
+    # Ensure that the indicator is a binary variable.
+    # TODO: allow this constraint to be deleted at the same time as the reified constraint.
+    cpo_java_add(
+        model.inner,
+        cpo_java_range(model.inner, 0, reify_indicator, 1),
+    )
+
+    # Build the constraint.
+    indicator_value = if A == MOI.ACTIVATE_ON_ONE
+        Int32(true)
+    else
+        Int32(false)
+    end
+    indicator = cpo_java_eq(model.inner, reify_indicator, indicator_value)
+    set = _build_constraint(model, reify_set_variables, s.set)
+    return cpo_java_ifthen(model.inner, indicator, set)
+end
+
 # CP.Reification
 function MOI.supports_constraint(
     o::Optimizer,
     ::Type{MOI.VectorOfVariables},
     ::Type{S},
 ) where {S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
-    # No information about the dimension of the function, only works if 2.
+    # No information about the dimension of the function, only works if 1 + dim(S2).
     return MOI.supports_constraint(o, MOI.SingleVariable, S2) ||
            MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
 end
@@ -19,7 +75,7 @@ function MOI.supports_constraint(
     S2 <: MOI.AbstractSet,
     S <: CP.Reification{S2},
 }
-    # No information about the dimension of the function, only works if 2.
+    # No information about the dimension of the function, only works if 1 + dim(S2).
     return MOI.supports_constraint(o, MOI.ScalarAffineFunction{T}, S2) ||
            MOI.supports_constraint(o, MOI.VectorAffineFunction{T}, S2)
 end

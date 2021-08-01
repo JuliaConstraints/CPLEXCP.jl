@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+Version 0.3.1
+-------------
+
+Add support for `MOI.IndicatorSet`.
+
+
 Version 0.3.0
 -------------
 
