@@ -1,15 +1,10 @@
 # CP.Reification
 function MOI.supports_constraint(
     o::Optimizer,
-    ::Type{F},
+    ::Type{MOI.VectorOfVariables},
     ::Type{S},
-) where {F <: MOI.VectorOfVariables, S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
-    # TODO: the output value should depend on the number of values in the function (either 2 or more).
-    # return if MOI.output_dimension(f) == 2
-    #     MOI.supports_constraint(o, MOI.SingleVariable(f.variables[2]), S2)
-    # else
-    #     MOI.supports_constraint(o, MOI.VectorOfVariables(f.variables[2:end]), S2)
-    # end
+) where {S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
+    # No information about the dimension of the function, only works if 2.
     return MOI.supports_constraint(o, MOI.SingleVariable, S2) ||
            MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
 end
@@ -24,12 +19,7 @@ function MOI.supports_constraint(
     S2 <: MOI.AbstractSet,
     S <: CP.Reification{S2},
 }
-    # TODO: the output value should depend on the number of values in the function (either 2 or more).
-    # return if MOI.output_dimension(f) == 2
-    #     MOI.supports_constraint(o, MOI.ScalarAffineFunction(f.terms[2], f.constants[2]), S2)
-    # else
-    #     MOI.supports_constraint(o, MOI.VectorAffineFunction(f.terms[2:end], f.constants[2:end]), S2)
-    # end
+    # No information about the dimension of the function, only works if 2.
     return MOI.supports_constraint(o, MOI.ScalarAffineFunction{T}, S2) ||
            MOI.supports_constraint(o, MOI.VectorAffineFunction{T}, S2)
 end
