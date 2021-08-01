@@ -1,8 +1,13 @@
 module CPLEXCP
 
 # TODO: 
-# - bridge for Circuit: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.5.1/ilog.odms.studio.help/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_circuit.html
-# - bridge for Cardinality/Sequence: https://www.ibm.com/support/knowledgecenter/SSSA5P_12.5.1/ilog.odms.studio.help/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_seq.html (https://sofdem.github.io/gccat/gccat/Cglobal_cardinality.html)
+# - bridge for Circuit: 
+#     https://www.ibm.com/support/knowledgecenter/SSSA5P_12.5.1/ilog.odms.studio.help/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_circuit.html
+#     https://lost-contact.mit.edu/afs/pdc.kth.se/roots/ilse/v0.7/pdc/vol/cplex/12.5/amd64_co5/doc/html/en-US/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_circuit.html
+# - bridge for Cardinality/Sequence: 
+#     https://www.ibm.com/support/knowledgecenter/SSSA5P_12.5.1/ilog.odms.studio.help/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_seq.html
+#     https://lost-contact.mit.edu/afs/pdc.kth.se/roots/ilse/v0.7/pdc/vol/cplex/12.5/amd64_co5/doc/html/en-US/OPL_Studio/oplmigration/topics/opl_mig_prev_3x4x_3xCP_constr_seq.html
+#     (https://sofdem.github.io/gccat/gccat/Cglobal_cardinality.html)
 # Help for debugging, with `model` an MOI model: 
 #   cpo_java_exportmodel(model.inner, "somewhere/model.cpo")
 #   -> cpoptimizer, r to read this file, opt to solve, etc.
