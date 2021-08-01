@@ -1,7 +1,7 @@
 # CP.Reification
 function MOI.supports_constraint(
     o::Optimizer,
-    f::Type{F},
+    ::Type{F},
     ::Type{S},
 ) where {F <: MOI.VectorOfVariables, S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
@@ -16,7 +16,7 @@ end
 
 function MOI.supports_constraint(
     o::Optimizer,
-    f::Type{F},
+    ::Type{F},
     ::Type{S},
 ) where {
     T <: Int,
