@@ -1,9 +1,9 @@
-# CP.Reified
+# CP.Reification
 function MOI.supports_constraint(
     o::Optimizer,
     f::Type{F},
     ::Type{S},
-) where {F <: MOI.VectorOfVariables, S2 <: MOI.AbstractSet, S <: CP.Reified{S2}}
+) where {F <: MOI.VectorOfVariables, S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
     # return if MOI.output_dimension(f) == 2
     #     MOI.supports_constraint(o, MOI.SingleVariable(f.variables[2]), S2)
@@ -22,7 +22,7 @@ function MOI.supports_constraint(
     T <: Int,
     F <: MOI.VectorAffineFunction{T},
     S2 <: MOI.AbstractSet,
-    S <: CP.Reified{S2},
+    S <: CP.Reification{S2},
 }
     # TODO: the output value should depend on the number of values in the function (either 2 or more).
     # return if MOI.output_dimension(f) == 2
@@ -37,7 +37,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.Reified{S2},
+    s::CP.Reification{S2},
 ) where {S2 <: MOI.AbstractSet, T <: Int}
     # Split the dimensions in the right parts. Only parse the first component, 
     # as the rest will be handled by the reified constraint.
