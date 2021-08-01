@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+Version 0.3.0
+-------------
+
+Update to COI 0.3.0.
+
+
 Version 0.2.1
 -------------
 
