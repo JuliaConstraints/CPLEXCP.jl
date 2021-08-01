@@ -6,6 +6,9 @@ Version 0.3.1
 
 Add support for `MOI.IndicatorSet`.
 
+`cpo_java_init` does not necessarily initialise JavaCall, which allows for 
+compatibility with applications that also need JavaCall for other parts.
+
 
 Version 0.3.0
 -------------

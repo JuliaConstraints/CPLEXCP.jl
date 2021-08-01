@@ -88,13 +88,22 @@ const IloMaxInt = typemax(Int32)
 const IloMinInt = typemin(Int32)
 
 """
-    cpo_java_init()
+    cpo_java_init(init_java::Bool=true)
 
-Initialises the JVM to be able to use CPLEX CP Optimizer.
+Initialises the JVM to be able to use CPLEX CP Optimizer. This function must 
+be called once per Julia process that uses CPLEX CP Optimizer.
+
+By default, this function automatically starts the JVM link (from JavaCall.jl).
+If other parts of the application require access to the JVM, this 
+initialisation can be disabled by setting `init_java` to `false`. 
+In that case, this function *MUST* be called before `JavaCall.init()`, because
+it sets Java's CLASSPATH to include CPLEX. 
 """
-function cpo_java_init()
+function cpo_java_init(init_java::Bool=true)
     JavaCall.addClassPath(libcplexcpojava)
-    JavaCall.init()
+    if init_java
+        JavaCall.init()
+    end
     return
 end
 
