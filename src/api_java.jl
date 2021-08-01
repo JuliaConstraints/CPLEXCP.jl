@@ -106,11 +106,10 @@ struct JavaCPOModel
     conflictstatus_excluded::Any
 end
 
-function cpo_java_model()
-    # TODO: move this to JavaCPOModel constructor?
-
-    # Getting access to the values is not possible before the JVM is started, i.e. before cpo_java_init() is called.
-    # It is thus not possible to use const for these values, unfortunately. TODO: Or just hard-code the values?
+function JavaCPOModel()
+    # Getting access to the values is not possible before the JVM is started, 
+    # i.e. before cpo_java_init() is called. It is thus not possible to use 
+    # const for these values, unfortunately. TODO: Or just hard-code the values?
     conflictstatus = @jimport ilog.cp.IloCP$ConflictStatus
     conflictstatus_possible =
         jfield(conflictstatus, "ConflictPossibleMember", conflictstatus)

@@ -82,7 +82,6 @@ export cpo_java_init,
     IloInfinity,
     IloMaxInt,
     IloMinInt,
-    cpo_java_model,
     cpo_java_release,
     cpo_java_boolvar,
     cpo_java_boolvararray,
@@ -435,5 +434,8 @@ include("MOI/wrapper_constraints_names.jl")
 include("MOI/wrapper_constraints_mo.jl")
 include("MOI/wrapper_constraints_cp.jl")
 include("MOI/wrapper_constraints_cp_reification.jl")
+
+# Some deprecations.
+@deprecate cpo_java_model JavaCPOModel
 
 end # module

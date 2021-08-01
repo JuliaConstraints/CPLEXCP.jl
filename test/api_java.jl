@@ -36,12 +36,12 @@
         end
 
         @testset "Model initialisation" begin
-            model = cpo_java_model()
+            model = JavaCPOModel()
             @test typeof(model) == JavaCPOModel
         end
 
         @testset "Variable creation" begin
-            model = cpo_java_model()
+            model = JavaCPOModel()
 
             # Integer variables
             @test typeof(cpo_java_intvar(model, Int32(5), Int32(10))) ==
@@ -94,7 +94,7 @@
         # Based on the provided examples, translated from Java.
 
         @testset "Color" begin
-            model = cpo_java_model()
+            model = JavaCPOModel()
             belgium = cpo_java_intvar(model, Int32(0), Int32(3))
             denmark = cpo_java_intvar(model, Int32(0), Int32(3))
             france = cpo_java_intvar(model, Int32(0), Int32(3))
@@ -222,7 +222,7 @@
             @test transmitter_idx(ncell, 1) == sum(nchannel)
 
             # Build the model.
-            model = cpo_java_model()
+            model = JavaCPOModel()
             ntransmitter = transmitter_idx(ncell, 1)
             freq = cpo_java_intvararray(
                 model,
@@ -291,7 +291,7 @@
             end
 
             # Build the model.
-            model = cpo_java_model()
+            model = JavaCPOModel()
             games = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
             home = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
             away = Dict{Tuple{Int, Int}, IloIntVar}() # nweeks, ngamesperweek
@@ -503,7 +503,7 @@
             ]
 
             # Build the model.
-            model = cpo_java_model()
+            model = JavaCPOModel()
             supplier = cpo_java_intvararray(
                 model,
                 Int32(nstores),

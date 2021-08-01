@@ -142,7 +142,7 @@ mutable struct Optimizer <: MOI.AbstractOptimizer
     """
     function Optimizer()
         model = new()
-        model.inner = cpo_java_model()
+        model.inner = JavaCPOModel()
 
         MOI.set(model, MOI.Silent(), false)
 
@@ -166,7 +166,7 @@ end
 Base.show(io::IO, model::Optimizer) = show(io, model.inner)
 
 function MOI.empty!(model::Optimizer)
-    model.inner = cpo_java_model()
+    model.inner = JavaCPOModel()
     model.name = ""
     empty!(model.variable_info)
     empty!(model.constraint_info)
