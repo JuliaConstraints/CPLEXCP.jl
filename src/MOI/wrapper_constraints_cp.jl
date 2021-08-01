@@ -137,7 +137,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.CountDistinct,
+    ::CP.CountDistinct,
 ) where {T <: Int}
     @assert MOI.output_dimension(f) >= 2
 
