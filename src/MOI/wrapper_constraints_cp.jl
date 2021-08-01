@@ -353,9 +353,13 @@ function _build_constraint(
     f::MOI.VectorAffineFunction{T},
     s::CP.LexicographicallyLessThan,
 ) where {T <: Int}
+    # _build_constraint can only return one constraint at a time, CPLEX only 
+    # has lexicographic constraints between two vectors.
+    @assert s.row_dim == 2
+
     f_parsed = _parse(model, f)
-    lex_first = f_parsed[1:(s.dimension)]
-    lex_second = f_parsed[(s.dimension + 1):(2 * s.dimension)]
+    lex_first = f_parsed[1:(s.column_dim)]
+    lex_second = f_parsed[(s.column_dim + 1):(2 * s.column_dim)]
 
     return cpo_java_lexicographic(model.inner, lex_first, lex_second)
 end
@@ -374,9 +378,13 @@ function _build_constraint(
     f::MOI.VectorAffineFunction{T},
     s::CP.Strictly{CP.LexicographicallyLessThan},
 ) where {T <: Int}
+    # _build_constraint can only return one constraint at a time, CPLEX only 
+    # has strict lexicographic constraints between two vectors.
+    @assert s.set.row_dim == 2
+
     f_parsed = _parse(model, f)
-    lex_first = f_parsed[1:(s.set.dimension)]
-    lex_second = f_parsed[(s.set.dimension + 1):(2 * s.set.dimension)]
+    lex_first = f_parsed[1:(s.set.column_dim)]
+    lex_second = f_parsed[(s.set.column_dim + 1):(2 * s.set.column_dim)]
 
     return cpo_java_strictlexicographic(model.inner, lex_first, lex_second)
 end
