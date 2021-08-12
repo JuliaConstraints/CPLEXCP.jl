@@ -216,7 +216,7 @@ function _build_constraint(
     )
 end
 
-# CP.Imply
+# CP.Implication
 function MOI.supports_constraint(
     ::Optimizer,
     ::Type{F},
@@ -226,7 +226,7 @@ function MOI.supports_constraint(
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
-    S <: CP.Imply{S1, S2},
+    S <: CP.Implication{S1, S2},
 }
     return true
 end
@@ -234,7 +234,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.Imply{S1, S2},
+    s::CP.Implication{S1, S2},
 ) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
     dim_first = MOI.dimension(s.antecedent)
     dim_second = MOI.dimension(s.consequent)

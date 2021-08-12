@@ -69,9 +69,6 @@ function _build_constraint(
     )
 end
 
-# CP.Membership
-# TODO: not available, make a bridge for this.
-
 # CP.DifferentFrom
 function MOI.supports_constraint(
     ::Optimizer,
@@ -219,9 +216,6 @@ function _build_constraint(
     return cpo_java_eq(model.inner, element_assign, expr)
 end
 
-# CP.Sort and CP.SortPermutation are not natively supported by CPLEX.
-# TODO: bridges.
-
 # CP.BinPacking
 # Unlike other CP solvers, the item weights are fixed (i.e. constant expressions, not variables).
 function MOI.supports_constraint(
@@ -231,7 +225,7 @@ function MOI.supports_constraint(
 ) where {
     T <: Int,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    S <: CP.BinPacking{T},
+    S <: CP.BinPacking{CP.NO_CAPACITY_BINPACKING, T},
 }
     return true
 end
@@ -239,7 +233,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::CP.BinPacking{T},
+    s::CP.BinPacking{CP.NO_CAPACITY_BINPACKING, T},
 ) where {T <: Int}
     f = MOI.Utilities.canonical(f)
 
@@ -258,10 +252,6 @@ function _build_constraint(
         convert(Vector{Int32}, s.weights),
     )
 end
-
-# CP.CapacitatedBinPacking
-# TODO: bridgde it by bounding the load variables.
-# https://www.ibm.com/support/knowledgecenter/SSSA5P_12.10.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.html#pack(ilog.concert.IloIntExpr[],%20ilog.concert.IloIntExpr[],%20int[],%20ilog.concert.IloIntExpr)
 
 # CP.MinimumDistance
 function MOI.supports_constraint(
