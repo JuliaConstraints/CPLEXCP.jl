@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+Version 0.4.0
+-------------
+
+Update to COI 0.4.
+
+
 Version 0.3.1
 -------------
 
@@ -13,7 +19,7 @@ compatibility with applications that also need JavaCall for other parts.
 Version 0.3.0
 -------------
 
-Update to COI 0.3.0.
+Update to COI 0.3.
 
 
 Version 0.2.1
