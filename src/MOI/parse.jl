@@ -20,7 +20,7 @@ function _parse(
 ) where {T <: Integer}
     cp = model.inner
     coeffs = Int32[t.coefficient for t in terms] # Type is forced by JNI.
-    vars = IloIntVar[_parse(model, t.variable_index) for t in terms]
+    vars = IloIntVar[_parse(model, t.variable) for t in terms]
     return cpo_java_scalprod(cp, coeffs, vars)
 end
 
@@ -30,7 +30,7 @@ function _parse(
 ) where {T <: Real}
     cp = model.inner
     coeffs = T[t.coefficient for t in terms]
-    vars = NumVar[_parse(model, t.variable_index) for t in terms]
+    vars = NumVar[_parse(model, t.variable) for t in terms]
     return cpo_java_scalprod(cp, coeffs, vars)
 end
 
@@ -44,8 +44,8 @@ function _parse(
     function prod_vars(term::MOI.ScalarQuadraticTerm{T})
         return cpo_java_prod(
             cp,
-            _parse(model, term.variable_index_1),
-            _parse(model, term.variable_index_2),
+            _parse(model, term.variable_1),
+            _parse(model, term.variable_2),
         )
     end
     function prod(term::MOI.ScalarQuadraticTerm{T})
@@ -93,7 +93,7 @@ function _parse(
                     cpo_java_prod(
                         cp,
                         IntExpr[cpo_java_constant(cp, term.coefficient)],
-                        IntExpr[_parse(model, term.variable_index)],
+                        IntExpr[_parse(model, term.variable)],
                     ),
                 ],
             )

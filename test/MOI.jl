@@ -1,4 +1,4 @@
-const CONFIG = MOIT.TestConfig(duals=false)
+const CONFIG = MOIT.Config(duals=false)
 
 const OPTIMIZER = CPLEXCP.Optimizer()
 MOI.set(OPTIMIZER, MOI.Silent(), true)
@@ -111,7 +111,7 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 
 # # @testset "Quadratic tests" begin
 # #     # TODO(odow): duals for quadratic problems.
-# #     quad_config = MOIT.TestConfig(duals = false, atol = 1e-3, rtol = 1e-3)
+# #     quad_config = MOIT.Config(duals = false, atol = 1e-3, rtol = 1e-3)
 # #
 # #     MOIT.contquadratictest(
 # #         BRIDGED_CERTIFICATE_OPTIMIZER,
@@ -132,7 +132,7 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 # #     MOIT.lin4test(BRIDGED_CERTIFICATE_OPTIMIZER, CONFIG)
 # #
 # #     # TODO(odow): duals for SOC constraints.
-# #     soc_config = MOIT.TestConfig(duals = false, atol=5e-3)
+# #     soc_config = MOIT.Config(duals = false, atol=5e-3)
 # #
 # #     MOIT.soctest(BRIDGED_OPTIMIZER, soc_config, [
 # #         "soc3"
@@ -140,7 +140,7 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 # #
 # #     MOIT.soc3test(
 # #         BRIDGED_OPTIMIZER,
-# #         MOIT.TestConfig(duals = false, infeas_certificates = false, atol = 1e-3)
+# #         MOIT.Config(duals = false, infeas_certificates = false, atol = 1e-3)
 # #     )
 # #
 # #     MOIT.rsoctest(BRIDGED_OPTIMIZER, soc_config)
