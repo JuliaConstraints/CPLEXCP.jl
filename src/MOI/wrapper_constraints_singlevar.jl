@@ -164,10 +164,10 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     s::MOI.LessThan{T},
 ) where {T <: Real}
-    @assert _info(model, f.variable).type == _type_to_variabletype(T)
-    _assert_no_ub(model, f.variable, s)
-    _set_ub(model, f.variable, s.upper)
-    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.variable.value)
+    @assert _info(model, f).type == _type_to_variabletype(T)
+    _assert_no_ub(model, f, s)
+    _set_ub(model, f, s.upper)
+    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.value)
 end
 
 function MOI.add_constraint(
@@ -175,10 +175,10 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     s::MOI.GreaterThan{T},
 ) where {T <: Real}
-    @assert _info(model, f.variable).type == _type_to_variabletype(T)
-    _assert_no_lb(model, f.variable, s)
-    _set_lb(model, f.variable, s.lower)
-    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.variable.value)
+    @assert _info(model, f).type == _type_to_variabletype(T)
+    _assert_no_lb(model, f, s)
+    _set_lb(model, f, s.lower)
+    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.value)
 end
 
 function MOI.add_constraint(
@@ -186,12 +186,12 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     s::MOI.EqualTo{T},
 ) where {T <: Real}
-    @assert _info(model, f.variable).type == _type_to_variabletype(T)
-    _assert_no_lb(model, f.variable, s)
-    _assert_no_ub(model, f.variable, s)
-    _set_lb(model, f.variable, s.value)
-    _set_ub(model, f.variable, s.value)
-    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.variable.value)
+    @assert _info(model, f).type == _type_to_variabletype(T)
+    _assert_no_lb(model, f, s)
+    _assert_no_ub(model, f, s)
+    _set_lb(model, f, s.value)
+    _set_ub(model, f, s.value)
+    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.value)
 end
 
 function MOI.add_constraint(
@@ -199,12 +199,12 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     s::MOI.Interval{T},
 ) where {T <: Real}
-    @assert _info(model, f.variable).type == _type_to_variabletype(T)
-    _assert_no_lb(model, f.variable, s)
-    _assert_no_ub(model, f.variable, s)
-    _set_lb(model, f.variable, s.lower)
-    _set_ub(model, f.variable, s.upper)
-    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.variable.value)
+    @assert _info(model, f).type == _type_to_variabletype(T)
+    _assert_no_lb(model, f, s)
+    _assert_no_ub(model, f, s)
+    _set_lb(model, f, s.lower)
+    _set_ub(model, f, s.upper)
+    return MOI.ConstraintIndex{MOI.VariableIndex, typeof(s)}(f.value)
 end
 
 function MOI.add_constraint(
@@ -212,7 +212,7 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     ::MOI.ZeroOne,
 )
-    info = _info(model, f.variable)
+    info = _info(model, f)
     @assert info.type == CONTINUOUS || info.type == INTEGER
     @assert info.binary === nothing
 
@@ -225,7 +225,7 @@ function MOI.add_constraint(
     info.binary = (bindex, cindex, eqcstr)
 
     return MOI.ConstraintIndex{MOI.VariableIndex, MOI.ZeroOne}(
-        f.variable.value,
+        f.value,
     )
 end
 
@@ -234,7 +234,7 @@ function MOI.add_constraint(
     f::MOI.VariableIndex,
     ::MOI.Integer,
 )
-    info = _info(model, f.variable)
+    info = _info(model, f)
     @assert info.type == CONTINUOUS
     @assert info.integer === nothing
 
@@ -247,7 +247,7 @@ function MOI.add_constraint(
     info.integer = (bindex, cindex, eqcstr)
 
     return MOI.ConstraintIndex{MOI.VariableIndex, MOI.ZeroOne}(
-        f.variable.value,
+        f.value,
     )
 end
 
