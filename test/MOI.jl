@@ -1,34 +1,13 @@
-const CONFIG = MOIT.Config(duals=false)
+const CONFIG = MOIT.Config(Int)
 
 const OPTIMIZER = CPLEXCP.Optimizer()
 MOI.set(OPTIMIZER, MOI.Silent(), true)
 const BRIDGED_OPTIMIZER = MOI.Bridges.full_bridge_optimizer(OPTIMIZER, Float64)
 
-const CERTIFICATE_OPTIMIZER = CPLEXCP.Optimizer()
-MOI.set(CERTIFICATE_OPTIMIZER, MOI.Silent(), true)
-const BRIDGED_CERTIFICATE_OPTIMIZER =
-    MOI.Bridges.full_bridge_optimizer(CERTIFICATE_OPTIMIZER, Float64)
-
-COIT.alldifferenttest(OPTIMIZER, CONFIG)
-COIT.antidomaintest(OPTIMIZER, CONFIG)
-COIT.binpackingtest(OPTIMIZER, CONFIG)
-COIT.counttest(OPTIMIZER, CONFIG)
-COIT.countdistincttest(OPTIMIZER, CONFIG)
-COIT.differentfromtest(OPTIMIZER, CONFIG)
-COIT.domaintest(OPTIMIZER, CONFIG)
-COIT.elementtest(OPTIMIZER, CONFIG)
-COIT.equivalencetest(OPTIMIZER, CONFIG)
-COIT.equivalencenottest(OPTIMIZER, CONFIG)
-COIT.ifthenelsetest(OPTIMIZER, CONFIG)
-COIT.Implicationtest(OPTIMIZER, CONFIG)
-COIT.indicatortest(OPTIMIZER, CONFIG)
-COIT.inversetest(OPTIMIZER, CONFIG)
-COIT.lexicographicallytest(OPTIMIZER, CONFIG)
-COIT.minimumdistancetest(OPTIMIZER, CONFIG)
-COIT.reificationtest(OPTIMIZER, CONFIG)
-COIT.strictlytest(OPTIMIZER, CONFIG)
-COIT.strictlylexicographicallytest(OPTIMIZER, CONFIG)
-COIT.truefalsetest(OPTIMIZER, CONFIG)
+COIT.runtests(
+    BRIDGED_OPTIMIZER,
+    CONFIG
+)
 
 # @testset "Integration tests" begin
 #     # Same tests as for the Java API.
