@@ -1,9 +1,9 @@
-# MOI.IndicatorSet
+# MOI.Indicator
 function MOI.supports_constraint(
     o::Optimizer,
     ::Type{MOI.VectorOfVariables},
     ::Type{S},
-) where {A, S2 <: MOI.AbstractSet, S <: MOI.IndicatorSet{A, S2}}
+) where {A, S2 <: MOI.AbstractSet, S <: MOI.Indicator{A, S2}}
     # No information about the dimension of the function, only works if 1 + dim(S2).
     return MOI.supports_constraint(o, MOI.VariableIndex, S2) ||
            MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
@@ -17,7 +17,7 @@ function MOI.supports_constraint(
     T <: Int,
     A,
     S2 <: MOI.AbstractSet,
-    S <: MOI.IndicatorSet{A, S2},
+    S <: MOI.Indicator{A, S2},
 }
     # No information about the dimension of the function, only works if 1 + dim(S2).
     return MOI.supports_constraint(o, MOI.ScalarAffineFunction{T}, S2) ||
@@ -27,7 +27,7 @@ end
 function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
-    s::MOI.IndicatorSet{A, S2},
+    s::MOI.Indicator{A, S2},
 ) where {A, S2 <: MOI.AbstractSet, T <: Int}
     # Split the dimensions in the right parts. Only parse the first component, 
     # as the rest will be handled by the reified constraint.
