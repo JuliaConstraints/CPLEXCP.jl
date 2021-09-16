@@ -685,7 +685,7 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
         end
     end
 
-    for (key, info) in model.constraint_info
+    for info in values(model.constraint_info)
         push!(constraints, (info.f, info.set))
     end
 
