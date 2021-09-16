@@ -26,7 +26,7 @@ function MOI.supports_constraint(
     ::Type{S},
 ) where {
     T <: Int,
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    F <: Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     S <: CP.Domain{T},
 }
     return true
@@ -34,7 +34,7 @@ end
 
 function _build_constraint(
     model::Optimizer,
-    f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    f::Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     s::CP.Domain{T},
 ) where {T <: Int}
     return cpo_java_allowedassignments(
@@ -51,7 +51,7 @@ function MOI.supports_constraint(
     ::Type{S},
 ) where {
     T <: Int,
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    F <: Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     S <: CP.AntiDomain{T},
 }
     return true
@@ -59,7 +59,7 @@ end
 
 function _build_constraint(
     model::Optimizer,
-    f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    f::Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     s::CP.AntiDomain{T},
 ) where {T <: Int}
     return cpo_java_forbiddenassignments(
@@ -76,7 +76,7 @@ function MOI.supports_constraint(
     ::Type{S},
 ) where {
     T <: Int,
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    F <: Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     S <: CP.DifferentFrom{T},
 }
     return true
@@ -84,7 +84,7 @@ end
 
 function _build_constraint(
     model::Optimizer,
-    f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    f::Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     s::CP.DifferentFrom{T},
 ) where {T <: Int}
     return cpo_java_neq(model.inner, _parse(model, f), Int32(s.value))
@@ -154,7 +154,7 @@ function MOI.supports_constraint(
 ) where {
     T <: Int,
     Sense <: Union{MOI.LessThan{T}, MOI.GreaterThan{T}},
-    F <: Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    F <: Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     S <: CP.Strictly{Sense, T},
 }
     return true
@@ -162,7 +162,7 @@ end
 
 function _build_constraint(
     model::Optimizer,
-    f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    f::Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     s::CP.Strictly{MOI.LessThan{T}, T},
 ) where {T <: Int}
     return cpo_java_lt(
@@ -174,7 +174,7 @@ end
 
 function _build_constraint(
     model::Optimizer,
-    f::Union{MOI.SingleVariable, MOI.ScalarAffineFunction{T}},
+    f::Union{MOI.VariableIndex, MOI.ScalarAffineFunction{T}},
     s::CP.Strictly{MOI.GreaterThan{T}, T},
 ) where {T <: Int}
     return cpo_java_gt(

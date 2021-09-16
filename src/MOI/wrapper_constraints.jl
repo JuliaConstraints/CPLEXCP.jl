@@ -1,5 +1,5 @@
 # Generic case for most constraints, excluding those on single variables.
-function _info(::Optimizer, key::MOI.ConstraintIndex{MOI.SingleVariable, <:Any})
+function _info(::Optimizer, key::MOI.ConstraintIndex{MOI.VariableIndex, <:Any})
     throw(MOI.InvalidIndex(key))
     return
 end

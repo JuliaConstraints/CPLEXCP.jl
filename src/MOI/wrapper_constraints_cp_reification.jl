@@ -5,7 +5,7 @@ function MOI.supports_constraint(
     ::Type{S},
 ) where {A, S2 <: MOI.AbstractSet, S <: MOI.IndicatorSet{A, S2}}
     # No information about the dimension of the function, only works if 1 + dim(S2).
-    return MOI.supports_constraint(o, MOI.SingleVariable, S2) ||
+    return MOI.supports_constraint(o, MOI.VariableIndex, S2) ||
            MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
 end
 
@@ -61,7 +61,7 @@ function MOI.supports_constraint(
     ::Type{S},
 ) where {S2 <: MOI.AbstractSet, S <: CP.Reification{S2}}
     # No information about the dimension of the function, only works if 1 + dim(S2).
-    return MOI.supports_constraint(o, MOI.SingleVariable, S2) ||
+    return MOI.supports_constraint(o, MOI.VariableIndex, S2) ||
            MOI.supports_constraint(o, MOI.VectorOfVariables, S2)
 end
 

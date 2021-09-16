@@ -43,7 +43,7 @@ function MOI.set(
     model::Optimizer,
     ::MOI.ObjectiveFunction{F},
     f::F,
-) where {F <: MOI.SingleVariable}
+) where {F <: MOI.VariableIndex}
     MOI.set(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),

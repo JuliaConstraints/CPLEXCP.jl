@@ -6,12 +6,8 @@ function _parse(::Optimizer, expr)
 end
 
 function _parse(model::Optimizer, f::MOI.VariableIndex)
-    return _info(model, f).variable
-end
-
-function _parse(model::Optimizer, f::MOI.SingleVariable)
     # A Concert Variable is already an expression for CPLEX.
-    return _info(model, f.variable).variable
+    return _info(model, f).variable
 end
 
 function _parse(model::Optimizer, f::MOI.VectorOfVariables)

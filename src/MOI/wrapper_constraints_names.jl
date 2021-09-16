@@ -1,7 +1,7 @@
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.LessThan{T}},
 ) where {T <: Real}
     return _info(model, MOI.VariableIndex(c.value)).ub_name
 end
@@ -9,7 +9,7 @@ end
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.GreaterThan{T}},
 ) where {T <: Real}
     return _info(model, MOI.VariableIndex(c.value)).lb_name
 end
@@ -17,7 +17,7 @@ end
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.Interval{T}},
 ) where {T <: Real}
     return _info(model, MOI.VariableIndex(c.value)).interval_name
 end
@@ -25,7 +25,7 @@ end
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.EqualTo{T}},
 ) where {T <: Real}
     return _info(model, MOI.VariableIndex(c.value)).equalto_name
 end
@@ -33,7 +33,7 @@ end
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.Integer},
 )
     return _info(model, MOI.VariableIndex(c.value)).integer_name
 end
@@ -41,7 +41,7 @@ end
 function MOI.get(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.ZeroOne},
 )
     return _info(model, MOI.VariableIndex(c.value)).binary_name
 end
@@ -53,7 +53,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.LessThan{T}},
     name::String,
 ) where {T <: Real}
     _info(model, MOI.VariableIndex(c.value)).ub_name = name
@@ -64,7 +64,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.GreaterThan{T}},
     name::String,
 ) where {T <: Real}
     _info(model, MOI.VariableIndex(c.value)).lb_name = name
@@ -75,7 +75,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.Interval{T}},
     name::String,
 ) where {T <: Real}
     _info(model, MOI.VariableIndex(c.value)).interval_name = name
@@ -86,7 +86,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.EqualTo{T}},
     name::String,
 ) where {T <: Real}
     _info(model, MOI.VariableIndex(c.value)).equalto_name = name
@@ -97,7 +97,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.Integer},
     name::String,
 )
     _info(model, MOI.VariableIndex(c.value)).integer_name = name
@@ -108,7 +108,7 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.ConstraintName,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, MOI.ZeroOne},
     name::String,
 )
     _info(model, MOI.VariableIndex(c.value)).binary_name = name
@@ -174,7 +174,7 @@ function _rebuild_name_to_constraint(model::Optimizer)
             _rebuild_name_to_constraint_add!(
                 model,
                 info.equalto_name,
-                MOI.ConstraintIndex{MOI.SingleVariable, MOI.EqualTo{T}}(
+                MOI.ConstraintIndex{MOI.VariableIndex, MOI.EqualTo{T}}(
                     index.value,
                 ),
             )
@@ -183,7 +183,7 @@ function _rebuild_name_to_constraint(model::Optimizer)
             _rebuild_name_to_constraint_add!(
                 model,
                 info.interval_name,
-                MOI.ConstraintIndex{MOI.SingleVariable, MOI.Interval{T}}(
+                MOI.ConstraintIndex{MOI.VariableIndex, MOI.Interval{T}}(
                     index.value,
                 ),
             )
@@ -192,7 +192,7 @@ function _rebuild_name_to_constraint(model::Optimizer)
             _rebuild_name_to_constraint_add!(
                 model,
                 info.ub_name,
-                MOI.ConstraintIndex{MOI.SingleVariable, MOI.LessThan{T}}(
+                MOI.ConstraintIndex{MOI.VariableIndex, MOI.LessThan{T}}(
                     index.value,
                 ),
             )
@@ -201,7 +201,7 @@ function _rebuild_name_to_constraint(model::Optimizer)
             _rebuild_name_to_constraint_add!(
                 model,
                 info.lb_name,
-                MOI.ConstraintIndex{MOI.SingleVariable, MOI.GreaterThan{T}}(
+                MOI.ConstraintIndex{MOI.VariableIndex, MOI.GreaterThan{T}}(
                     index.value,
                 ),
             )

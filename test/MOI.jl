@@ -80,7 +80,7 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 
 # @testset "Unit Tests" begin
 #     MOIT.basic_constraint_tests(BRIDGED_OPTIMIZER, CONFIG, exclude=[
-#         (MOI.SingleVariable, MOI.Integer) # Integer becomes ZeroOne at some point in the tests!?
+#         (MOI.VariableIndex, MOI.Integer) # Integer becomes ZeroOne at some point in the tests!?
 #     ])
 #     # MOIT.solve_unbounded_model(CERTIFICATE_OPTIMIZER, CONFIG) # Relies on dual result.
 #     MOIT.modificationtest(BRIDGED_OPTIMIZER, CONFIG, [
@@ -198,15 +198,15 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 # #         # but supports_constrainttest is broken via bridges:
 # #         MOI.empty!(BRIDGED_OPTIMIZER)
 # #         MOI.add_variable(BRIDGED_OPTIMIZER)
-# #         @test  MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.SingleVariable, MOI.EqualTo{Float64})
+# #         @test  MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VariableIndex, MOI.EqualTo{Float64})
 # #         @test  MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64})
 # #         # This test is broken for some reason:
 # #         @test_broken !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Float64})
 # #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int})
-# #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.SingleVariable, MOI.EqualTo{Int})
+# #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VariableIndex, MOI.EqualTo{Int})
 # #         @test  MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VectorOfVariables, MOI.Zeros)
 # #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VectorOfVariables, MOI.EqualTo{Float64})
-# #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.SingleVariable, MOI.Zeros)
+# #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VariableIndex, MOI.Zeros)
 # #         @test !MOI.supports_constraint(BRIDGED_OPTIMIZER, MOI.VectorOfVariables, MOIT.UnknownVectorSet)
 # #     end
 # #
@@ -238,8 +238,8 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 # #     c = MOI.add_constraint(model, cf, MOI.LessThan(1.5))
 # #     @test MOI.get(model, MOI.NumberOfConstraints{MOI.ScalarAffineFunction{Float64},MOI.LessThan{Float64}}()) == 1
 # #
-# #     MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.GreaterThan(0.0))
-# #     @test MOI.get(model, MOI.NumberOfConstraints{MOI.SingleVariable,MOI.GreaterThan{Float64}}()) == 2
+# #     MOI.add_constraint.(model, v, MOI.GreaterThan(0.0))
+# #     @test MOI.get(model, MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}()) == 2
 # #
 # #     objf = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([-1.0,0.0], v), 0.0)
 # #     MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), objf)
@@ -257,7 +257,7 @@ COIT.truefalsetest(OPTIMIZER, CONFIG)
 # #     @test MOI.get(model, MOI.ConstraintPrimal(), c) ≈ 1.5 atol=atol rtol=rtol
 # #
 # #     # Add integrality constraints
-# #     int = MOI.add_constraint.(model, MOI.SingleVariable.(v), MOI.Integer())
+# #     int = MOI.add_constraint.(model, v, MOI.Integer())
 # #     MOI.optimize!(model)
 # #     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
 # #     @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT

@@ -24,7 +24,7 @@ function _make_var(
 )
     index = _make_var(model, variable)
     return index,
-    MOI.ConstraintIndex{MOI.SingleVariable, typeof(set)}(index.value)
+    MOI.ConstraintIndex{MOI.VariableIndex, typeof(set)}(index.value)
 end
 
 function _make_vars(model::Optimizer, variables::Vector{<:Variable})
@@ -182,7 +182,7 @@ function MOI.delete(model::Optimizer, v::MOI.VariableIndex)
     cpo_java_remove(model.inner, info.variable)
     delete!(model.variable_info, v)
 
-    # We throw away name_to_constraint so we will rebuild SingleVariable
+    # We throw away name_to_constraint so we will rebuild VariableIndex
     # constraint names (without v) on the next access to it.
     model.name_to_variable = nothing
     model.name_to_constraint = nothing

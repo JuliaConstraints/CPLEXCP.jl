@@ -18,7 +18,7 @@ mutable struct VariableInfo
     name::String
     type::VariableType
 
-    # Variable bounds: either integers or floats. Needed for is_valid on SingleVariable 
+    # Variable bounds: either integers or floats. Needed for is_valid on VariableIndex 
     # and bound constraints.
     lb::Real
     ub::Real
@@ -26,7 +26,7 @@ mutable struct VariableInfo
         Nothing,
         Tuple{
             MOI.VariableIndex,
-            MOI.ConstraintIndex{MOI.SingleVariable, MOI.Integer},
+            MOI.ConstraintIndex{MOI.VariableIndex, MOI.Integer},
             Constraint,
         },
     }
@@ -34,7 +34,7 @@ mutable struct VariableInfo
         Nothing,
         Tuple{
             MOI.VariableIndex,
-            MOI.ConstraintIndex{MOI.SingleVariable, MOI.ZeroOne},
+            MOI.ConstraintIndex{MOI.VariableIndex, MOI.ZeroOne},
             Constraint,
         },
     }
@@ -208,7 +208,7 @@ function MOI.supports(
     ::MOI.ObjectiveFunction{F},
 ) where {
     F <: Union{
-        MOI.SingleVariable,
+        MOI.VariableIndex,
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
     },
@@ -218,7 +218,7 @@ end
 
 function MOI.supports_constraint(
     ::Optimizer,
-    ::Type{MOI.SingleVariable},
+    ::Type{MOI.VariableIndex},
     ::Type{F},
 ) where {
     T <: Union{Int, Float64},
@@ -377,7 +377,7 @@ end
 function MOI.get(
     model::Optimizer,
     attr::MOI.ConstraintPrimal,
-    c::MOI.ConstraintIndex{MOI.SingleVariable, <:Any},
+    c::MOI.ConstraintIndex{MOI.VariableIndex, <:Any},
 )
     _throw_if_optimize_in_progress(model, attr)
     return MOI.get(model, MOI.VariablePrimal(), MOI.VariableIndex(c.value))
@@ -568,7 +568,7 @@ _check_bound_compatible(model::Optimizer, idx::MOI.VariableIndex, ::Any) = false
 
 function MOI.get(
     model::Optimizer,
-    ::MOI.NumberOfConstraints{MOI.SingleVariable, S},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex, S},
 ) where {S}
     n = 0
     for (key, info) in model.variable_info
@@ -598,27 +598,27 @@ end
 
 function MOI.get(
     model::Optimizer,
-    ::MOI.ListOfConstraintIndices{MOI.SingleVariable, S},
+    ::MOI.ListOfConstraintIndices{MOI.VariableIndex, S},
 ) where {S}
-    indices = MOI.ConstraintIndex{MOI.SingleVariable, S}[]
+    indices = MOI.ConstraintIndex{MOI.VariableIndex, S}[]
     for (key, info) in model.variable_info
         if _check_bound_compatible(model, key, S) || info.type in _type_enums(S)
             push!(
                 indices,
-                MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value),
+                MOI.ConstraintIndex{MOI.VariableIndex, S}(key.value),
             )
         end
 
         if S == MOI.ZeroOne && info.binary !== nothing
             push!(
                 indices,
-                MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value),
+                MOI.ConstraintIndex{MOI.VariableIndex, S}(key.value),
             )
         end
         if S == MOI.Integer && info.integer !== nothing
             push!(
                 indices,
-                MOI.ConstraintIndex{MOI.SingleVariable, S}(key.value),
+                MOI.ConstraintIndex{MOI.VariableIndex, S}(key.value),
             )
         end
     end
@@ -648,7 +648,7 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
             push!(
                 constraints,
                 (
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.EqualTo{typeof(_get_lb(model, info.index))},
                 ),
             )
@@ -656,7 +656,7 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
             push!(
                 constraints,
                 (
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.Interval{typeof(_get_lb(model, info.index))},
                 ),
             )
@@ -664,7 +664,7 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
             push!(
                 constraints,
                 (
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.LessThan{typeof(_get_lb(model, info.index))},
                 ),
             )
@@ -672,16 +672,16 @@ function MOI.get(model::Optimizer, ::MOI.ListOfConstraints)
             push!(
                 constraints,
                 (
-                    MOI.SingleVariable,
+                    MOI.VariableIndex,
                     MOI.GreaterThan{typeof(_get_lb(model, info.index))},
                 ),
             )
         end
         if info.type == CONTINUOUS
         elseif info.type == BINARY
-            push!(constraints, (MOI.SingleVariable, MOI.ZeroOne))
+            push!(constraints, (MOI.VariableIndex, MOI.ZeroOne))
         elseif info.type == INTEGER
-            push!(constraints, (MOI.SingleVariable, MOI.Integer))
+            push!(constraints, (MOI.VariableIndex, MOI.Integer))
         end
     end
 
