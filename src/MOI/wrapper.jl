@@ -388,7 +388,7 @@ function MOI.get(
     c::MOI.ConstraintIndex,
 )
     _throw_if_optimize_in_progress(model, attr)
-    constraint = _info(model, x).constraint # IloConstraint <: IloIntExpr
+    constraint = _info(model, c).constraint # IloConstraint <: IloIntExpr
     return cpo_java_getvalue(model.inner, constraint)
 end
 
