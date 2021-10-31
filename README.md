@@ -17,7 +17,7 @@ for details.
 
 *Note: This wrapper is maintained by the community and is not
 officially supported by IBM. If you are a commercial customer
-interested in official support for CPLEX CP Optimizer in Julia, let them know!.*
+interested in official support for CPLEX CP Optimizer in Julia, let them know!*
 
 ## Installation
 
