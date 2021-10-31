@@ -23,8 +23,8 @@ function _make_var(
     set::MOI.AbstractScalarSet,
 )
     index = _make_var(model, variable)
-    return index,
-    MOI.ConstraintIndex{MOI.VariableIndex, typeof(set)}(index.value)
+    S = typeof(set)
+    return index, MOI.ConstraintIndex{MOI.VariableIndex, S}(index.value)
 end
 
 function _make_vars(model::Optimizer, variables::Vector{<:Variable})
