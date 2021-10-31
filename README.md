@@ -1,6 +1,6 @@
 # CPLEXCP.jl
 
-CPLEXCP.jl is a wrapper for the [IBM® ILOG® CPLEX® CP Optimizer](https://www.ibm.com/analytics/cplex-cp-optimizer)
+CPLEXCP.jl is a wrapper for the [IBM® ILOG® CPLEX® CP Optimizer](https://www.ibm.com/analytics/cplex-cp-optimizer).
 
 You cannot use CPLEXCP.jl without having purchased and installed a copy of CPLEX
 Optimization Studio from [IBM](http://www.ibm.com/). However, CPLEX is
