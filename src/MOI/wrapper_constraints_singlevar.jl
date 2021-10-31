@@ -263,7 +263,6 @@ function MOI.delete(
         MOI.VariableIndex(c.value),
         (T == Float64) ? IloInfinity : IloMaxInt,
     )
-    _info(model, MOI.VariableIndex(c.value)).ub_name = ""
     model.name_to_constraint = nothing
     return
 end
@@ -278,7 +277,6 @@ function MOI.delete(
         MOI.VariableIndex(c.value),
         (T == Float64) ? -IloInfinity : IloMinInt,
     )
-    _info(model, MOI.VariableIndex(c.value)).lb_name = ""
     model.name_to_constraint = nothing
     return
 end
@@ -298,7 +296,6 @@ function MOI.delete(
         MOI.VariableIndex(c.value),
         (T == Float64) ? -IloInfinity : IloMinInt,
     )
-    _info(model, MOI.VariableIndex(c.value)).equalto_name = ""
     model.name_to_constraint = nothing
     return
 end
@@ -318,7 +315,6 @@ function MOI.delete(
         MOI.VariableIndex(c.value),
         (T == Float64) ? -IloInfinity : IloMinInt,
     )
-    _info(model, MOI.VariableIndex(c.value)).interval_name = ""
     model.name_to_constraint = nothing
     return
 end

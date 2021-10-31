@@ -39,14 +39,6 @@ mutable struct VariableInfo
         },
     }
 
-    # Bound-constraint names.
-    lb_name::String
-    ub_name::String
-    interval_name::String
-    equalto_name::String
-    integer_name::String
-    binary_name::String
-
     # For second-order cones, the variable must be constrained to be >= 0.
     # However, when removing all cones this variable participates in,
     # the previous lower bound must be restored.
@@ -64,12 +56,6 @@ function VariableInfo(index::MOI.VariableIndex, variable::Variable)
         IloInfinity,
         nothing,
         nothing,
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
         0,
         nothing,
     )
