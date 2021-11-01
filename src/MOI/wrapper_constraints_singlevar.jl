@@ -124,7 +124,6 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     c::MOI.ConstraintIndex{MOI.VariableIndex, <:Any},
 )
-    println(">> $c")
     MOI.throw_if_not_valid(model, c)
     return MOI.VariableIndex(MOI.VariableIndex(c.value))
 end
