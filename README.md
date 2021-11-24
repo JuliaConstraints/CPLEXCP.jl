@@ -26,24 +26,24 @@ but are not tested. Versions 12.9 and 12.10 are automatically detected, though.
 
 First, obtain a license of CPLEX and install CPLEX CP optimizer, following the
 instructions on [IBM's website](https://www.ibm.com/analytics/cplex-cp-optimizer). Then, set the
-`CPLEX_STUDIO_BINARIES` environment variable as appropriate and run
+`CPLEX_STUDIO_DIR` environment variable as appropriate and run
 `Pkg.add("CPLEXCP")`, then `Pkg.build("CPLEXCP")`. For example:
 
 ```julia
 # On Windows, this might be
-ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\CPLEX_Studio1210\\cplex\\bin\\x86-64_win\\"
+ENV["CPLEX_STUDIO_DIR"] = "C:\\Program Files\\CPLEX_Studio1210\\"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
 
 # On macOS, this might be
-ENV["CPLEX_STUDIO_BINARIES"] = "/Applications/CPLEX_Studio1210/cplex/bin/x86-64_osx/"
+ENV["CPLEX_STUDIO_DIR"] = "/Applications/CPLEX_Studio1210/"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
 
 # On Unix, this might be
-ENV["CPLEX_STUDIO_BINARIES"] = "/opt/CPLEX_Studio1210/cplex/bin/x86-64_linux/"
+ENV["CPLEX_STUDIO_DIR"] = "/opt/CPLEX_Studio1210/"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
