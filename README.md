@@ -31,19 +31,19 @@ instructions on [IBM's website](https://www.ibm.com/analytics/cplex-cp-optimizer
 
 ```julia
 # On Windows, this might be
-ENV["CPLEX_STUDIO_DIR"] = "C:\\Program Files\\CPLEX_Studio1210\\cplex\\bin\\x86-64_win\\"
+ENV["CPLEX_STUDIO_DIR"] = "C:\\Program Files\\CPLEX_Studio1210\\cplex\\"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
 
 # On macOS, this might be
-ENV["CPLEX_STUDIO_DIR"] = "/Applications/CPLEX_Studio1210/cplex/bin/x86-64_osx/"
+ENV["CPLEX_STUDIO_DIR"] = "/Applications/CPLEX_Studio1210/cplex/"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
 
 # On Unix, this might be
-ENV["CPLEX_STUDIO_DIR"] = "/opt/CPLEX_Studio1210/cplex/bin/x86-64_linux/"
+ENV["CPLEX_STUDIO_DIR"] = "/opt/CPLEX_Studio1210/cplex/"
 import Pkg
 Pkg.add("CPLEXCP")
 Pkg.build("CPLEXCP")
