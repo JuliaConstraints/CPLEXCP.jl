@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+Version 0.6.0
+-------------
+
+Update to COI 0.7.
+
+
+Version 0.5.0
+-------------
+
+Update to COI 0.6 and MOI 0.10.
+
+
 Version 0.4.0
 -------------
 

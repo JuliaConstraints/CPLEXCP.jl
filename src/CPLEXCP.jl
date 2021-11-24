@@ -441,7 +441,4 @@ include("MOI/wrapper_constraints_mo.jl")
 include("MOI/wrapper_constraints_cp.jl")
 include("MOI/wrapper_constraints_cp_reification.jl")
 
-# Some deprecations.
-@deprecate cpo_java_model JavaCPOModel
-
 end # module
