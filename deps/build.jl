@@ -38,10 +38,14 @@ function get_jar_file()
     end
 
     if cplex_path !== nothing
+        @info("Found a CPLEX binary within: $(cplex_path)")
         lib_path = abspath(cplex_path * "../../lib/ILOG.CP.jar")
         if isfile(lib_path)
+            @info("Found a CPLEXCP JAR at: $(lib_path)")
             return lib_path
         end
+    else
+        @info("No CPLEX binary found in the PATH; now switching to environment variables")
     end
 
     # - or from an environment variable.
@@ -51,8 +55,10 @@ function get_jar_file()
             continue
         end
 
+        @info("Environment variable $(env) found")
         lib_path = abspath(ENV[env] * "/cpoptimizer/lib/ILOG.CP.jar")
         if isfile(lib_path)
+            @info("CPLEXCP found with environment variable $(env) at: $(lib_path)")
             return lib_path
         end
     end
