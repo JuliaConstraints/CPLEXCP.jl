@@ -448,11 +448,20 @@ end
 function MOI.set(
     model::Optimizer,
     ::MOI.TimeLimitSec,
-    x::Union{Number, Nothing},
+    x::Float64,
 )
     _throw_if_optimize_in_progress(model, attr)
-    value = (x === nothing) ? IloInfinity : Float64(x)
-    cpo_java_setdoubleparameter(model.inner, "TimeLimit", value)
+    cpo_java_setdoubleparameter(model.inner, "TimeLimit", x)
+    return
+end
+
+function MOI.set(
+    model::Optimizer,
+    ::MOI.TimeLimitSec,
+    ::Nothing,
+)
+    _throw_if_optimize_in_progress(model, attr)
+    cpo_java_setdoubleparameter(model.inner, "TimeLimit", IloInfinity)
     return
 end
 
