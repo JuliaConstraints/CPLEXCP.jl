@@ -7115,7 +7115,7 @@ function cpo_java_setdoubleparameter(
         cp.cp,
         "setParameter",
         Nothing,
-        (IloIntParam, jdouble),
+        (IloDoubleParam, jdouble),
         param,
         value,
     )
