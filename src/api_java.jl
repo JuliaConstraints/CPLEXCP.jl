@@ -7079,6 +7079,11 @@ function cpo_java_getdoubleinfo(cp::JavaCPOModel, name::String)
     return jcall(cp.cp, "getInfo", jdouble, (IloDoubleInfo,), param)
 end
 
+function cpo_java_getparametervalue(name::String)
+    field = jfield(IloParameterValues, name, IloParameterValues)
+    return jcall(field, "getValue", jint, ())
+end
+
 function cpo_java_getdoubleparameter(cp::JavaCPOModel, name::String)
     param = jfield(IloDoubleParam, name, IloDoubleParam)
     return jcall(cp.cp, "getParameter", jdouble, (IloDoubleParam,), param)

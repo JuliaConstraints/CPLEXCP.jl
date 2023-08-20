@@ -1,4 +1,86 @@
 @testset "Java API" begin
+
+    function set_parameters(model::JavaCPOModel)
+        # Set parameters (DefaultInferenceLevel)
+        # Be careful when setting the parameter value to "Default", 
+        # because it allows the IloCP to control the value of the 
+        # parameter, as it is for the parameter 
+        # `AllMinDistanceInferenceLevel` 
+        # (https://www.ibm.com/docs/api/v1/content/SSSA5P_20.1.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.IntParam.html#AllMinDistanceInferenceLevel) 
+        # for instance. And thus, the parameter value retrieval may not
+        # be the same as the value entered.
+        int_parameters = Dict{String, Union{Int32, String}}(
+            "Workers" => Int32(6),
+            "DefaultInferenceLevel" => "Low",
+            "AllDiffInferenceLevel" => "Medium",
+            "DistributeInferenceLevel" => "Extended",
+            "CountInferenceLevel" => "Medium",
+            "SequenceInferenceLevel" => "Low",
+            "AllMinDistanceInferenceLevel" => "Medium",
+            "ElementInferenceLevel" => "Extended",
+            "FailLimit" => Int32(1000000),
+            "ChoicePointLimit" => Int32(1000000),
+            "LogVerbosity" => "Verbose",
+            "LogPeriod" => Int32(2),
+            "SearchType" => "MultiPoint",
+            "RandomSeed" => Int32(1234567),
+            "RestartFailLimit" => Int32(14000),
+            "MultiPointNumberOfSearchPoints" => Int32(3500),
+            "BranchLimit" => Int32(300000),
+            "DynamicProbing" => "Auto",
+            "SolutionLimit" => Int32(10000),
+            "PrecedenceInferenceLevel" => "Low",
+            "IntervalSequenceInferenceLevel" => "Medium",
+            "NoOverlapInferenceLevel" => "Extended",
+            "CumulFunctionInferenceLevel" => "Medium",
+            "StateFunctionInferenceLevel" => "Low",
+            "TimeMode" => "ElapsedTime",
+            "TemporalRelaxation" => "On",
+            "Presolve" => "On",
+            "ConflictRefinerIterationLimit" => Int32(10000),
+            "ConflictRefinerBranchLimit" => Int32(20000),
+            "ConflictRefinerFailLimit" => Int32(20000),
+            "ConflictRefinerOnVariables" => "On",
+            "ModelAnonymizer" => "On",
+            "FailureDirectedSearch" => "On",
+            "FailureDirectedSearchMaxMemory" => Int32(104857600), # 100MB
+            "WarningLevel" => Int32(3), 
+            "PrintModelDetailsInMessages" => "On", 
+            "CountDifferentInferenceLevel" => "Extended", 
+            "LogSearchTags" => "On", 
+            "KPIDisplay" => "SingleLine", 
+        )
+
+        for  (param, value) in int_parameters
+            cpo_java_setintparameter(model, param, value)
+
+            if typeof(value) == String                
+                @test cpo_java_getintparameter(model, param) == 
+                cpo_java_getparametervalue(value)
+            else
+                @test cpo_java_getintparameter(model, param) == value 
+            end
+        end
+
+        # Set double parameters 
+        # (https://www.ibm.com/docs/api/v1/content/SSSA5P_20.1.0/ilog.odms.cpo.help/refjavacpoptimizer/html/ilog/cp/IloCP.DoubleParam.html)
+        double_parameters = Dict{String, Float64}(
+            "ConflictRefinerTimeLimit" => 5,
+            "DynamicProbingStrength" => 0.03,
+            "FailureDirectedSearchEmphasis" => 1.4,
+            "ObjectiveLimit" => 1000,
+            "OptimalityTolerance" => 10,
+            "RelativeOptimalityTolerance" => 1e-2,
+            "RestartGrowthFactor" => 1.2,
+            "PeriodicCallbackMinDelay" => 2,
+            "TimeLimit" => 10
+        )
+        for  (param, value) in double_parameters
+            cpo_java_setdoubleparameter(model, param, value)
+            @test cpo_java_getdoubleparameter(model, param) == value
+        end
+    end
+
     @testset "Unit tests" begin
         @testset "Type hierarchy" begin
             for T in [
@@ -38,6 +120,9 @@
         @testset "Model initialisation" begin
             model = JavaCPOModel()
             @test typeof(model) == JavaCPOModel
+
+            # Set parameters
+            set_parameters(model)
         end
 
         @testset "Variable creation" begin
@@ -87,6 +172,9 @@
             i2 = cpo_java_intervalvar(model)
             @test typeof(cpo_java_intervalsequencevar(model, [i1, i2])) ==
                   IloIntervalSequenceVar
+
+            # Set parameters
+            set_parameters(model)
         end
     end
 
@@ -112,6 +200,10 @@
             cpo_java_add(model, cpo_java_neq(model, germany, luxembourg))
             cpo_java_add(model, cpo_java_neq(model, germany, netherlands))
 
+            # Set parameters
+            set_parameters(model)
+
+            # Solve model
             status = cpo_java_solve(model)
             @test status
 
@@ -271,6 +363,10 @@
             obj = cpo_java_countdifferent(model, freq)
             cpo_java_minimize(model, obj)
 
+            # Set parameters
+            set_parameters(model)
+
+            # Solve model
             status = cpo_java_solve(model)
             @test status
         end
@@ -481,6 +577,10 @@
                 end
             end
 
+            # Set parameters
+            set_parameters(model)
+
+            # Solve model
             status = cpo_java_solve(model)
             @test status
         end
@@ -546,6 +646,10 @@
             end
             cpo_java_add(model, cpo_java_minimize(model, obj))
 
+            # Set parameters
+            set_parameters(model)
+
+            # Solve model
             status = cpo_java_solve(model)
             @test status
         end
