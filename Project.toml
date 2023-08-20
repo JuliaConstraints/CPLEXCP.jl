@@ -2,7 +2,7 @@ name = "CPLEXCP"
 uuid = "cf5b58c4-1b5d-4a07-a0a4-f2f6c3ca5a5f"
 authors = ["Thibaut Cuvelier <cuvelier.thibaut@gmail.com>"]
 repo = "https://github.com/JuliaConstraints/CPLEXCP.jl"
-version = "0.6.1"
+version = "0.6.2"
 
 [deps]
 JavaCall = "494afd89-becb-516b-aafa-70d2670c0337"
