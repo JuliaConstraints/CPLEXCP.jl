@@ -222,7 +222,7 @@ function MOI.supports_constraint(
     ::Type{F},
     ::Type{S},
 ) where {
-    T <: Int,
+    T <: Real,
     F <: Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     S1 <: MOI.AbstractSet,
     S2 <: MOI.AbstractSet,
@@ -235,7 +235,7 @@ function _build_constraint(
     model::Optimizer,
     f::Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{T}},
     s::CP.Implication{S1, S2},
-) where {T <: Int, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
+) where {T <: Real, S1 <: MOI.AbstractSet, S2 <: MOI.AbstractSet}
     dim_first = MOI.dimension(s.antecedent)
     dim_second = MOI.dimension(s.consequent)
     dim_end = dim_first + dim_second
